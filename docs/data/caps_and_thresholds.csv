@@ -1,0 +1,19 @@
+value,what,concerns,note
+Rs300,"Transport amount, per order",TRANSPORT_NOT_RECEIVED,"Exceeding it is a TICKET, not a clamp"
+Rs50 / km,Transport rate beyond hub radius,TRANSPORT_NOT_RECEIVED,OPEN: partial-km rounding rule undecided
+Rs500,Main Wallet minimum floor after withdrawal,MAIN_WALLET_TO_BANK,"Hard rule, deny-and-explain"
+5 / month,ARW withdrawal count,ARW_TO_BANK,Calendar month
+"Rs40,000 / month",ARW withdrawal value,ARW_TO_BANK,Calendar month
+Rs30,Cashback per eligible booking,CASHBACK_NOT_RECEIVED,Only for admin-created completed bookings
+1 / SP / day,Maximum strikes,VIOL_ARCHITECTURE,5 strikes may trigger deactivation
+2 / month (interim),POOLED emergency removals,VIOL_T1_SAMEDAY_LEAVE + VIOL_R8_R10_EMERGENCY,Shared counter. Final number OPEN
+1 / 25-job cycle,Extra-services delay allowance (SR2),VIOL_R3_DELAYED_PREV,Warning issued on the grant
+1 / 25-job cycle,Product-unavailable allowance,VIOL_R9_NO_PRODUCT,Logistics-failure removals excluded from the count
+1 / calendar month,Period leave,VIOL_R5_PERIODS,Second one is upheld
+Rs800,Small-booking threshold,VIOL_R7_SMALL_BOOKING,"Below it is a TICKET; at or above, upheld"
+30 seconds,Partner-customer call duration,VIOL_T5_JOB_REJECT + VIOL_T6_REJECT_OVER_CALL,Decision boundary in both types
+30 / 60 / 120 min,Customer-confirmation cutoff before slot,VIOL_R2_NOT_RESPONDING,By assignment lead time: <1hr / same-day / day-before+
+45 min,Minimum gap between jobs,VIOL_R3_DELAYED_PREV,Context for the delay premise
+2 hours,Preceding-booking lookback window,VIOL_R3_DELAYED_PREV,"Uses SCHEDULED end, not actual"
+300 metres,Arrival proximity event,TRANSPORT_NOT_RECEIVED,arrivedAt300metre is the travel proof
+11 PM,Delivery TAT deadline,PROD_DELIVERY_DELAY + VIOL_R9_NO_PRODUCT,Shared function

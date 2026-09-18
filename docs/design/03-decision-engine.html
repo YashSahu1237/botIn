@@ -1,0 +1,782 @@
+<title>BOTIn Decision Engine</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#F4F6F9; --surface:#FFFFFF; --panel:#EAEEF5; --line:#CDD5E1; --line-soft:#E0E6EF;
+    --ink:#161A21; --ink-2:#454E5D; --muted:#798393;
+    --accent:#2F4468; --accent-soft:#E6ECF7; --accent-line:#B7C4DC;
+    --t0:#0F7A69; --t1:#2B5FC4; --t2:#8F5409; --t3:#8B3365; --stop:#A93A38;
+    --mono-bg:#EBEFF5; --code-ink:#2F4468;
+    --font-sans:'IBM Plex Sans',system-ui,-apple-system,'Segoe UI',sans-serif;
+    --font-mono:'IBM Plex Mono',ui-monospace,SFMono-Regular,Menlo,monospace;
+  }
+  @media (prefers-color-scheme: dark){ :root:not([data-theme="light"]){
+    --bg:#0F1218; --surface:#151921; --panel:#1C222D; --line:#2C3340; --line-soft:#222833;
+    --ink:#E5E9F1; --ink-2:#B2BAC7; --muted:#6A7383;
+    --accent:#9DB3DE; --accent-soft:#19212F; --accent-line:#31405A;
+    --t0:#33BFA2; --t1:#6B95EE; --t2:#DFA13B; --t3:#D172A7; --stop:#E0736E;
+    --mono-bg:#1A202A; --code-ink:#B6C4E4; } }
+  :root[data-theme="dark"]{
+    --bg:#0F1218; --surface:#151921; --panel:#1C222D; --line:#2C3340; --line-soft:#222833;
+    --ink:#E5E9F1; --ink-2:#B2BAC7; --muted:#6A7383;
+    --accent:#9DB3DE; --accent-soft:#19212F; --accent-line:#31405A;
+    --t0:#33BFA2; --t1:#6B95EE; --t2:#DFA13B; --t3:#D172A7; --stop:#E0736E;
+    --mono-bg:#1A202A; --code-ink:#B6C4E4; }
+
+  *{box-sizing:border-box;}
+  body{margin:0; background:var(--bg); color:var(--ink); font-family:var(--font-sans);
+       font-size:15px; line-height:1.6; -webkit-font-smoothing:antialiased;}
+  a{color:var(--accent);}
+  p{margin:0 0 14px; max-width:76ch;}
+  h2,h3,h4{text-wrap:balance;}
+  .shell{max-width:1180px; margin:0 auto; padding:0 24px 110px;}
+
+  header.mast{padding:44px 0 22px; border-bottom:2px solid var(--ink); margin-bottom:26px;}
+  .kicker{font-family:var(--font-mono); font-size:11.5px; letter-spacing:.11em;
+          text-transform:uppercase; color:var(--muted); margin:0 0 12px;}
+  h1{font-size:clamp(30px,4.4vw,42px); font-weight:600; letter-spacing:-.02em; margin:0 0 10px; line-height:1.12;}
+  .sub{color:var(--ink-2); font-size:16.5px; margin:0; max-width:72ch;}
+
+  .tiles{display:grid; grid-template-columns:repeat(auto-fit,minmax(158px,1fr)); gap:1px;
+         background:var(--line); border:1px solid var(--line); border-radius:3px; margin:0 0 26px; overflow:hidden;}
+  .tile{background:var(--surface); padding:16px 18px;}
+  .tile .big{font-size:26px; font-weight:600; letter-spacing:-.02em; font-variant-numeric:tabular-nums; line-height:1.1;}
+  .tile .lab{font-size:13px; color:var(--ink); margin-top:3px;}
+  .tile .sub{font-family:var(--font-mono); font-size:10.5px; color:var(--muted); margin-top:4px;}
+
+  section{margin:0 0 42px; scroll-margin-top:20px;}
+  section > h2{font-size:20px; font-weight:600; margin:0 0 6px; letter-spacing:-.012em;
+               display:flex; gap:12px; align-items:baseline;}
+  section > h2 .num{font-family:var(--font-mono); font-size:13px; color:var(--muted); font-weight:500; flex:none;}
+  section > h2 + .rule{height:1px; background:var(--line); margin:0 0 16px;}
+
+  code{font-family:var(--font-mono); background:var(--mono-bg); color:var(--code-ink);
+       padding:1.5px 5px; border-radius:3px; font-size:12px;}
+  strong{font-weight:600;} .mut{color:var(--muted); font-weight:400;}
+
+  .tw{overflow-x:auto; margin:0 0 18px; border:1px solid var(--line); border-radius:3px; background:var(--surface);}
+  table{width:100%; border-collapse:collapse; font-size:13.5px; min-width:520px;}
+  caption{caption-side:top; text-align:left; font-family:var(--font-mono); font-size:11px;
+          color:var(--muted); padding:11px 14px 0;}
+  th{text-align:left; padding:10px 14px; font-family:var(--font-mono); font-size:10.5px;
+     letter-spacing:.07em; text-transform:uppercase; color:var(--muted); font-weight:500;
+     border-bottom:1px solid var(--line); background:var(--panel); vertical-align:bottom;}
+  td{padding:10px 14px; border-bottom:1px solid var(--line-soft); vertical-align:top; color:var(--ink-2);}
+  td:first-child{color:var(--ink);}
+  tbody tr:last-child td{border-bottom:none;}
+  table.facts td:nth-child(3){font-size:12px; line-height:1.9;}
+  table.shared td:nth-child(3) code{font-size:10.5px;}
+  .cnt{font-family:var(--font-mono); font-size:12px; color:var(--ink); font-variant-numeric:tabular-nums;}
+
+  .chip{display:inline-block; font-family:var(--font-mono); font-size:9.5px; font-weight:600;
+        letter-spacing:.05em; padding:2px 6px; border-radius:3px; border:1px solid currentColor;
+        white-space:nowrap; line-height:1.5;}
+  .c-t0{color:var(--t0);} .c-t1{color:var(--t1);} .c-t2{color:var(--t2);}
+  .c-t3{color:var(--t3);} .c-mu{color:var(--muted);}
+  .tr-t0{color:var(--t0);} .tr-t1{color:var(--t1);} .tr-t2{color:var(--t2);}
+  .tr-t3{color:var(--t3);} .tr-mu{color:var(--muted);}
+  td[class^="tr-"]{font-family:var(--font-mono); font-size:12px; font-weight:600;}
+
+  .note{border:1px solid var(--line); border-left:3px solid var(--accent); background:var(--panel);
+        border-radius:3px; padding:14px 18px; margin:0 0 18px; font-size:14px; color:var(--ink-2);}
+  .note strong{color:var(--ink);} .note.hazard{border-left-color:var(--stop);}
+  .note p:last-child{margin-bottom:0;} .note p{max-width:none;}
+
+  .filters{display:flex; flex-wrap:wrap; gap:14px 22px; align-items:center; padding:14px 0 16px;
+           border-top:1px solid var(--line); border-bottom:1px solid var(--line); margin:0 0 22px;
+           position:sticky; top:0; background:var(--bg); z-index:5;}
+  .fgroup{display:flex; flex-wrap:wrap; gap:5px; align-items:center;}
+  .flab{font-family:var(--font-mono); font-size:10px; letter-spacing:.08em; text-transform:uppercase;
+        color:var(--muted); margin-right:3px;}
+  .fb{font-family:var(--font-mono); font-size:11px; padding:4px 9px; border-radius:3px;
+      border:1px solid var(--line); background:var(--surface); color:var(--ink-2); cursor:pointer;}
+  .fb:hover{color:var(--ink); border-color:var(--accent-line);}
+  .fb.on{background:var(--accent); border-color:var(--accent); color:var(--bg); font-weight:600;}
+  #q{font-family:var(--font-sans); font-size:13px; padding:5px 10px; border-radius:3px;
+     border:1px solid var(--line); background:var(--surface); color:var(--ink); min-width:220px;}
+  .fcount{font-family:var(--font-mono); font-size:11px; color:var(--muted); margin-left:auto;}
+
+  .concern{border:1px solid var(--line); border-radius:3px; background:var(--surface);
+           padding:16px 18px 6px; margin:0 0 14px;}
+  .chead{display:flex; justify-content:space-between; align-items:flex-start; gap:16px; flex-wrap:wrap;}
+  .ctitle{min-width:0;}
+  .cl1{font-family:var(--font-mono); font-size:10px; letter-spacing:.08em; text-transform:uppercase; color:var(--accent);}
+  .ctitle h4{font-size:16px; font-weight:600; margin:3px 0 4px; letter-spacing:-.01em;}
+  .ctitle h4.dead{text-decoration:line-through; color:var(--muted);}
+  .ckey{font-size:10.5px;}
+  .vol{font-family:var(--font-mono); font-size:15px; font-weight:600; color:var(--ink);
+       font-variant-numeric:tabular-nums; white-space:nowrap;}
+  .vol.none{font-size:10.5px; font-weight:400; color:var(--muted);}
+  .cmean{font-size:13.5px; color:var(--ink-2); margin:10px 0 8px; max-width:none;}
+  .cchecks{font-size:12px; color:var(--muted); margin:0 0 12px; max-width:none; font-family:var(--font-mono); line-height:1.6;}
+  .cchecks span{display:inline-block; font-size:9.5px; letter-spacing:.08em; text-transform:uppercase;
+                color:var(--accent); margin-right:8px;}
+  .cnote{font-size:12.5px; color:var(--muted); margin:0 0 12px; max-width:none;
+         border-left:2px solid var(--line); padding-left:12px;}
+  table.rules{min-width:600px; font-size:13px;}
+  table.rules td.rs{font-family:var(--font-mono); font-size:11px; color:var(--muted); width:26px;}
+  table.rules td:nth-child(4),table.rules td:nth-child(5){white-space:nowrap;}
+  [hidden]{display:none!important;}
+  :focus-visible{outline:2px solid var(--accent); outline-offset:2px;}
+  footer{margin-top:26px; padding-top:20px; border-top:2px solid var(--ink);
+         font-family:var(--font-mono); font-size:11.5px; color:var(--muted); line-height:1.8;}
+  footer a{color:var(--accent);}
+  @media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important;}}
+</style>
+
+<div class="shell">
+
+<header class="mast">
+  <p class="kicker">Yesmadam · Partner Experience · Implementation Reference</p>
+  <h1>BOTIn Decision Engine</h1>
+  <p class="sub">Every L1/L2 concern, its backend checks, and every condition-to-outcome rule — normalised into the shape the engine needs. Built directly from the concern mapping, nothing inferred except where marked.</p>
+</header>
+
+<div class="tiles">
+<div class="tile"><div class="big">38</div><div class="lab">concerns</div><div class="sub">across 6 L1 paths</div></div>
+<div class="tile"><div class="big">113</div><div class="lab">decision rules</div><div class="sub">condition to outcome</div></div>
+<div class="tile"><div class="big">8</div><div class="lab">outcome types</div><div class="sub">only 4 map to a tier</div></div>
+<div class="tile"><div class="big">67</div><div class="lab">backend signals</div><div class="sub">the real critical path</div></div>
+<div class="tile"><div class="big">10</div><div class="lab">shared services</div><div class="sub">build once, used many</div></div>
+<div class="tile"><div class="big">23,721</div><div class="lab">live June volume</div><div class="sub">13,823 deprecated out</div></div>
+</div>
+
+<div class="note hazard">
+  <p><strong>Two things in this mapping invalidate earlier plans.</strong></p>
+  <p><strong>Fine Related is deprecated.</strong> 12,781 of June volume — the single largest bucket — has no standalone flow: automated fines now link to the strike system only, and disputes route to Violations. <strong>The Leave Fine POC is built on a concern that no longer exists.</strong> With <code>Saving &lt;Rs5000</code> also retired, 13,823 tickets (37% of stated volume) leave the build entirely.</p>
+  <p><strong>Violations is now the centre of gravity.</strong> 17 of 38 concerns and 54 of 113 rules — nearly half the engine — and it carries <strong>no volume figure at all</strong>. It is also the only domain with a defined verdict vocabulary (accept / uphold / ticket) and the only one where the bot changes state without touching money.</p>
+</div>
+
+<section id="vocab">
+  <h2><span class="num">1</span>Outcome vocabulary, mapped to tiers</h2><div class="rule"></div>
+  <p>The mapping uses eight outcome types. Our tier model has four. They do not line up one-to-one, and two of the mismatches matter.</p>
+  <div class="tw"><table class="">
+<caption>Rule counts by outcome type. Tier assignment is our mapping, not stated in the source.</caption>
+<thead><tr><th>Outcome type</th><th>Tier</th><th>Rules</th><th>What it means</th></tr></thead><tbody>
+<tr><td><strong>SELF-SERVE</strong></td><td><span class="tr-t0">T0</span></td><td><span class="cnt">4</span></td><td>Deflect to the app. No ticket, no agent.</td></tr>
+<tr><td><strong>BOT <span class='mut'>(inform / deny)</span></strong></td><td><span class="tr-t1">T1</span></td><td><span class="cnt">22</span></td><td>Bot answers or refuses from backend facts. No state change.</td></tr>
+<tr><td><strong>UPHOLD</strong></td><td><span class="tr-t1">T1</span></td><td><span class="cnt">17</span></td><td>A challenge is rejected with an explanation. No state change.</td></tr>
+<tr><td><strong>BOT <span class='mut'>(act)</span></strong></td><td><span class="tr-t2">T2</span></td><td><span class="cnt">21</span></td><td>Backend state changes: 6 credit money, 14 remove a violation, 1 blocks a customer.</td></tr>
+<tr><td><strong>TICKET</strong></td><td><span class="tr-t3">T3</span></td><td><span class="cnt">29</span></td><td>Human decides. The only path to an agent.</td></tr>
+<tr><td><strong>REROUTE</strong></td><td><span class="tr-mu"><span class='mut'>none</span></span></td><td><span class="cnt">14</span></td><td>Not terminal. Ends this flow by starting another.</td></tr>
+<tr><td><strong>V2 / DEPRECATED / MIXED</strong></td><td><span class="tr-mu"><span class='mut'>out</span></span></td><td><span class="cnt">6</span></td><td>Not in this build.</td></tr>
+</tbody></table></div>
+  <div class="note">
+    <p><strong>REROUTE has no equivalent in the current design.</strong> 14 rules — one in eight — end by handing the session to a different concern's flow rather than resolving it. Type 5 (Job Reject) is <em>almost entirely</em> reroute: six of its eight rules just dispatch to R1, R7, R9, R10, R8 or R3. In BPMN this is a Call Activity or a re-entry into concern selection; today's design has neither, and a process that ends by starting another needs a defined ticket and session identity story.</p>
+    <p><strong>UPHOLD is a distinct outcome, not a T1 answer.</strong> 17 rules reject a challenge. It behaves like T1 — bot replies, no state change — but it is a <em>denial of an appeal</em>, which is exactly the case most likely to produce a dissatisfied partner and fire agent-connect trigger A. Worth its own template class and its own CSAT watch.</p>
+  </div>
+</section>
+
+<section id="shared">
+  <h2><span class="num">2</span>Shared services — build once</h2><div class="rule"></div>
+  <p>Ten capabilities are used by more than one concern. Three are called out in the source as explicit alignment requirements, meaning they are already known to have drifted.</p>
+  <div class="tw"><table class="shared">
+<thead><tr><th>Service</th><th>What it does</th><th>Used by</th><th>Note</th></tr></thead><tbody>
+<tr><td><strong>Haversine + hub radius</strong></td><td>Straight-line distance from a job&#x27;s lat/long to the mapped hub centre, compared against hub_radius. Measured from the radius EDGE, not the centre.</td><td><code>TRANSPORT_NOT_RECEIVED (Path 3)</code><br><code>VIOL_R1_FAR_JOB</code></td><td>Source says explicitly: &#x27;Shares the haversine/hub-radius service with Transport Path 3.&#x27;</td></tr>
+<tr><td><strong>Express / Standard delivery TAT</strong></td><td>Express: same day if ordered before 3PM, next day after. Standard: ~3 days. Deadline 11 PM.</td><td><code>PROD_DELIVERY_DELAY</code><br><code>VIOL_R9_NO_PRODUCT</code></td><td>Source flags this as an alignment fix: R9 must use this function, NOT a flat 3 days.</td></tr>
+<tr><td><strong>Cashfree balance health check + batched alert</strong></td><td>Checks payout-rail balance; raises ONE stakeholder alert per low-balance window, deduped across both wallets.</td><td><code>ARW_TO_BANK</code><br><code>MAIN_WALLET_TO_BANK</code></td><td>Dedupe is the requirement, not a nicety - two concerns hitting the same low balance must not alert twice.</td></tr>
+<tr><td><strong>Pooled emergency counter</strong></td><td>ONE shared monthly counter across Type-1 emergency, R8 health and R10 death. Interim cap 2/month. Only GRANTED removals decrement it.</td><td><code>VIOL_T1_SAMEDAY_LEAVE</code><br><code>VIOL_R8_R10_EMERGENCY</code></td><td>Explicitly prevents stacking 2+2+2 across three flows. Final number is OPEN.</td></tr>
+<tr><td><strong>25-job cycle allowance counter</strong></td><td>Tracks grants within the SP&#x27;s current 25-job cycle. Two independent allowances ride on the same cycle mechanism.</td><td><code>VIOL_R3_DELAYED_PREV (SR2)</code><br><code>VIOL_R9_NO_PRODUCT</code></td><td>Separate allowances, one cycle definition. R9 excludes logistics-failure removals from its count.</td></tr>
+<tr><td><strong>Duplicate-credit guard</strong></td><td>Idempotency check before any credit: has this Order ID / txn ID already been paid?</td><td><code>TRANSPORT_NOT_RECEIVED</code><br><code>ONLINE_BOOKING_MONEY</code><br><code>RECHARGE_DEBIT_NO_CREDIT</code><br><code>CASHBACK_NOT_RECEIVED</code></td><td>Appears in four money flows under three different keys (Order ID, PayU txn ID). One service, keyed per action type.</td></tr>
+<tr><td><strong>NLU free-text router</strong></td><td>Matches free text to a defined concern and hands off. Routing only - the destination flow re-validates against backend facts.</td><td><code>VIOL_R4_OTHERS</code><br><code>VIOL_R6_RUDE</code><br><code>VIOL_T5_JOB_REJECT</code><br><code>VIOL_T6_REJECT_OVER_CALL</code><br><code>PROD_APP_FAILURE</code><br><code>OTHER_FREETEXT_TRIAGE</code><br><code>ONLINE_BOOKING_MONEY</code></td><td>The single most reused AI capability. Source note: &#x27;Safe to trust text for ROUTING only.&#x27;</td></tr>
+<tr><td><strong>Product fuzzy-match + disambiguation</strong></td><td>Ask product name, show 2-3 best catalogue matches, SP picks the exact item.</td><td><code>PROD_OUT_OF_STOCK</code><br><code>PROD_DELIVERY_DELAY</code><br><code>PROD_APP_FAILURE</code><br><code>VIOL_R9_NO_PRODUCT</code></td><td>Source: &#x27;Shared step ... Reused by every Product L2.&#x27;</td></tr>
+<tr><td><strong>Partner-customer call log + duration</strong></td><td>Was a call attempted, and how long did it last. Drives three separate verdicts.</td><td><code>VIOL_R2_NOT_RESPONDING</code><br><code>VIOL_T5_JOB_REJECT</code><br><code>VIOL_T6_REJECT_OVER_CALL</code></td><td>30-second threshold is the decision boundary in Types 5 and 6. v2 replaces duration with recording analysis.</td></tr>
+<tr><td><strong>Violation removal + automatic strike recalculation</strong></td><td>Removes a violation record. Strike removal is a BACKEND consequence once no violations remain for that day.</td><td><code>VIOL_ARCHITECTURE</code><br><code>and every Violations concern with a Remove outcome</code></td><td>CRITICAL: the bot never removes a strike. It removes violations; the backend recomputes. 14 of 21 T2 rules call this.</td></tr>
+</tbody></table></div>
+  <div class="note">
+    <p><strong>The strike rule is the one to get right first.</strong> The bot never removes a strike — it removes <em>violations</em>, and the backend recomputes the strike once no violations remain for that day. Fourteen of the twenty-one state-changing rules call this one service. Getting its contract wrong is not a bug in one flow, it is a bug in two thirds of the T2 surface.</p>
+  </div>
+</section>
+
+<section id="facts">
+  <h2><span class="num">3</span>Backend signal inventory</h2><div class="rule"></div>
+  <p>Sixty-seven distinct signals across nine domains. <strong>This is the real critical path.</strong> Every rule above is a comparison over these values, so a signal that cannot be read is a rule that cannot be built — and the audit of what actually exists is cheaper than any code.</p>
+  <div class="tw"><table class="facts">
+<thead><tr><th>Domain</th><th>Signals</th><th>Detail</th></tr></thead><tbody>
+<tr><td><strong>Booking / job</strong></td><td><span class="cnt">17</span></td><td><code>Order ID</code> · <code>cancellation status (NR / by Agent / CR)</code> · <code>arrivedAt300metre event</code> · <code>scheduled start and end</code> · <code>assignment timestamp</code> · <code>reassignment timestamp</code> · <code>OTP / job-start timestamp</code> · <code>extra-services flag</code> · <code>booking total order value</code> · <code>booking type (exclusive vs not)</code> · <code>booking creation source (app vs admin)</code> · <code>booking completion status</code> · <code>booking required gender</code> · <code>job address lat/long</code> · <code>preceding booking within 2-hr window</code> · <code>SP&#x27;s last 5 orders + customer names</code> · <code>reject reason chosen in SP app</code></td></tr>
+<tr><td><strong>Wallet / ledger</strong></td><td><span class="cnt">14</span></td><td><code>existing transport credit for Order ID</code> · <code>customer transport charge</code> · <code>last-min cancellation cashback</code> · <code>&#x27;Booking Online Transaction&#x27; ledger entry</code> · <code>prepaid-received flag</code> · <code>payment type</code> · <code>commission computation</code> · <code>main wallet balance</code> · <code>advance-pending flag</code> · <code>withdrawal count this month</code> · <code>total withdrawn this month</code> · <code>referral cashback entries</code> · <code>cashback credit vs Order ID</code> · <code>wallet credit status vs PayU txn ID</code></td></tr>
+<tr><td><strong>Hub / geo</strong></td><td><span class="cnt">5</span></td><td><code>cs_address</code> · <code>mapped hub centre lat/long</code> · <code>hub_radius</code> · <code>hub type (primary / secondary / exclusive)</code> · <code>current hub mapping</code></td></tr>
+<tr><td><strong>Violation / strike</strong></td><td><span class="cnt">8</span></td><td><code>violation record</code> · <code>violation type</code> · <code>violation date</code> · <code>GRANTED emergency removals this month</code> · <code>period leaves this calendar month</code> · <code>SR2 grants in current 25-job cycle</code> · <code>product-removal grants in current cycle</code> · <code>position in current 25-job cycle</code></td></tr>
+<tr><td><strong>Leave</strong></td><td><span class="cnt">3</span></td><td><code>leave record + app-recorded reason</code> · <code>leave status</code> · <code>confirmed-assignment status</code></td></tr>
+<tr><td><strong>Product / inventory</strong></td><td><span class="cnt">8</span></td><td><code>product catalogue (fuzzy match)</code> · <code>product category vs SP category</code> · <code>backend inventory for the item</code> · <code>order placed for the missing product</code> · <code>order type (Express / Standard)</code> · <code>delivery TAT</code> · <code>order placement time</code> · <code>in-transit orders list</code></td></tr>
+<tr><td><strong>Call / telephony</strong></td><td><span class="cnt">4</span></td><td><code>partner-customer call log (any attempt)</code> · <code>conversation duration</code> · <code>OBD verification result</code> · <code>call recording (v2 only)</code></td></tr>
+<tr><td><strong>External systems</strong></td><td><span class="cnt">2</span></td><td><code>PayU transaction status</code> · <code>Cashfree payout-rail balance</code></td></tr>
+<tr><td><strong>SP profile</strong></td><td><span class="cnt">6</span></td><td><code>SP lookup by referee phone number</code> · <code>referee onboarding status</code> · <code>referrer on record</code> · <code>SP gender</code> · <code>SP category</code> · <code>current shift time</code></td></tr>
+</tbody></table></div>
+</section>
+
+<section id="caps">
+  <h2><span class="num">4</span>Caps, thresholds and counters</h2><div class="rule"></div>
+  <p>Eighteen numeric constants. All of these belong in decision tables or configuration, not in Java — several are already marked interim.</p>
+  <div class="tw"><table class="caps">
+<thead><tr><th>Value</th><th>What it bounds</th><th>Concern</th><th>Note</th></tr></thead><tbody>
+<tr><td><strong>Rs300</strong></td><td>Transport amount, per order</td><td><code>TRANSPORT_NOT_RECEIVED</code></td><td>Exceeding it is a TICKET, not a clamp</td></tr>
+<tr><td><strong>Rs50 / km</strong></td><td>Transport rate beyond hub radius</td><td><code>TRANSPORT_NOT_RECEIVED</code></td><td>OPEN: partial-km rounding rule undecided</td></tr>
+<tr><td><strong>Rs500</strong></td><td>Main Wallet minimum floor after withdrawal</td><td><code>MAIN_WALLET_TO_BANK</code></td><td>Hard rule, deny-and-explain</td></tr>
+<tr><td><strong>5 / month</strong></td><td>ARW withdrawal count</td><td><code>ARW_TO_BANK</code></td><td>Calendar month</td></tr>
+<tr><td><strong>Rs40,000 / month</strong></td><td>ARW withdrawal value</td><td><code>ARW_TO_BANK</code></td><td>Calendar month</td></tr>
+<tr><td><strong>Rs30</strong></td><td>Cashback per eligible booking</td><td><code>CASHBACK_NOT_RECEIVED</code></td><td>Only for admin-created completed bookings</td></tr>
+<tr><td><strong>1 / SP / day</strong></td><td>Maximum strikes</td><td><code>VIOL_ARCHITECTURE</code></td><td>5 strikes may trigger deactivation</td></tr>
+<tr><td><strong>2 / month (interim)</strong></td><td>POOLED emergency removals</td><td><code>VIOL_T1_SAMEDAY_LEAVE + VIOL_R8_R10_EMERGENCY</code></td><td>Shared counter. Final number OPEN</td></tr>
+<tr><td><strong>1 / 25-job cycle</strong></td><td>Extra-services delay allowance (SR2)</td><td><code>VIOL_R3_DELAYED_PREV</code></td><td>Warning issued on the grant</td></tr>
+<tr><td><strong>1 / 25-job cycle</strong></td><td>Product-unavailable allowance</td><td><code>VIOL_R9_NO_PRODUCT</code></td><td>Logistics-failure removals excluded from the count</td></tr>
+<tr><td><strong>1 / calendar month</strong></td><td>Period leave</td><td><code>VIOL_R5_PERIODS</code></td><td>Second one is upheld</td></tr>
+<tr><td><strong>Rs800</strong></td><td>Small-booking threshold</td><td><code>VIOL_R7_SMALL_BOOKING</code></td><td>Below it is a TICKET; at or above, upheld</td></tr>
+<tr><td><strong>30 seconds</strong></td><td>Partner-customer call duration</td><td><code>VIOL_T5_JOB_REJECT + VIOL_T6_REJECT_OVER_CALL</code></td><td>Decision boundary in both types</td></tr>
+<tr><td><strong>30 / 60 / 120 min</strong></td><td>Customer-confirmation cutoff before slot</td><td><code>VIOL_R2_NOT_RESPONDING</code></td><td>By assignment lead time: &lt;1hr / same-day / day-before+</td></tr>
+<tr><td><strong>45 min</strong></td><td>Minimum gap between jobs</td><td><code>VIOL_R3_DELAYED_PREV</code></td><td>Context for the delay premise</td></tr>
+<tr><td><strong>2 hours</strong></td><td>Preceding-booking lookback window</td><td><code>VIOL_R3_DELAYED_PREV</code></td><td>Uses SCHEDULED end, not actual</td></tr>
+<tr><td><strong>300 metres</strong></td><td>Arrival proximity event</td><td><code>TRANSPORT_NOT_RECEIVED</code></td><td>arrivedAt300metre is the travel proof</td></tr>
+<tr><td><strong>11 PM</strong></td><td>Delivery TAT deadline</td><td><code>PROD_DELIVERY_DELAY + VIOL_R9_NO_PRODUCT</code></td><td>Shared function</td></tr>
+</tbody></table></div>
+  <div class="note">
+    <p><strong>Three counters are stateful across time, not per-request.</strong> The pooled emergency counter, both 25-job-cycle allowances, and the monthly withdrawal counts all need a durable per-SP tally with a defined reset boundary. Nothing in the current data model holds them. They are not facts to be read from an existing system — they are state this engine has to own.</p>
+  </div>
+</section>
+
+<section id="poc">
+  <h2><span class="num">5</span>Revised POC recommendation</h2><div class="rule"></div>
+  <p>The Leave Fine POC no longer has a subject. Four concerns, sixteen rules, cover every outcome type in the build and exercise every mechanism the architecture rests on.</p>
+  <div class="tw"><table class="poc">
+<thead><tr><th>Concern</th><th>Rules</th><th>Why this one</th><th>Exercises</th></tr></thead><tbody>
+<tr><td><strong>Transport amount nahi mila</strong><br><code>TRANSPORT_NOT_RECEIVED</code></td><td>9</td><td>Highest-volume live concern (5,615). Three decision paths, a hard cap that escalates rather than clamps, and a duplicate-credit guard. <strong>Needs no classifier at all</strong> — every condition is a backend fact.</td><td>Money movement · idempotency · <code>REQUIRES_NEW</code> · cap-to-ticket · shared geo service · multi-path DMN</td></tr>
+<tr><td><strong>Type 2 R5 Periods Leave</strong><br><code>VIOL_R5_PERIODS</code></td><td>2</td><td>The simplest rule in Violations, and Violations is half the engine. One monthly counter, two outcomes.</td><td>Violation removal · UPHOLD outcome · monthly counter state · backend strike recalculation</td></tr>
+<tr><td><strong>Type 2 R4 Others</strong><br><code>VIOL_R4_OTHERS</code></td><td>2</td><td>The smallest possible REROUTE test. Free text in, a different flow out.</td><td>NLU router · REROUTE mechanics · ticket identity across a handoff</td></tr>
+<tr><td><strong>Forget MPIN</strong><br><code>FORGET_MPIN</code></td><td>1</td><td>One rule, no backend checks, 100% deflection.</td><td>T0 · no ticket created · deeplink deflection</td></tr>
+</tbody></table></div>
+  <div class="note">
+    <p><strong>Why Transport rather than another money concern:</strong> it is the only one whose decision needs no language understanding, which lets the money path be proven independently of classifier accuracy. That separates the two hardest unknowns instead of testing them together — if the POC fails, you know which half failed.</p>
+    <p>Together these four cover BOT-inform, BOT-act, UPHOLD, TICKET, REROUTE and SELF-SERVE — every outcome type except the six rules already marked out of build.</p>
+  </div>
+</section>
+
+<section id="open">
+  <h2><span class="num">6</span>Open items carried from the mapping</h2><div class="rule"></div>
+  <div class="tw"><table class="open">
+<thead><tr><th>Area</th><th>Item</th><th>Concern</th></tr></thead><tbody>
+<tr><td><code>Transport</code></td><td>Partial-km rounding rule: prorate, round up, or round down?</td><td><code>TRANSPORT_NOT_RECEIVED</code></td></tr>
+<tr><td><code>Violations</code></td><td>Final pooled emergency cap - 2/month is interim</td><td><code>VIOL_T1_SAMEDAY_LEAVE + VIOL_R8_R10_EMERGENCY</code></td></tr>
+<tr><td><code>Amount</code></td><td>Stakeholder email list for the batched Cashfree low-balance alert</td><td><code>ARW_TO_BANK</code></td></tr>
+<tr><td><code>Violations</code></td><td>R6 rude behaviour: does the bot ask the SP to confirm or contest the tag, or infer it from the explanation?</td><td><code>VIOL_R6_RUDE</code></td></tr>
+<tr><td><code>Other</code></td><td>Reduce-hours: deny-and-explain, or ticket? The self-serve link only supports increase</td><td><code>OTHER_HUB_TIME</code></td></tr>
+<tr><td><code>Amount</code></td><td>Continuous referral bonus cadence (month-2 missing) deferred to v2; v1 shows latest txn only</td><td><code>REFERRAL_NOT_RECEIVED</code></td></tr>
+<tr><td><code>Amount</code></td><td>Commission deny-and-explain deferred to v2</td><td><code>ONLINE_BOOKING_MONEY</code></td></tr>
+<tr><td><code>Violations</code></td><td>Type 3 and Type 6 v2 both depend on the call-recording analysis pipeline</td><td><code>VIOL_T3_OBD_DENIED + VIOL_T6_REJECT_OVER_CALL</code></td></tr>
+<tr><td><code>Coverage</code></td><td>Violations carries no volume figure at all - 17 of 38 concerns and 54 of 113 rules are unsized</td><td><code>Violations (all)</code></td></tr>
+</tbody></table></div>
+</section>
+
+<section id="browser">
+  <h2><span class="num">7</span>Rule browser</h2><div class="rule"></div>
+  <p>All 38 concerns and 113 rules. Filter by path or outcome type, or search conditions and outcomes.</p>
+  <div class="filters">
+<div class="fgroup"><span class="flab">L1</span><button class="fb on" data-f="l1" data-v="*">All</button>
+<button class="fb" data-f="l1" data-v="Amount Related">Amount Related</button>
+<button class="fb" data-f="l1" data-v="Violations">Violations</button>
+<button class="fb" data-f="l1" data-v="Product Issues">Product Issues</button>
+<button class="fb" data-f="l1" data-v="Other Issues">Other Issues</button>
+<button class="fb" data-f="l1" data-v="Leaves Related">Leaves Related</button>
+<button class="fb" data-f="l1" data-v="Fine Related">Fine Related</button>
+</div><div class="fgroup"><span class="flab">Outcome</span><button class="fb on" data-f="ot" data-v="*">All</button>
+<button class="fb" data-f="ot" data-v="BOT">BOT</button>
+<button class="fb" data-f="ot" data-v="UPHOLD">UPHOLD</button>
+<button class="fb" data-f="ot" data-v="TICKET">TICKET</button>
+<button class="fb" data-f="ot" data-v="REROUTE">REROUTE</button>
+<button class="fb" data-f="ot" data-v="SELF-SERVE">SELF-SERVE</button>
+<button class="fb" data-f="ot" data-v="V2">V2</button>
+<button class="fb" data-f="ot" data-v="DEPRECATED">DEPRECATED</button>
+<button class="fb" data-f="ot" data-v="MIXED">MIXED</button>
+</div><div class="fgroup"><span class="flab">Search</span><input id="q" type="search" placeholder="condition, outcome, concern..." aria-label="Search rules"></div>
+<div class="fcount" id="fcount"></div></div>
+<div class="concern" data-l1="Amount Related" data-ot="BOT|TICKET" data-k="transport amount nahi mila transport_not_received sp was entitled to transport amount on a job per policy but didn&#x27;t receive it. raised against an order id.">
+<div class="chead">
+<div class="ctitle"><span class="cl1">Amount Related</span><h4>Transport amount nahi mila</h4><code class="ckey">TRANSPORT_NOT_RECEIVED</code></div><span class="vol">5,615</span></div>
+<p class="cmean">SP was entitled to transport amount on a job per policy but didn&#x27;t receive it. Raised against an Order ID.</p>
+<p class="cchecks"><span>Backend checks</span>Order ID; existing transport credit (dup-guard); customer transport charge; arrivedAt300metre event; cancellation status; last-min cancellation cashback; cs_address &amp; mapped hub centre lat/long; hub_radius</p>
+<div class="tw"><table class="rules"><thead><tr><th>#</th><th>Condition</th><th>Bot outcome</th><th>Type</th><th>Tier</th></tr></thead><tbody>
+<tr data-ot="BOT"><td class="rs">1</td><td>Already credited for this Order ID</td><td>Inform already paid, close</td><td><span class="chip c-t1">BOT</span></td><td class="tr-t1">T1</td></tr>
+<tr data-ot="BOT"><td class="rs">2</td><td>Path 1: customer-paid transport charged but not in SP wallet</td><td>Auto-credit (sub-action: Transport)</td><td><span class="chip c-t2">BOT</span></td><td class="tr-t2">T2</td></tr>
+<tr data-ot="BOT"><td class="rs">3</td><td>Path 2: arrivedAt300metre = FALSE</td><td>Deny - SP did not travel</td><td><span class="chip c-t1">BOT</span></td><td class="tr-t1">T1</td></tr>
+<tr data-ot="BOT"><td class="rs">4</td><td>Path 2: arrived TRUE + Cancelled NR / Cancelled by Agent</td><td>Eligible - auto-credit</td><td><span class="chip c-t2">BOT</span></td><td class="tr-t2">T2</td></tr>
+<tr data-ot="BOT"><td class="rs">5</td><td>Path 2: Cancelled CR + last-min cashback credited</td><td>Deny - cashback compensates travel</td><td><span class="chip c-t1">BOT</span></td><td class="tr-t1">T1</td></tr>
+<tr data-ot="TICKET"><td class="rs">6</td><td>Path 2: Cancelled CR + cashback NOT credited</td><td>Create ticket - anomaly</td><td><span class="chip c-t3">TICKET</span></td><td class="tr-t3">T3</td></tr>
+<tr data-ot="BOT"><td class="rs">7</td><td>Path 3: haversine(job, hub) &lt;= hub_radius</td><td>Deny - within hub</td><td><span class="chip c-t1">BOT</span></td><td class="tr-t1">T1</td></tr>
+<tr data-ot="BOT"><td class="rs">8</td><td>Path 3: distance &gt; radius</td><td>Credit (distance - radius) x Rs50</td><td><span class="chip c-t2">BOT</span></td><td class="tr-t2">T2</td></tr>
+<tr data-ot="TICKET"><td class="rs">9</td><td>ANY path: computed amount &gt; Rs300</td><td>Create ticket - exceeds cap</td><td><span class="chip c-t3">TICKET</span></td><td class="tr-t3">T3</td></tr>
+</tbody></table></div>
+<p class="cnote">OPEN: partial-km rounding (prorate / round up / down). Haversine straight-line, measured from radius EDGE.</p>
+</div>
+<div class="concern" data-l1="Amount Related" data-ot="BOT|REROUTE|TICKET|V2" data-k="online booking ke pese nahi mile online_booking_money sp believes booking money owed wasn&#x27;t credited. prepaid credited then commission deducted; cod commission only; mixed prepaid credited, commission on prepaid+cod.">
+<div class="chead">
+<div class="ctitle"><span class="cl1">Amount Related</span><h4>Online Booking ke pese nahi mile</h4><code class="ckey">ONLINE_BOOKING_MONEY</code></div><span class="vol">1,868</span></div>
+<p class="cmean">SP believes booking money owed wasn&#x27;t credited. Prepaid credited then commission deducted; COD commission only; Mixed prepaid credited, commission on prepaid+COD.</p>
+<p class="cchecks"><span>Backend checks</span>Prepaid-received flag; &#x27;Booking Online Transaction&#x27; ledger entry for Order ID; payment type; commission computation</p>
+<div class="tw"><table class="rules"><thead><tr><th>#</th><th>Condition</th><th>Bot outcome</th><th>Type</th><th>Tier</th></tr></thead><tbody>
+<tr data-ot="REROUTE"><td class="rs">1</td><td>Mis-tagged (approx 85% of bucket)</td><td>Global reroute to correct L1/L2</td><td><span class="chip c-mu">REROUTE</span></td><td class="tr-mu">-</td></tr>
+<tr data-ot="BOT"><td class="rs">2</td><td>Prepaid flag TRUE but no/short wallet credit</td><td>Auto-credit shortfall (dup-guard)</td><td><span class="chip c-t2">BOT</span></td><td class="tr-t2">T2</td></tr>
+<tr data-ot="BOT"><td class="rs">3</td><td>Already credited</td><td>Show credited entry, close</td><td><span class="chip c-t1">BOT</span></td><td class="tr-t1">T1</td></tr>
+<tr data-ot="V2"><td class="rs">4</td><td>Commission dispute (expects prepaid-only)</td><td>Explain commission is on prepaid+COD per policy</td><td><span class="chip c-mu">V2</span></td><td class="tr-mu">OUT</td></tr>
+<tr data-ot="TICKET"><td class="rs">5</td><td>Genuine mixed/COD credit dispute</td><td>Create ticket w/ expected vs actual entry</td><td><span class="chip c-t3">TICKET</span></td><td class="tr-t3">T3</td></tr>
+</tbody></table></div>
+<p class="cnote">Only ~15% of this bucket is genuine. Commission deny-and-explain deferred to v2.</p>
+</div>
+<div class="concern" data-l1="Amount Related" data-ot="DEPRECATED" data-k="saving account &lt;rs5000 to bank transfer saving_under_5k legacy: sp wanted transfer but had under rs5,000 in saving wallet.">
+<div class="chead">
+<div class="ctitle"><span class="cl1">Amount Related</span><h4 class=dead>Saving account &lt;Rs5000 to bank transfer</h4><code class="ckey">SAVING_UNDER_5K</code></div><span class="vol">1,042</span></div>
+<p class="cmean">Legacy: SP wanted transfer but had under Rs5,000 in Saving Wallet.</p>
+<div class="tw"><table class="rules"><thead><tr><th>#</th><th>Condition</th><th>Bot outcome</th><th>Type</th><th>Tier</th></tr></thead><tbody>
+<tr data-ot="DEPRECATED"><td class="rs">1</td><td>All cases</td><td>Retire L2 from picker; global reroute</td><td><span class="chip c-mu">DEPRECATED</span></td><td class="tr-mu">OUT</td></tr>
+</tbody></table></div>
+<p class="cnote">DEPRECATED: the Rs5,000 minimum condition has been REMOVED. 100% of these are mis-tagged.</p>
+</div>
+<div class="concern" data-l1="Amount Related" data-ot="BOT|TICKET" data-k="recharge kiya, pese cut gaye, aaye nahi recharge_debit_no_credit sp recharged main wallet, bank debited, wallet not credited.">
+<div class="chead">
+<div class="ctitle"><span class="cl1">Amount Related</span><h4>Recharge kiya, pese cut gaye, aaye nahi</h4><code class="ckey">RECHARGE_DEBIT_NO_CREDIT</code></div><span class="vol">883</span></div>
+<p class="cmean">SP recharged Main Wallet, bank debited, wallet not credited.</p>
+<p class="cchecks"><span>Backend checks</span>PayU status for the txn; wallet credit status vs PayU transaction ID (dup-guard)</p>
+<div class="tw"><table class="rules"><thead><tr><th>#</th><th>Condition</th><th>Bot outcome</th><th>Type</th><th>Tier</th></tr></thead><tbody>
+<tr data-ot="TICKET"><td class="rs">1</td><td>PayU = Pending</td><td>Create ticket</td><td><span class="chip c-t3">TICKET</span></td><td class="tr-t3">T3</td></tr>
+<tr data-ot="BOT"><td class="rs">2</td><td>PayU = Success and not already credited</td><td>Auto-credit wallet, ref PayU txn ID</td><td><span class="chip c-t2">BOT</span></td><td class="tr-t2">T2</td></tr>
+<tr data-ot="BOT"><td class="rs">3</td><td>PayU = Failed</td><td>Ask to recharge again + &#x27;refund in 2-3 din&#x27;</td><td><span class="chip c-t1">BOT</span></td><td class="tr-t1">T1</td></tr>
+<tr data-ot="TICKET"><td class="rs">4</td><td>PayU = Failed and SP not satisfied</td><td>Create ticket on SP request</td><td><span class="chip c-t3">TICKET</span></td><td class="tr-t3">T3</td></tr>
+</tbody></table></div>
+<p class="cnote">Dup-guard on PayU txn ID prevents double-credit on re-raise.</p>
+</div>
+<div class="concern" data-l1="Amount Related" data-ot="SELF-SERVE" data-k="forget mpin forget_mpin sp forgot the mpin used to authorise main wallet withdrawals.">
+<div class="chead">
+<div class="ctitle"><span class="cl1">Amount Related</span><h4>Forget MPIN</h4><code class="ckey">FORGET_MPIN</code></div><span class="vol">738</span></div>
+<p class="cmean">SP forgot the MPIN used to authorise Main Wallet withdrawals.</p>
+<div class="tw"><table class="rules"><thead><tr><th>#</th><th>Condition</th><th>Bot outcome</th><th>Type</th><th>Tier</th></tr></thead><tbody>
+<tr data-ot="SELF-SERVE"><td class="rs">1</td><td>All cases</td><td>Show reset deeplink in chat - SP self-resets</td><td><span class="chip c-t0">SELF-SERVE</span></td><td class="tr-t0">T0</td></tr>
+</tbody></table></div>
+<p class="cnote">100% deflection. Changed from old SOP where an agent clicked Reset MPIN.</p>
+</div>
+<div class="concern" data-l1="Amount Related" data-ot="BOT|TICKET" data-k="arw (saving) to bank transfer arw_to_bank sp wants to withdraw advance recovery wallet balance to bank and can&#x27;t.">
+<div class="chead">
+<div class="ctitle"><span class="cl1">Amount Related</span><h4>ARW (Saving) to bank transfer</h4><code class="ckey">ARW_TO_BANK</code></div><span class="vol">650</span></div>
+<p class="cmean">SP wants to withdraw Advance Recovery Wallet balance to bank and can&#x27;t.</p>
+<p class="cchecks"><span>Backend checks</span>Main wallet balance; advance-pending flag; count of withdrawals this month; total withdrawn this month; Cashfree balance</p>
+<div class="tw"><table class="rules"><thead><tr><th>#</th><th>Condition</th><th>Bot outcome</th><th>Type</th><th>Tier</th></tr></thead><tbody>
+<tr data-ot="BOT"><td class="rs">1</td><td>Main wallet negative</td><td>Explain: clear negative balance first</td><td><span class="chip c-t1">BOT</span></td><td class="tr-t1">T1</td></tr>
+<tr data-ot="BOT"><td class="rs">2</td><td>Advance pending on SP</td><td>Explain: blocked till advance cleared</td><td><span class="chip c-t1">BOT</span></td><td class="tr-t1">T1</td></tr>
+<tr data-ot="BOT"><td class="rs">3</td><td>5 withdrawals already this month</td><td>Explain monthly count limit</td><td><span class="chip c-t1">BOT</span></td><td class="tr-t1">T1</td></tr>
+<tr data-ot="BOT"><td class="rs">4</td><td>More than Rs40,000 withdrawn this month</td><td>Explain monthly amount limit</td><td><span class="chip c-t1">BOT</span></td><td class="tr-t1">T1</td></tr>
+<tr data-ot="BOT"><td class="rs">5</td><td>All checks pass + Cashfree balance low</td><td>Tell SP wait 2-3 hrs + BATCHED stakeholder alert</td><td><span class="chip c-t1">BOT</span></td><td class="tr-t1">T1</td></tr>
+<tr data-ot="TICKET"><td class="rs">6</td><td>All checks pass + Cashfree fine</td><td>Create ticket - cause unknown</td><td><span class="chip c-t3">TICKET</span></td><td class="tr-t3">T3</td></tr>
+</tbody></table></div>
+<p class="cnote">Cashfree alert must be batched: ONE per low-balance window, deduped across ARW + Main Wallet. OPEN: stakeholder email list.</p>
+</div>
+<div class="concern" data-l1="Amount Related" data-ot="BOT|TICKET" data-k="main wallet to bank transfer main_wallet_to_bank sp wants to withdraw from main wallet to bank and can&#x27;t.">
+<div class="chead">
+<div class="ctitle"><span class="cl1">Amount Related</span><h4>Main Wallet to bank transfer</h4><code class="ckey">MAIN_WALLET_TO_BANK</code></div><span class="vol">316</span></div>
+<p class="cmean">SP wants to withdraw from Main Wallet to bank and can&#x27;t.</p>
+<p class="cchecks"><span>Backend checks</span>Main wallet balance vs withdrawal amount; Cashfree balance</p>
+<div class="tw"><table class="rules"><thead><tr><th>#</th><th>Condition</th><th>Bot outcome</th><th>Type</th><th>Tier</th></tr></thead><tbody>
+<tr data-ot="BOT"><td class="rs">1</td><td>Withdrawal would leave balance &lt; Rs500</td><td>Explain Rs500 floor rule</td><td><span class="chip c-t1">BOT</span></td><td class="tr-t1">T1</td></tr>
+<tr data-ot="BOT"><td class="rs">2</td><td>Cashfree balance low</td><td>Wait 2-3 hrs + batched stakeholder alert</td><td><span class="chip c-t1">BOT</span></td><td class="tr-t1">T1</td></tr>
+<tr data-ot="TICKET"><td class="rs">3</td><td>Neither</td><td>Create ticket</td><td><span class="chip c-t3">TICKET</span></td><td class="tr-t3">T3</td></tr>
+</tbody></table></div>
+<p class="cnote">Shares the Cashfree health-check service with ARW.</p>
+</div>
+<div class="concern" data-l1="Amount Related" data-ot="BOT|TICKET" data-k="referral ka amount nhi aya referral_not_received bonus for referring another sp. on referee onboarding the referrer earns a one-time or continuous bonus (only one type active per sp).">
+<div class="chead">
+<div class="ctitle"><span class="cl1">Amount Related</span><h4>Referral ka amount nhi aya</h4><code class="ckey">REFERRAL_NOT_RECEIVED</code></div><span class="vol">192</span></div>
+<p class="cmean">Bonus for referring another SP. On referee onboarding the referrer earns a one-time OR continuous bonus (only one type active per SP).</p>
+<p class="cchecks"><span>Backend checks</span>SP lookup by referee phone number; referee onboarding status; referrer on record; referral cashback entries in raiser&#x27;s Main Wallet</p>
+<div class="tw"><table class="rules"><thead><tr><th>#</th><th>Condition</th><th>Bot outcome</th><th>Type</th><th>Tier</th></tr></thead><tbody>
+<tr data-ot="BOT"><td class="rs">1</td><td>No SP found on that phone number</td><td>Deny - not eligible</td><td><span class="chip c-t1">BOT</span></td><td class="tr-t1">T1</td></tr>
+<tr data-ot="BOT"><td class="rs">2</td><td>Referee found but not yet onboarded</td><td>Explain bonus comes after onboarding</td><td><span class="chip c-t1">BOT</span></td><td class="tr-t1">T1</td></tr>
+<tr data-ot="BOT"><td class="rs">3</td><td>Raiser is NOT the referrer, SP accepts</td><td>Close - not the referrer</td><td><span class="chip c-t1">BOT</span></td><td class="tr-t1">T1</td></tr>
+<tr data-ot="TICKET"><td class="rs">4</td><td>Raiser is NOT the referrer, SP disputes</td><td>Create ticket</td><td><span class="chip c-t3">TICKET</span></td><td class="tr-t3">T3</td></tr>
+<tr data-ot="BOT"><td class="rs">5</td><td>Raiser IS referrer + cashback credited</td><td>Show txn date/time/amount</td><td><span class="chip c-t1">BOT</span></td><td class="tr-t1">T1</td></tr>
+<tr data-ot="TICKET"><td class="rs">6</td><td>Raiser IS referrer + cashback NOT credited</td><td>Create ticket</td><td><span class="chip c-t3">TICKET</span></td><td class="tr-t3">T3</td></tr>
+</tbody></table></div>
+<p class="cnote">Onboarding check placed BEFORE referrer check. Continuous-bonus cadence (month-2 missing) = v2; v1 shows latest txn.</p>
+</div>
+<div class="concern" data-l1="Amount Related" data-ot="BOT" data-k="cashback nahi aya cashback_not_received rs30 reward when an sp routes a customer through ym instead of going direct. those bookings are created by agents from admin.">
+<div class="chead">
+<div class="ctitle"><span class="cl1">Amount Related</span><h4>Cashback nahi aya</h4><code class="ckey">CASHBACK_NOT_RECEIVED</code></div><span class="vol">176</span></div>
+<p class="cmean">Rs30 reward when an SP routes a customer through YM instead of going direct. Those bookings are created by agents from admin.</p>
+<p class="cchecks"><span>Backend checks</span>Order ID; booking creation source (app vs admin); booking completion status; cashback credit vs Order ID</p>
+<div class="tw"><table class="rules"><thead><tr><th>#</th><th>Condition</th><th>Bot outcome</th><th>Type</th><th>Tier</th></tr></thead><tbody>
+<tr data-ot="BOT"><td class="rs">1</td><td>Booking created via app (iOS/Android/Web)</td><td>Not eligible - explain</td><td><span class="chip c-t1">BOT</span></td><td class="tr-t1">T1</td></tr>
+<tr data-ot="BOT"><td class="rs">2</td><td>Admin-created, not completed</td><td>Cashback credits after completion</td><td><span class="chip c-t1">BOT</span></td><td class="tr-t1">T1</td></tr>
+<tr data-ot="BOT"><td class="rs">3</td><td>Admin-created, completed, already credited</td><td>Show credited detail</td><td><span class="chip c-t1">BOT</span></td><td class="tr-t1">T1</td></tr>
+<tr data-ot="BOT"><td class="rs">4</td><td>Admin-created, completed, not credited</td><td>Auto-credit Rs30 + confirm satisfaction</td><td><span class="chip c-t2">BOT</span></td><td class="tr-t2">T2</td></tr>
+</tbody></table></div>
+<p class="cnote">Fully bot-resolvable on all four branches - no human path.</p>
+</div>
+<div class="concern" data-l1="Violations" data-ot="BOT|TICKET|UPHOLD" data-k="architecture (applies to all types) viol_architecture sp challenges a violation. bot verdicts: accept (remove violation) / reject (uphold + explain) / ticket (agent decides later).">
+<div class="chead">
+<div class="ctitle"><span class="cl1">Violations</span><h4>ARCHITECTURE (applies to all types)</h4><code class="ckey">VIOL_ARCHITECTURE</code></div><span class="vol none">no volume data</span></div>
+<p class="cmean">SP challenges a violation. Bot verdicts: ACCEPT (remove violation) / REJECT (uphold + explain) / TICKET (agent decides later).</p>
+<p class="cchecks"><span>Backend checks</span>Violation record; violation type; date</p>
+<div class="tw"><table class="rules"><thead><tr><th>#</th><th>Condition</th><th>Bot outcome</th><th>Type</th><th>Tier</th></tr></thead><tbody>
+<tr data-ot="BOT"><td class="rs">1</td><td>Bot accepts challenge</td><td>Remove violation in backend</td><td><span class="chip c-t2">BOT</span></td><td class="tr-t2">T2</td></tr>
+<tr data-ot="UPHOLD"><td class="rs">2</td><td>Bot rejects challenge</td><td>Uphold + explain</td><td><span class="chip c-t1">UPHOLD</span></td><td class="tr-t1">T1</td></tr>
+<tr data-ot="TICKET"><td class="rs">3</td><td>Needs human judgement</td><td>Create ticket, tell SP TAT</td><td><span class="chip c-t3">TICKET</span></td><td class="tr-t3">T3</td></tr>
+</tbody></table></div>
+<p class="cnote">STRIKE REMOVAL IS AUTOMATIC IN BACKEND once no violations remain for that day - never a bot step. 5 strikes = possible deactivation.</p>
+</div>
+<div class="concern" data-l1="Violations" data-ot="BOT|TICKET|UPHOLD" data-k="type 1: same-day leave with active job viol_t1_sameday_leave today&#x27;s jobs assigned real-time; tomorrow+ confirmed at 3pm today. same-day leave = leave for today, or tomorrow after 3pm, while holding a confirmed assignment.">
+<div class="chead">
+<div class="ctitle"><span class="cl1">Violations</span><h4>Type 1: Same-Day Leave with Active Job</h4><code class="ckey">VIOL_T1_SAMEDAY_LEAVE</code></div><span class="vol none">no volume data</span></div>
+<p class="cmean">Today&#x27;s jobs assigned real-time; tomorrow+ confirmed at 3PM today. Same-day leave = leave for today, or tomorrow after 3PM, while holding a CONFIRMED assignment.</p>
+<p class="cchecks"><span>Backend checks</span>Leave record + app-recorded reason; challenged reason; confirmed-assignment status; count of GRANTED emergency removals this month</p>
+<div class="tw"><table class="rules"><thead><tr><th>#</th><th>Condition</th><th>Bot outcome</th><th>Type</th><th>Tier</th></tr></thead><tbody>
+<tr data-ot="UPHOLD"><td class="rs">1</td><td>Chat reason does not match app-recorded / challenged reason</td><td>Uphold - anti-gaming</td><td><span class="chip c-t1">UPHOLD</span></td><td class="tr-t1">T1</td></tr>
+<tr data-ot="UPHOLD"><td class="rs">2</td><td>Reasons match but not a substantial emergency</td><td>Uphold + explain</td><td><span class="chip c-t1">UPHOLD</span></td><td class="tr-t1">T1</td></tr>
+<tr data-ot="BOT"><td class="rs">3</td><td>Match + substantial emergency + under pooled cap</td><td>Remove violation</td><td><span class="chip c-t2">BOT</span></td><td class="tr-t2">T2</td></tr>
+<tr data-ot="TICKET"><td class="rs">4</td><td>Match + emergency + pooled cap reached</td><td>Create ticket (3rd+ this month)</td><td><span class="chip c-t3">TICKET</span></td><td class="tr-t3">T3</td></tr>
+</tbody></table></div>
+<p class="cnote">Only GRANTED removals count; denied claims don&#x27;t burn allowance. OPEN: final pooled cap number.</p>
+</div>
+<div class="concern" data-l1="Violations" data-ot="BOT|UPHOLD" data-k="type 2 r1: denying due to far job viol_r1_far_job sp declined saying job was too far. mostly perception, rarely real. hubs are radius circles: primary (1), secondary (many), exclusive (many, repeat customers only).">
+<div class="chead">
+<div class="ctitle"><span class="cl1">Violations</span><h4>Type 2 R1: Denying due to Far job</h4><code class="ckey">VIOL_R1_FAR_JOB</code></div><span class="vol none">no volume data</span></div>
+<p class="cmean">SP declined saying job was too far. Mostly perception, rarely real. Hubs are radius circles: Primary (1), Secondary (many), Exclusive (many, repeat customers only).</p>
+<p class="cchecks"><span>Backend checks</span>Hub mapped to the job + centre lat/long + radius; job address lat/long; booking type (exclusive); SP gender where relevant</p>
+<div class="tw"><table class="rules"><thead><tr><th>#</th><th>Condition</th><th>Bot outcome</th><th>Type</th><th>Tier</th></tr></thead><tbody>
+<tr data-ot="UPHOLD"><td class="rs">1</td><td>Exclusive hub AND exclusive booking</td><td>Uphold - far is not a valid out</td><td><span class="chip c-t1">UPHOLD</span></td><td class="tr-t1">T1</td></tr>
+<tr data-ot="BOT"><td class="rs">2</td><td>Other hubs: haversine(job, hub centre) &gt; radius</td><td>Remove - genuinely far</td><td><span class="chip c-t2">BOT</span></td><td class="tr-t2">T2</td></tr>
+<tr data-ot="UPHOLD"><td class="rs">3</td><td>Other hubs: distance &lt;= radius</td><td>Uphold - job was inside the hub</td><td><span class="chip c-t1">UPHOLD</span></td><td class="tr-t1">T1</td></tr>
+</tbody></table></div>
+<p class="cnote">Shares the haversine/hub-radius service with Transport Path 3.</p>
+</div>
+<div class="concern" data-l1="Violations" data-ot="BOT|TICKET|UPHOLD" data-k="type 2 r2: not responding / not contactable viol_r2_not_responding job must be seen then confirmed with customer. if unconfirmed near slot time, ops calls sp; unresponsive leads to reassignment.">
+<div class="chead">
+<div class="ctitle"><span class="cl1">Violations</span><h4>Type 2 R2: Not Responding / Not contactable</h4><code class="ckey">VIOL_R2_NOT_RESPONDING</code></div><span class="vol none">no volume data</span></div>
+<p class="cmean">Job must be seen then confirmed with customer. If unconfirmed near slot time, ops calls SP; unresponsive leads to reassignment.</p>
+<p class="cchecks"><span>Backend checks</span>Partner-customer call log (any attempt); assignment timestamp; scheduled timestamp; reassignment timestamp</p>
+<div class="tw"><table class="rules"><thead><tr><th>#</th><th>Condition</th><th>Bot outcome</th><th>Type</th><th>Tier</th></tr></thead><tbody>
+<tr data-ot="TICKET"><td class="rs">1</td><td>A partner-customer call was attempted for this job</td><td>Create ticket - &#x27;not responding&#x27; contradicted</td><td><span class="chip c-t3">TICKET</span></td><td class="tr-t3">T3</td></tr>
+<tr data-ot="BOT"><td class="rs">2</td><td>No such call + reassigned BEFORE cutoff</td><td>Remove - premature reassignment</td><td><span class="chip c-t2">BOT</span></td><td class="tr-t2">T2</td></tr>
+<tr data-ot="UPHOLD"><td class="rs">3</td><td>No such call + reassigned AT/AFTER cutoff</td><td>Uphold - deadline missed and unreachable</td><td><span class="chip c-t1">UPHOLD</span></td><td class="tr-t1">T1</td></tr>
+</tbody></table></div>
+<p class="cnote">Tiers: assigned within 1hr confirm 30min before; same day &gt;1hr 60min; one day before or earlier 120min.</p>
+</div>
+<div class="concern" data-l1="Violations" data-ot="BOT|REROUTE|UPHOLD" data-k="type 2 r3: delayed due to last job (also r12) viol_r3_delayed_prev current job affected because previous job ran long. minimum gap between jobs = 45 min.">
+<div class="chead">
+<div class="ctitle"><span class="cl1">Violations</span><h4>Type 2 R3: Delayed due to last job (also R12)</h4><code class="ckey">VIOL_R3_DELAYED_PREV</code></div><span class="vol none">no volume data</span></div>
+<p class="cmean">Current job affected because previous job ran long. Minimum gap between jobs = 45 min.</p>
+<p class="cchecks"><span>Backend checks</span>Preceding booking with SCHEDULED end within 2 hrs before current slot; prev job arrivedAt300metre vs its scheduled start; prev job OTP/start timestamp; extra-services flag on prev booking; SR2 grants in current 25-job cycle</p>
+<div class="tw"><table class="rules"><thead><tr><th>#</th><th>Condition</th><th>Bot outcome</th><th>Type</th><th>Tier</th></tr></thead><tbody>
+<tr data-ot="REROUTE"><td class="rs">1</td><td>No preceding booking in the 2-hr window</td><td>Premise false - ask real issue - reroute</td><td><span class="chip c-mu">REROUTE</span></td><td class="tr-mu">-</td></tr>
+<tr data-ot="UPHOLD"><td class="rs">2</td><td>SR1: reached previous job late</td><td>Uphold - SP&#x27;s own planning</td><td><span class="chip c-t1">UPHOLD</span></td><td class="tr-t1">T1</td></tr>
+<tr data-ot="BOT"><td class="rs">3</td><td>SR2: extra services added, 1st in current cycle</td><td>Warning + remove</td><td><span class="chip c-t2">BOT</span></td><td class="tr-t2">T2</td></tr>
+<tr data-ot="UPHOLD"><td class="rs">4</td><td>SR2: extra services added, 2nd+ in cycle</td><td>Uphold - allowance used</td><td><span class="chip c-t1">UPHOLD</span></td><td class="tr-t1">T1</td></tr>
+<tr data-ot="BOT"><td class="rs">5</td><td>SR3: arrived early but customer delayed OTP/start</td><td>Remove - customer-caused wait</td><td><span class="chip c-t2">BOT</span></td><td class="tr-t2">T2</td></tr>
+</tbody></table></div>
+<p class="cnote">Sub-reasons auto-classified from backend signals (no reliance on SP&#x27;s word). Uses SCHEDULED end, not actual.</p>
+</div>
+<div class="concern" data-l1="Violations" data-ot="REROUTE|TICKET" data-k="type 2 r4: others viol_r4_others agent marked &#x27;others&#x27; - no structured reason captured. acts as a router.">
+<div class="chead">
+<div class="ctitle"><span class="cl1">Violations</span><h4>Type 2 R4: Others</h4><code class="ckey">VIOL_R4_OTHERS</code></div><span class="vol none">no volume data</span></div>
+<p class="cmean">Agent marked &#x27;Others&#x27; - no structured reason captured. Acts as a router.</p>
+<p class="cchecks"><span>Backend checks</span>SP free-text; NLU match against defined reasons</p>
+<div class="tw"><table class="rules"><thead><tr><th>#</th><th>Condition</th><th>Bot outcome</th><th>Type</th><th>Tier</th></tr></thead><tbody>
+<tr data-ot="REROUTE"><td class="rs">1</td><td>Free text matches a defined reason</td><td>Route to that reason&#x27;s flow</td><td><span class="chip c-mu">REROUTE</span></td><td class="tr-mu">-</td></tr>
+<tr data-ot="TICKET"><td class="rs">2</td><td>No match - genuine other</td><td>Create ticket</td><td><span class="chip c-t3">TICKET</span></td><td class="tr-t3">T3</td></tr>
+</tbody></table></div>
+<p class="cnote">Safe to trust text for ROUTING only - downstream flows self-validate against backend.</p>
+</div>
+<div class="concern" data-l1="Violations" data-ot="BOT|UPHOLD" data-k="type 2 r5: periods leave viol_r5_periods sp took period leave. one per month is legitimate.">
+<div class="chead">
+<div class="ctitle"><span class="cl1">Violations</span><h4>Type 2 R5: Periods Leave</h4><code class="ckey">VIOL_R5_PERIODS</code></div><span class="vol none">no volume data</span></div>
+<p class="cmean">SP took period leave. One per month is legitimate.</p>
+<p class="cchecks"><span>Backend checks</span>Count of period leaves this calendar month</p>
+<div class="tw"><table class="rules"><thead><tr><th>#</th><th>Condition</th><th>Bot outcome</th><th>Type</th><th>Tier</th></tr></thead><tbody>
+<tr data-ot="BOT"><td class="rs">1</td><td>1st period leave this month</td><td>Remove - valid</td><td><span class="chip c-t2">BOT</span></td><td class="tr-t2">T2</td></tr>
+<tr data-ot="UPHOLD"><td class="rs">2</td><td>2nd or more this month</td><td>Uphold - one per month is the limit</td><td><span class="chip c-t1">UPHOLD</span></td><td class="tr-t1">T1</td></tr>
+</tbody></table></div>
+</div>
+<div class="concern" data-l1="Violations" data-ot="REROUTE|TICKET" data-k="type 2 r6: rude behaviour with customer viol_r6_rude subjective conduct allegation - no backend signal can verify rudeness.">
+<div class="chead">
+<div class="ctitle"><span class="cl1">Violations</span><h4>Type 2 R6: Rude behaviour with Customer</h4><code class="ckey">VIOL_R6_RUDE</code></div><span class="vol none">no volume data</span></div>
+<p class="cmean">Subjective conduct allegation - no backend signal can verify rudeness.</p>
+<p class="cchecks"><span>Backend checks</span>SP&#x27;s explanation; (v2) call recording</p>
+<div class="tw"><table class="rules"><thead><tr><th>#</th><th>Condition</th><th>Bot outcome</th><th>Type</th><th>Tier</th></tr></thead><tbody>
+<tr data-ot="TICKET"><td class="rs">1</td><td>Tag is RIGHT - genuine conduct incident</td><td>Coaching remark + create ticket (agent decides)</td><td><span class="chip c-t3">TICKET</span></td><td class="tr-t3">T3</td></tr>
+<tr data-ot="REROUTE"><td class="rs">2</td><td>Tag is WRONG - SP names a different operational reason</td><td>Free text - route to derived reason flow</td><td><span class="chip c-mu">REROUTE</span></td><td class="tr-mu">-</td></tr>
+</tbody></table></div>
+<p class="cnote">OPEN: does the bot ask SP to confirm/contest the tag directly, or infer from the explanation? Never auto-removes.</p>
+</div>
+<div class="concern" data-l1="Violations" data-ot="TICKET|UPHOLD" data-k="type 2 r7: small amount booking viol_r7_small_booking sp declined because booking value was low. policy: sp must serve regardless of order value.">
+<div class="chead">
+<div class="ctitle"><span class="cl1">Violations</span><h4>Type 2 R7: Small Amount Booking</h4><code class="ckey">VIOL_R7_SMALL_BOOKING</code></div><span class="vol none">no volume data</span></div>
+<p class="cmean">SP declined because booking value was low. Policy: SP must serve regardless of order value.</p>
+<p class="cchecks"><span>Backend checks</span>Booking total order value</p>
+<div class="tw"><table class="rules"><thead><tr><th>#</th><th>Condition</th><th>Bot outcome</th><th>Type</th><th>Tier</th></tr></thead><tbody>
+<tr data-ot="TICKET"><td class="rs">1</td><td>Order value &lt; Rs800</td><td>Create ticket - discretionary call</td><td><span class="chip c-t3">TICKET</span></td><td class="tr-t3">T3</td></tr>
+<tr data-ot="UPHOLD"><td class="rs">2</td><td>Order value &gt;= Rs800</td><td>Uphold - premise false</td><td><span class="chip c-t1">UPHOLD</span></td><td class="tr-t1">T1</td></tr>
+</tbody></table></div>
+<p class="cnote">Unassign only.</p>
+</div>
+<div class="concern" data-l1="Violations" data-ot="BOT|TICKET|UPHOLD" data-k="type 2 r8 health + r10 death / any emergency viol_r8_r10_emergency substantial health situation or death/emergency in family.">
+<div class="chead">
+<div class="ctitle"><span class="cl1">Violations</span><h4>Type 2 R8 Health + R10 Death / Any emergency</h4><code class="ckey">VIOL_R8_R10_EMERGENCY</code></div><span class="vol none">no volume data</span></div>
+<p class="cmean">Substantial health situation or death/emergency in family.</p>
+<p class="cchecks"><span>Backend checks</span>Nature of emergency; pooled emergency counter this month</p>
+<div class="tw"><table class="rules"><thead><tr><th>#</th><th>Condition</th><th>Bot outcome</th><th>Type</th><th>Tier</th></tr></thead><tbody>
+<tr data-ot="UPHOLD"><td class="rs">1</td><td>Not a substantial emergency</td><td>Uphold</td><td><span class="chip c-t1">UPHOLD</span></td><td class="tr-t1">T1</td></tr>
+<tr data-ot="BOT"><td class="rs">2</td><td>Substantial emergency + under pooled cap</td><td>Remove (counts toward pooled cap)</td><td><span class="chip c-t2">BOT</span></td><td class="tr-t2">T2</td></tr>
+<tr data-ot="TICKET"><td class="rs">3</td><td>Substantial emergency + cap reached</td><td>Create ticket</td><td><span class="chip c-t3">TICKET</span></td><td class="tr-t3">T3</td></tr>
+</tbody></table></div>
+<p class="cnote">SINGLE shared counter across Type-1 emergency + R8 + R10 - prevents stacking 2+2+2. OPEN: final number.</p>
+</div>
+<div class="concern" data-l1="Violations" data-ot="BOT|TICKET|UPHOLD" data-k="type 2 r9: not having product / equipment viol_r9_no_product sp lacked the required product. onus normally on sp to keep inventory stocked; removal conditional on having ordered it.">
+<div class="chead">
+<div class="ctitle"><span class="cl1">Violations</span><h4>Type 2 R9: Not Having Product / Equipment</h4><code class="ckey">VIOL_R9_NO_PRODUCT</code></div><span class="vol none">no volume data</span></div>
+<p class="cmean">SP lacked the required product. Onus normally on SP to keep inventory stocked; removal conditional on having ordered it.</p>
+<p class="cchecks"><span>Backend checks</span>Order placed for the missing product after rejection; order type (Express/Standard); delivery TAT vs now; product-removal grants in current 25-job cycle</p>
+<div class="tw"><table class="rules"><thead><tr><th>#</th><th>Condition</th><th>Bot outcome</th><th>Type</th><th>Tier</th></tr></thead><tbody>
+<tr data-ot="UPHOLD"><td class="rs">1</td><td>No order placed</td><td>Uphold + remind SP to order</td><td><span class="chip c-t1">UPHOLD</span></td><td class="tr-t1">T1</td></tr>
+<tr data-ot="TICKET"><td class="rs">2</td><td>Ordered but past its delivery TAT (logistics failure)</td><td>Create ticket: remove violation + agent fixes logistics</td><td><span class="chip c-t3">TICKET</span></td><td class="tr-t3">T3</td></tr>
+<tr data-ot="BOT"><td class="rs">3</td><td>Ordered, delivered or in-transit within TAT, allowance available</td><td>Remove</td><td><span class="chip c-t2">BOT</span></td><td class="tr-t2">T2</td></tr>
+<tr data-ot="UPHOLD"><td class="rs">4</td><td>Ordered but allowance already used this cycle</td><td>Uphold</td><td><span class="chip c-t1">UPHOLD</span></td><td class="tr-t1">T1</td></tr>
+</tbody></table></div>
+<p class="cnote">ALIGNED: must use the shared Express/Standard TAT (11PM deadline), NOT a flat 3 days.</p>
+</div>
+<div class="concern" data-l1="Violations" data-ot="UPHOLD" data-k="type 2 r11: vehicle / ride issue viol_r11_vehicle sp&#x27;s own vehicle/ride failed. onus lies entirely on the sp; alternatives exist.">
+<div class="chead">
+<div class="ctitle"><span class="cl1">Violations</span><h4>Type 2 R11: Vehicle / Ride Issue</h4><code class="ckey">VIOL_R11_VEHICLE</code></div><span class="vol none">no volume data</span></div>
+<p class="cmean">SP&#x27;s own vehicle/ride failed. Onus lies entirely on the SP; alternatives exist.</p>
+<div class="tw"><table class="rules"><thead><tr><th>#</th><th>Condition</th><th>Bot outcome</th><th>Type</th><th>Tier</th></tr></thead><tbody>
+<tr data-ot="UPHOLD"><td class="rs">1</td><td>Any vehicle/ride issue</td><td>Always uphold + coaching to use alternative transport</td><td><span class="chip c-t1">UPHOLD</span></td><td class="tr-t1">T1</td></tr>
+</tbody></table></div>
+<p class="cnote">No removal path at all - simplest rule in the set.</p>
+</div>
+<div class="concern" data-l1="Violations" data-ot="TICKET" data-k="type 2 r13: customer not satisfied with service viol_r13_cx_unsatisfied job rescheduled because customer was unhappy - caused by an sp service default.">
+<div class="chead">
+<div class="ctitle"><span class="cl1">Violations</span><h4>Type 2 R13: Customer not satisfied with service</h4><code class="ckey">VIOL_R13_CX_UNSATISFIED</code></div><span class="vol none">no volume data</span></div>
+<p class="cmean">Job rescheduled because customer was unhappy - caused by an SP service default.</p>
+<p class="cchecks"><span>Backend checks</span>SP&#x27;s account of the service</p>
+<div class="tw"><table class="rules"><thead><tr><th>#</th><th>Condition</th><th>Bot outcome</th><th>Type</th><th>Tier</th></tr></thead><tbody>
+<tr data-ot="TICKET"><td class="rs">1</td><td>Any case</td><td>Collect SP account - upheld posture + create ticket</td><td><span class="chip c-t3">TICKET</span></td><td class="tr-t3">T3</td></tr>
+</tbody></table></div>
+<p class="cnote">Reschedule only.</p>
+</div>
+<div class="concern" data-l1="Violations" data-ot="TICKET|UPHOLD|V2" data-k="type 3: customer cancellation / denied on obd viol_t3_obd_denied sp marked &#x27;customer wants to cancel&#x27;; one obd call verifies. customer denial means the sp misused the flow.">
+<div class="chead">
+<div class="ctitle"><span class="cl1">Violations</span><h4>Type 3: Customer Cancellation / Denied on OBD</h4><code class="ckey">VIOL_T3_OBD_DENIED</code></div><span class="vol none">no volume data</span></div>
+<p class="cmean">SP marked &#x27;customer wants to cancel&#x27;; one OBD call verifies. Customer denial means the SP misused the flow.</p>
+<p class="cchecks"><span>Backend checks</span>OBD verification result; (v2) partner-customer call recording</p>
+<div class="tw"><table class="rules"><thead><tr><th>#</th><th>Condition</th><th>Bot outcome</th><th>Type</th><th>Tier</th></tr></thead><tbody>
+<tr data-ot="UPHOLD"><td class="rs">1</td><td>Customer denied on OBD, SP accepts</td><td>Uphold - strike stands</td><td><span class="chip c-t1">UPHOLD</span></td><td class="tr-t1">T1</td></tr>
+<tr data-ot="TICKET"><td class="rs">2</td><td>SP pushes back (v1)</td><td>Create ticket - agent reviews call recording</td><td><span class="chip c-t3">TICKET</span></td><td class="tr-t3">T3</td></tr>
+<tr data-ot="V2"><td class="rs">3</td><td>SP pushes back (v2)</td><td>Auto-analyse recording for cancellation intent</td><td><span class="chip c-mu">V2</span></td><td class="tr-mu">OUT</td></tr>
+</tbody></table></div>
+<p class="cnote">v2 reuses the existing Whisper to Claude call-analysis pipeline.</p>
+</div>
+<div class="concern" data-l1="Violations" data-ot="BOT|REROUTE|UPHOLD" data-k="type 5: job reject viol_t5_job_reject sp rejected a job in the app choosing a reason. pure router - objective checks validate regardless of who declared the reason.">
+<div class="chead">
+<div class="ctitle"><span class="cl1">Violations</span><h4>Type 5: Job Reject</h4><code class="ckey">VIOL_T5_JOB_REJECT</code></div><span class="vol none">no volume data</span></div>
+<p class="cmean">SP rejected a job in the app choosing a reason. Pure router - objective checks validate regardless of who declared the reason.</p>
+<p class="cchecks"><span>Backend checks</span>Reject reason chosen in SP app; then the target reason&#x27;s own checks</p>
+<div class="tw"><table class="rules"><thead><tr><th>#</th><th>Condition</th><th>Bot outcome</th><th>Type</th><th>Tier</th></tr></thead><tbody>
+<tr data-ot="REROUTE"><td class="rs">1</td><td>Door ki job hai</td><td>Route to R1 (hub distance)</td><td><span class="chip c-mu">REROUTE</span></td><td class="tr-mu">-</td></tr>
+<tr data-ot="REROUTE"><td class="rs">2</td><td>Choti job hai</td><td>Route to R7 (&lt;Rs800 - ticket)</td><td><span class="chip c-mu">REROUTE</span></td><td class="tr-mu">-</td></tr>
+<tr data-ot="REROUTE"><td class="rs">3</td><td>Product nahi hai job ka</td><td>Route to R9 (order-placed gate)</td><td><span class="chip c-mu">REROUTE</span></td><td class="tr-mu">-</td></tr>
+<tr data-ot="REROUTE"><td class="rs">4</td><td>Emergency in family</td><td>Route to R10 (pooled cap)</td><td><span class="chip c-mu">REROUTE</span></td><td class="tr-mu">-</td></tr>
+<tr data-ot="REROUTE"><td class="rs">5</td><td>Health issues</td><td>Route to R8 (pooled cap)</td><td><span class="chip c-mu">REROUTE</span></td><td class="tr-mu">-</td></tr>
+<tr data-ot="REROUTE"><td class="rs">6</td><td>Delay in previous job</td><td>Route to R3 (premise + SR1/2/3)</td><td><span class="chip c-mu">REROUTE</span></td><td class="tr-mu">-</td></tr>
+<tr data-ot="BOT"><td class="rs">7</td><td>Do not want to go: served before AND partner-customer call &gt;= 30s</td><td>Remove - genuine denial</td><td><span class="chip c-t2">BOT</span></td><td class="tr-t2">T2</td></tr>
+<tr data-ot="UPHOLD"><td class="rs">8</td><td>Do not want to go: criteria not met</td><td>Uphold (v1 judges threat claim on call timing only)</td><td><span class="chip c-t1">UPHOLD</span></td><td class="tr-t1">T1</td></tr>
+</tbody></table></div>
+<p class="cnote">Policy permits denial for: feeling threatened/unsafe, past bad experience, cross-gender. Real-time danger goes via SOS emergency trigger, NOT this flow.</p>
+</div>
+<div class="concern" data-l1="Violations" data-ot="BOT|REROUTE|UPHOLD" data-k="type 6: job rejected over call viol_t6_reject_over_call partner called customer, denied going; customer then cancelled saying &#x27;sp refused&#x27;. no structured reason captured, so the call is the source of truth.">
+<div class="chead">
+<div class="ctitle"><span class="cl1">Violations</span><h4>Type 6: Job Rejected over call</h4><code class="ckey">VIOL_T6_REJECT_OVER_CALL</code></div><span class="vol none">no volume data</span></div>
+<p class="cmean">Partner called customer, denied going; customer then cancelled saying &#x27;SP refused&#x27;. No structured reason captured, so the call is the source of truth.</p>
+<p class="cchecks"><span>Backend checks</span>Partner-customer conversation duration; SP&#x27;s stated issue; booking required-gender vs SP gender; then R1/R9 checks; (v2) recording</p>
+<div class="tw"><table class="rules"><thead><tr><th>#</th><th>Condition</th><th>Bot outcome</th><th>Type</th><th>Tier</th></tr></thead><tbody>
+<tr data-ot="BOT"><td class="rs">1</td><td>Call duration &lt; 30 secs</td><td>Remove - minimal engagement, customer cancelled wrongly</td><td><span class="chip c-t2">BOT</span></td><td class="tr-t2">T2</td></tr>
+<tr data-ot="BOT"><td class="rs">2</td><td>&gt;= 30s + cross-gender request</td><td>Remove (hard-check gender fields where available)</td><td><span class="chip c-t2">BOT</span></td><td class="tr-t2">T2</td></tr>
+<tr data-ot="BOT"><td class="rs">3</td><td>&gt;= 30s + customer-side service condition</td><td>Remove</td><td><span class="chip c-t2">BOT</span></td><td class="tr-t2">T2</td></tr>
+<tr data-ot="BOT"><td class="rs">4</td><td>&gt;= 30s + customer asked for another time</td><td>Remove + guide SP to raise a reschedule request</td><td><span class="chip c-t2">BOT</span></td><td class="tr-t2">T2</td></tr>
+<tr data-ot="REROUTE"><td class="rs">5</td><td>&gt;= 30s + SP-fault: far</td><td>Route to R1 objective check</td><td><span class="chip c-mu">REROUTE</span></td><td class="tr-mu">-</td></tr>
+<tr data-ot="REROUTE"><td class="rs">6</td><td>&gt;= 30s + SP-fault: no product</td><td>Route to R9 objective check</td><td><span class="chip c-mu">REROUTE</span></td><td class="tr-mu">-</td></tr>
+<tr data-ot="UPHOLD"><td class="rs">7</td><td>&gt;= 30s + plain refusal, no valid ground</td><td>Uphold</td><td><span class="chip c-t1">UPHOLD</span></td><td class="tr-t1">T1</td></tr>
+</tbody></table></div>
+<p class="cnote">v2: analyse recording to verify intent rather than trusting SP self-report.</p>
+</div>
+<div class="concern" data-l1="Violations" data-ot="DEPRECATED" data-k="type 4: training session missed viol_t4_training sp missed mandatory training even after rescheduling.">
+<div class="chead">
+<div class="ctitle"><span class="cl1">Violations</span><h4 class=dead>Type 4: Training Session Missed</h4><code class="ckey">VIOL_T4_TRAINING</code></div><span class="vol none">no volume data</span></div>
+<p class="cmean">SP missed mandatory training even after rescheduling.</p>
+<div class="tw"><table class="rules"><thead><tr><th>#</th><th>Condition</th><th>Bot outcome</th><th>Type</th><th>Tier</th></tr></thead><tbody>
+<tr data-ot="DEPRECATED"><td class="rs">1</td><td>All cases</td><td>Out of scope for current build</td><td><span class="chip c-mu">DEPRECATED</span></td><td class="tr-mu">OUT</td></tr>
+</tbody></table></div>
+<p class="cnote">Excluded by decision.</p>
+</div>
+<div class="concern" data-l1="Product Issues" data-ot="BOT|TICKET" data-k="out of stock prod_out_of_stock sp tries to order a product in the sp app but it shows unavailable. should not happen.">
+<div class="chead">
+<div class="ctitle"><span class="cl1">Product Issues</span><h4>Out of stock</h4><code class="ckey">PROD_OUT_OF_STOCK</code></div><span class="vol">2,807</span></div>
+<p class="cmean">SP tries to order a product in the SP app but it shows unavailable. Should not happen.</p>
+<p class="cchecks"><span>Backend checks</span>Product catalogue fuzzy-match; product category vs SP category; backend inventory for the item</p>
+<div class="tw"><table class="rules"><thead><tr><th>#</th><th>Condition</th><th>Bot outcome</th><th>Type</th><th>Tier</th></tr></thead><tbody>
+<tr data-ot="BOT"><td class="rs">1</td><td>Product not in SP&#x27;s own category</td><td>Explain own-category-only rule</td><td><span class="chip c-t1">BOT</span></td><td class="tr-t1">T1</td></tr>
+<tr data-ot="TICKET"><td class="rs">2</td><td>In category + inventory available</td><td>Guide to purchase/retry + ticket logging false out-of-stock</td><td><span class="chip c-t3">TICKET</span></td><td class="tr-t3">T3</td></tr>
+<tr data-ot="TICKET"><td class="rs">3</td><td>In category + inventory NOT available</td><td>Create ticket - genuine stock-out / restock</td><td><span class="chip c-t3">TICKET</span></td><td class="tr-t3">T3</td></tr>
+</tbody></table></div>
+<p class="cnote">Shared step: ask product name, show 2-3 best matches, SP picks exact item. Reused by every Product L2.</p>
+</div>
+<div class="concern" data-l1="Product Issues" data-ot="BOT|TICKET" data-k="delay in delivery prod_delivery_delay sp&#x27;s product order hasn&#x27;t arrived within its expected tat.">
+<div class="chead">
+<div class="ctitle"><span class="cl1">Product Issues</span><h4>Delay in delivery</h4><code class="ckey">PROD_DELIVERY_DELAY</code></div><span class="vol">2,306</span></div>
+<p class="cmean">SP&#x27;s product order hasn&#x27;t arrived within its expected TAT.</p>
+<p class="cchecks"><span>Backend checks</span>In-transit orders list; Order ID; order type (Express/Standard); order placement time; now vs deadline</p>
+<div class="tw"><table class="rules"><thead><tr><th>#</th><th>Condition</th><th>Bot outcome</th><th>Type</th><th>Tier</th></tr></thead><tbody>
+<tr data-ot="TICKET"><td class="rs">1</td><td>Past the 11 PM deadline for its TAT</td><td>Create ticket - logistics escalation</td><td><span class="chip c-t3">TICKET</span></td><td class="tr-t3">T3</td></tr>
+<tr data-ot="BOT"><td class="rs">2</td><td>Still within TAT</td><td>Show expected delivery date, ask to wait</td><td><span class="chip c-t1">BOT</span></td><td class="tr-t1">T1</td></tr>
+</tbody></table></div>
+<p class="cnote">SHARED TAT FUNCTION - Violation R9 must use this, not a flat 3 days.</p>
+</div>
+<div class="concern" data-l1="Product Issues" data-ot="REROUTE|TICKET" data-k="app se product nahi lag raha prod_app_failure app failure - sp can&#x27;t place a product order.">
+<div class="chead">
+<div class="ctitle"><span class="cl1">Product Issues</span><h4>App se product nahi lag raha</h4><code class="ckey">PROD_APP_FAILURE</code></div><span class="vol">873</span></div>
+<p class="cmean">App failure - SP can&#x27;t place a product order.</p>
+<p class="cchecks"><span>Backend checks</span>SP&#x27;s description of the failure; NLU intent classification</p>
+<div class="tw"><table class="rules"><thead><tr><th>#</th><th>Condition</th><th>Bot outcome</th><th>Type</th><th>Tier</th></tr></thead><tbody>
+<tr data-ot="TICKET"><td class="rs">1</td><td>Genuine app/ordering failure</td><td>Create ticket - app/tech issue</td><td><span class="chip c-t3">TICKET</span></td><td class="tr-t3">T3</td></tr>
+<tr data-ot="REROUTE"><td class="rs">2</td><td>Description actually maps to another concern</td><td>Reroute to correct flow</td><td><span class="chip c-mu">REROUTE</span></td><td class="tr-mu">-</td></tr>
+</tbody></table></div>
+<p class="cnote">Remaining Product Issues L2s deferred.</p>
+</div>
+<div class="concern" data-l1="Other Issues" data-ot="REROUTE|TICKET" data-k="global: free-text triage other_freetext_triage sp writes their issue; bot understands it and routes.">
+<div class="chead">
+<div class="ctitle"><span class="cl1">Other Issues</span><h4>GLOBAL: free-text triage</h4><code class="ckey">OTHER_FREETEXT_TRIAGE</code></div><span class="vol none">no volume data</span></div>
+<p class="cmean">SP writes their issue; bot understands it and routes.</p>
+<p class="cchecks"><span>Backend checks</span>NLU match across the whole engine</p>
+<div class="tw"><table class="rules"><thead><tr><th>#</th><th>Condition</th><th>Bot outcome</th><th>Type</th><th>Tier</th></tr></thead><tbody>
+<tr data-ot="REROUTE"><td class="rs">1</td><td>Matches a concern covered elsewhere</td><td>Reroute to that flow</td><td><span class="chip c-mu">REROUTE</span></td><td class="tr-mu">-</td></tr>
+<tr data-ot="TICKET"><td class="rs">2</td><td>Matches none of the defined concerns</td><td>Create ticket with transcript summary</td><td><span class="chip c-t3">TICKET</span></td><td class="tr-t3">T3</td></tr>
+</tbody></table></div>
+</div>
+<div class="concern" data-l1="Other Issues" data-ot="TICKET" data-k="legal help chahiye other_legal sp needs legal assistance.">
+<div class="chead">
+<div class="ctitle"><span class="cl1">Other Issues</span><h4>Legal help chahiye</h4><code class="ckey">OTHER_LEGAL</code></div><span class="vol none">no volume data</span></div>
+<p class="cmean">SP needs legal assistance.</p>
+<p class="cchecks"><span>Backend checks</span>SP&#x27;s description of the legal issue</p>
+<div class="tw"><table class="rules"><thead><tr><th>#</th><th>Condition</th><th>Bot outcome</th><th>Type</th><th>Tier</th></tr></thead><tbody>
+<tr data-ot="TICKET"><td class="rs">1</td><td>Any legal issue</td><td>Take input - create ticket</td><td><span class="chip c-t3">TICKET</span></td><td class="tr-t3">T3</td></tr>
+</tbody></table></div>
+</div>
+<div class="concern" data-l1="Other Issues" data-ot="SELF-SERVE" data-k="booking banwani hai other_booking_req sp wants a customer booking created.">
+<div class="chead">
+<div class="ctitle"><span class="cl1">Other Issues</span><h4>Booking banwani hai</h4><code class="ckey">OTHER_BOOKING_REQ</code></div><span class="vol none">no volume data</span></div>
+<p class="cmean">SP wants a customer booking created.</p>
+<div class="tw"><table class="rules"><thead><tr><th>#</th><th>Condition</th><th>Bot outcome</th><th>Type</th><th>Tier</th></tr></thead><tbody>
+<tr data-ot="SELF-SERVE"><td class="rs">1</td><td>All cases</td><td>Deeplink to SP booking-panel request flow</td><td><span class="chip c-t0">SELF-SERVE</span></td><td class="tr-t0">T0</td></tr>
+</tbody></table></div>
+</div>
+<div class="concern" data-l1="Other Issues" data-ot="MIXED|SELF-SERVE|TICKET" data-k="hub / time change karwana hai other_hub_time sp wants to change assigned hub, or change working hours.">
+<div class="chead">
+<div class="ctitle"><span class="cl1">Other Issues</span><h4>Hub / Time change karwana hai</h4><code class="ckey">OTHER_HUB_TIME</code></div><span class="vol">2,635</span></div>
+<p class="cmean">SP wants to change assigned hub, or change working hours.</p>
+<p class="cchecks"><span>Backend checks</span>Current hub mapping; current shift time</p>
+<div class="tw"><table class="rules"><thead><tr><th>#</th><th>Condition</th><th>Bot outcome</th><th>Type</th><th>Tier</th></tr></thead><tbody>
+<tr data-ot="TICKET"><td class="rs">1</td><td>Hub change</td><td>Create ticket - agent handles</td><td><span class="chip c-t3">TICKET</span></td><td class="tr-t3">T3</td></tr>
+<tr data-ot="SELF-SERVE"><td class="rs">2</td><td>Time change - INCREASE hours</td><td>Deeplink to self-serve entry point</td><td><span class="chip c-t0">SELF-SERVE</span></td><td class="tr-t0">T0</td></tr>
+<tr data-ot="MIXED"><td class="rs">3</td><td>Time change - REDUCE hours</td><td>Not supported by the link</td><td><span class="chip c-mu">MIXED</span></td><td class="tr-mu">OUT</td></tr>
+</tbody></table></div>
+<p class="cnote">OPEN: reduce-hours - deny-and-explain, or ticket? SP can only increase hours via the current link.</p>
+</div>
+<div class="concern" data-l1="Other Issues" data-ot="TICKET" data-k="id activate / deactivate karani hai other_id_activate sp wants their id activated or deactivated.">
+<div class="chead">
+<div class="ctitle"><span class="cl1">Other Issues</span><h4>ID Activate / Deactivate karani hai</h4><code class="ckey">OTHER_ID_ACTIVATE</code></div><span class="vol none">no volume data</span></div>
+<p class="cmean">SP wants their ID activated or deactivated.</p>
+<p class="cchecks"><span>Backend checks</span>SP&#x27;s stated reason; intent match</p>
+<div class="tw"><table class="rules"><thead><tr><th>#</th><th>Condition</th><th>Bot outcome</th><th>Type</th><th>Tier</th></tr></thead><tbody>
+<tr data-ot="TICKET"><td class="rs">1</td><td>Reason matches activation/deactivation intent</td><td>Take reason - create ticket</td><td><span class="chip c-t3">TICKET</span></td><td class="tr-t3">T3</td></tr>
+</tbody></table></div>
+</div>
+<div class="concern" data-l1="Other Issues" data-ot="TICKET" data-k="rating / exclusive lead / wrong data in app other_wrong_data sp sees incorrect rating, exclusive-lead count, or other data in the app.">
+<div class="chead">
+<div class="ctitle"><span class="cl1">Other Issues</span><h4>Rating / exclusive lead / wrong data in app</h4><code class="ckey">OTHER_WRONG_DATA</code></div><span class="vol">1,771</span></div>
+<p class="cmean">SP sees incorrect rating, exclusive-lead count, or other data in the app.</p>
+<p class="cchecks"><span>Backend checks</span>SP&#x27;s description of the wrong data</p>
+<div class="tw"><table class="rules"><thead><tr><th>#</th><th>Condition</th><th>Bot outcome</th><th>Type</th><th>Tier</th></tr></thead><tbody>
+<tr data-ot="TICKET"><td class="rs">1</td><td>Concern is only about data</td><td>Take input - create ticket</td><td><span class="chip c-t3">TICKET</span></td><td class="tr-t3">T3</td></tr>
+</tbody></table></div>
+</div>
+<div class="concern" data-l1="Other Issues" data-ot="BOT" data-k="issue with customer / block customer other_block_customer sp wants to block a specific customer.">
+<div class="chead">
+<div class="ctitle"><span class="cl1">Other Issues</span><h4>Issue with customer / Block customer</h4><code class="ckey">OTHER_BLOCK_CUSTOMER</code></div><span class="vol none">no volume data</span></div>
+<p class="cmean">SP wants to block a specific customer.</p>
+<p class="cchecks"><span>Backend checks</span>SP&#x27;s last 5 orders with customer names</p>
+<div class="tw"><table class="rules"><thead><tr><th>#</th><th>Condition</th><th>Bot outcome</th><th>Type</th><th>Tier</th></tr></thead><tbody>
+<tr data-ot="BOT"><td class="rs">1</td><td>SP selects the order/customer, confirms</td><td>Block customer from backend - fully automated</td><td><span class="chip c-t2">BOT</span></td><td class="tr-t2">T2</td></tr>
+</tbody></table></div>
+<p class="cnote">Recommend an explicit confirm step before executing - it&#x27;s a state change on who can rebook the SP.</p>
+</div>
+<div class="concern" data-l1="Leaves Related" data-ot="SELF-SERVE|TICKET" data-k="all leave types (apply / remove) leave_all all leaves can be marked from the sp app directly.">
+<div class="chead">
+<div class="ctitle"><span class="cl1">Leaves Related</span><h4>All leave types (apply / remove)</h4><code class="ckey">LEAVE_ALL</code></div><span class="vol">2,891</span></div>
+<p class="cmean">All leaves can be marked from the SP app directly.</p>
+<p class="cchecks"><span>Backend checks</span>Leave status; app entry point</p>
+<div class="tw"><table class="rules"><thead><tr><th>#</th><th>Condition</th><th>Bot outcome</th><th>Type</th><th>Tier</th></tr></thead><tbody>
+<tr data-ot="SELF-SERVE"><td class="rs">1</td><td>SP able to use the app</td><td>Guide to app self-serve entry point</td><td><span class="chip c-t0">SELF-SERVE</span></td><td class="tr-t0">T0</td></tr>
+<tr data-ot="TICKET"><td class="rs">2</td><td>SP unable to apply/remove in app (app failure)</td><td>Create ticket - human intervention</td><td><span class="chip c-t3">TICKET</span></td><td class="tr-t3">T3</td></tr>
+</tbody></table></div>
+<p class="cnote">Whole L1 collapses to self-serve + app-failure ticket.</p>
+</div>
+<div class="concern" data-l1="Fine Related" data-ot="DEPRECATED" data-k="all fine sub-concerns fine_all historically a separate dispute flow for leave fines, rule-break fines, escalation fines etc.">
+<div class="chead">
+<div class="ctitle"><span class="cl1">Fine Related</span><h4 class=dead>ALL fine sub-concerns</h4><code class="ckey">FINE_ALL</code></div><span class="vol">12,781</span></div>
+<p class="cmean">Historically a separate dispute flow for leave fines, rule-break fines, escalation fines etc.</p>
+<div class="tw"><table class="rules"><thead><tr><th>#</th><th>Condition</th><th>Bot outcome</th><th>Type</th><th>Tier</th></tr></thead><tbody>
+<tr data-ot="DEPRECATED"><td class="rs">1</td><td>All cases</td><td>No standalone flow - fines link to strike system only; route to Violations</td><td><span class="chip c-mu">DEPRECATED</span></td><td class="tr-mu">OUT</td></tr>
+</tbody></table></div>
+<p class="cnote">Job-related fines will also be stopped. Largest single simplification in the redesign.</p>
+</div>
+</section>
+
+<footer>
+  BOTIn Decision Engine Reference · generated from the L1/L2 concern mapping<br>
+  Tier assignment and the shared-service, signal and cap inventories are derived; everything else is transcribed from the source mapping<br>
+  Companion documents — <a href="https://claude.ai/code/artifact/9b27bd5f-3e8e-407d-b9de-6bb5b0ca2c4f">Engineering Design</a> · <a href="https://claude.ai/code/artifact/1f3e4e0d-2f28-44a5-87a4-75e7eca100a7">Decision Brief</a><br>
+  Contains internal business rules, thresholds and repository detail. Private until deliberately shared.
+</footer>
+
+</div>
+
+<script>
+(function(){
+  var state={l1:'*',ot:'*',q:''};
+  var concerns=[].slice.call(document.querySelectorAll('.concern'));
+  var count=document.getElementById('fcount');
+  function apply(){
+    var shown=0, rules=0;
+    concerns.forEach(function(c){
+      var okL1 = state.l1==='*' || c.dataset.l1===state.l1;
+      var okOT = state.ot==='*' || c.dataset.ot.split('|').indexOf(state.ot)>=0;
+      var okQ  = !state.q || c.dataset.k.indexOf(state.q)>=0;
+      var vis = okL1 && okOT && okQ;
+      c.hidden = !vis;
+      if(vis){
+        shown++;
+        var rows=[].slice.call(c.querySelectorAll('tbody tr'));
+        rows.forEach(function(r){
+          var rv = state.ot==='*' || r.dataset.ot===state.ot;
+          r.hidden = !rv; if(rv) rules++;
+        });
+      }
+    });
+    count.textContent = shown+' concern'+(shown===1?'':'s')+' · '+rules+' rule'+(rules===1?'':'s');
+  }
+  document.querySelectorAll('.fb').forEach(function(b){
+    b.addEventListener('click',function(){
+      var f=b.dataset.f;
+      document.querySelectorAll('.fb[data-f="'+f+'"]').forEach(function(x){x.classList.remove('on');});
+      b.classList.add('on'); state[f]=b.dataset.v; apply();
+    });
+  });
+  var q=document.getElementById('q');
+  q.addEventListener('input',function(){ state.q=q.value.trim().toLowerCase(); apply(); });
+  apply();
+})();
+</script>

@@ -1,0 +1,4 @@
+-------------------------------------------------------------------------------
+Test set: in.yesmadam.botin.console.JourneyTest
+-------------------------------------------------------------------------------
+Tests run: 10, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 1.317 s -- in in.yesmadam.botin.console.JourneyTest

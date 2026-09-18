@@ -1,0 +1,4 @@
+-------------------------------------------------------------------------------
+Test set: in.yesmadam.botin.facts.shared.GeoServiceTest
+-------------------------------------------------------------------------------
+Tests run: 8, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.003 s -- in in.yesmadam.botin.facts.shared.GeoServiceTest

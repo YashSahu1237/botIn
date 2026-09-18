@@ -1,0 +1,327 @@
+<title>BOTIn Mod Tech Design</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#F6F7FA; --surface:#FFFFFF; --panel:#EAEDF2; --panel-border:#D2D8E1;
+    --ink:#1B2029; --ink-soft:#4A5262; --muted:#8891A0; --line:#C6CCD6;
+    --accent:#33415C; --mono-bg:#EDEFF3; --code-ink:#33415C;
+    --font-sans:'IBM Plex Sans',system-ui,-apple-system,sans-serif;
+    --font-mono:'IBM Plex Mono',ui-monospace,SFMono-Regular,Menlo,monospace;
+  }
+  @media (prefers-color-scheme: dark){
+    :root:not([data-theme="light"]){
+      --bg:#12151B; --surface:#171B22; --panel:#1E2430; --panel-border:#2B3240;
+      --ink:#E7EAF0; --ink-soft:#B7BEC9; --muted:#6B7484; --line:#313846;
+      --accent:#9FB2DE; --mono-bg:#1B212B; --code-ink:#B9C6E6;
+    }
+  }
+  :root[data-theme="dark"]{
+    --bg:#12151B; --surface:#171B22; --panel:#1E2430; --panel-border:#2B3240;
+    --ink:#E7EAF0; --ink-soft:#B7BEC9; --muted:#6B7484; --line:#313846;
+    --accent:#9FB2DE; --mono-bg:#1B212B; --code-ink:#B9C6E6;
+  }
+  *{box-sizing:border-box;}
+  body{margin:0; background:var(--bg); color:var(--ink); font-family:var(--font-sans);
+       line-height:1.62; -webkit-font-smoothing:antialiased;}
+  .shell{max-width:1240px; margin:0 auto; padding:44px 26px 90px;
+         display:grid; grid-template-columns:250px 1fr; gap:44px; align-items:start;}
+  @media (max-width:900px){ .shell{grid-template-columns:1fr; gap:26px;} nav.toc{position:static!important;} }
+
+  header.page{grid-column:1/-1; margin-bottom:8px;}
+  .eyebrow{font-family:var(--font-mono); font-size:12px; letter-spacing:.08em;
+           text-transform:uppercase; color:var(--muted); margin:0 0 10px;}
+  header.page h1{font-size:clamp(27px,4vw,36px); font-weight:600; margin:0 0 12px;
+                 letter-spacing:-.015em; text-wrap:balance;}
+  .dek{color:var(--ink-soft); font-size:15.5px; margin:0; max-width:68ch;}
+
+  nav.toc{position:sticky; top:28px; font-size:13.5px;}
+  nav.toc .toc-head{font-family:var(--font-mono); font-size:11px; letter-spacing:.07em;
+                    text-transform:uppercase; color:var(--muted); margin:0 0 12px;
+                    padding-bottom:10px; border-bottom:1px solid var(--line);}
+  nav.toc ol{list-style:none; margin:0; padding:0; display:flex; flex-direction:column; gap:2px;
+             counter-reset:sec;}
+  nav.toc a{display:block; padding:5px 9px; border-radius:5px; text-decoration:none;
+            color:var(--ink-soft); transition:background .12s ease,color .12s ease;}
+  nav.toc a:hover{background:var(--panel); color:var(--ink);}
+  nav.toc a:focus-visible{outline:2px solid var(--accent); outline-offset:1px;}
+
+  main{min-width:0; background:var(--surface); border:1px solid var(--line);
+       border-radius:8px; padding:34px clamp(20px,3.5vw,44px) 48px;}
+  main > :first-child{margin-top:0;}
+
+  main h2{font-size:20.5px; font-weight:600; margin:46px 0 16px; letter-spacing:-.01em;
+          padding-top:24px; border-top:1px solid var(--line); scroll-margin-top:24px;}
+  main h2:first-of-type{margin-top:0; padding-top:0; border-top:none;}
+  main h3{font-size:16px; font-weight:600; margin:28px 0 10px;}
+  main p{margin:0 0 15px; max-width:74ch;}
+  main ul,main ol{margin:0 0 16px; padding-left:22px; max-width:74ch;}
+  main li{margin-bottom:7px;}
+  main strong{font-weight:600;}
+  main em{color:var(--ink-soft);}
+  main hr{border:none; border-top:1px solid var(--line); margin:34px 0;}
+  main a{color:var(--accent);}
+
+  code{font-family:var(--font-mono); background:var(--mono-bg); color:var(--code-ink);
+       padding:1.5px 6px; border-radius:4px; font-size:12.5px;}
+  pre{background:var(--panel); border:1px solid var(--panel-border); border-radius:6px;
+      padding:16px 18px; overflow-x:auto; margin:0 0 18px;}
+  pre code{background:none; padding:0; font-size:12px; line-height:1.5; color:var(--ink-soft);}
+
+  .table-scroll{overflow-x:auto; margin:0 0 20px;}
+  table{width:100%; border-collapse:collapse; font-size:14px;}
+  th,td{text-align:left; padding:9px 13px; border-bottom:1px solid var(--line); vertical-align:top;}
+  th{font-family:var(--font-mono); font-size:11px; text-transform:uppercase;
+     letter-spacing:.05em; color:var(--muted); font-weight:500;}
+  tr:last-child td{border-bottom:none;}
+
+  footer{grid-column:1/-1; margin-top:34px; padding-top:18px; border-top:1px solid var(--line);
+         font-size:13px; color:var(--muted); font-family:var(--font-mono);}
+  footer a{color:var(--accent);}
+</style>
+
+<div class="shell">
+  <header class="page">
+    <p class="eyebrow">Yesmadam · Service Partner Support Automation</p>
+    <h1>BOTIn Mod — End-to-End Tech Design</h1>
+    <p class="dek">v0.2. Java backend, single developer end-to-end. Every box below is a real, named technology or a concrete data flow — no "the bot integrates with the wallet service" without saying how.</p>
+  </header>
+
+  <nav class="toc" aria-label="Contents">
+    <p class="toc-head">Contents</p>
+    <ol>
+<li><a href="#what-changed-this-pass">What changed this pass</a></li>
+<li><a href="#terminology-the-acronyms-used-throughout-this-document">Terminology — the acronyms used throughout this document</a></li>
+<li><a href="#architecture-layer-by-layer">Architecture, layer by layer</a></li>
+<li><a href="#layer-1-client-integration-the-part-youll-finalize-with-frontend">Layer 1 — Client integration (the part you'll finalize with frontend)</a></li>
+<li><a href="#layer-2-sessionticket-state-the-backbone">Layer 2 — Session/Ticket state (the backbone)</a></li>
+<li><a href="#layer-3-orchestration-flowable-embedded">Layer 3 — Orchestration: Flowable, embedded</a></li>
+<li><a href="#layer-4-decision-logic-dmn-for-the-l3-rules-specifically">Layer 4 — Decision logic: DMN, for the L3 rules specifically</a></li>
+<li><a href="#layer-5-the-python-ai-microservice-language-understanding-only-never-the-decision">Layer 5 — The Python AI microservice (language understanding only, never the decision)</a></li>
+<li><a href="#layer-6-action-executors-integration-adapters">Layer 6 — Action Executors / integration adapters</a></li>
+<li><a href="#layer-7-safety-idempotency-reconciliation-kill-switches">Layer 7 — Safety: idempotency, reconciliation, kill switches</a></li>
+<li><a href="#layer-8-agent-connect-t3">Layer 8 — Agent-connect (T3)</a></li>
+<li><a href="#layer-9-observability">Layer 9 — Observability</a></li>
+<li><a href="#layer-10-illustrative-end-to-end-flows-t0-through-t3-client-request-client-response">Layer 10 — Illustrative end-to-end flows, T0 through T3 (client request → client response)</a></li>
+<li><a href="#layer-11-access-control-permissions-placeholder-not-yet-designed">Layer 11 — Access control / permissions (PLACEHOLDER — not yet designed)</a></li>
+<li><a href="#layer-12-llm-guardrails-placeholder-not-yet-designed">Layer 12 — LLM guardrails (PLACEHOLDER — not yet designed)</a></li>
+<li><a href="#layer-13-ai-agents-for-the-wave-4-long-tail-future-explicitly-out-of-scope-for-waves-13">Layer 13 — AI agents for the Wave 4 long tail (FUTURE, explicitly out of scope for Waves 1–3)</a></li>
+<li><a href="#whats-still-genuinely-open-pick-these-up-in-whatever-order-suits-you-none-gate-the-others-thanks-to-the-interface-boundaries-above">What's still genuinely open (pick these up in whatever order suits you — none gate the others thanks to the interface boundaries above)</a></li>
+    </ol>
+  </nav>
+
+  <main>
+<p><em>Java backend, single developer end-to-end. Every box below is a real, named technology or a concrete data flow — no "the bot integrates with the wallet service" without saying how. Treat this as the skeleton we deepen layer by layer, per your "in depth as we go" plan.</em></p>
+<h2 id="what-changed-this-pass">What changed this pass</h2>
+<p>v0.1: confirmed Java backend, picked Flowable for orchestration, pulled real sourced detail from Swiggy's published architecture. v0.2: split the stack explicitly — <strong>Java owns all data access and actions (queries, wallet/leave/hub/booking calls, orchestration); Python owns only the AI-touching surface (the two narrow LLM calls)</strong>, talking to each other over one small REST contract. Diagram and Layer 5 rewritten below to make that boundary concrete rather than leaving "Python does AI" vague.</p>
+<h2 id="terminology-the-acronyms-used-throughout-this-document">Terminology — the acronyms used throughout this document</h2>
+<div class="table-scroll"><table>
+<thead>
+<tr>
+<th>Term</th>
+<th>Full form</th>
+<th>What it is</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>BPMN</strong></td>
+<td><strong>B</strong>usiness <strong>P</strong>rocess <strong>M</strong>odel and <strong>N</strong>otation</td>
+<td>An OMG specification for describing a <em>process</em> — the sequence of steps, branches, waits and hand-offs. Renders as a flowchart; the XML is directly executable by an engine. Layer 3.</td>
+</tr>
+<tr>
+<td><strong>DMN</strong></td>
+<td><strong>D</strong>ecision <strong>M</strong>odel and <strong>N</strong>otation</td>
+<td>An OMG specification for describing a <em>decision</em> — a table of input conditions mapped to outputs. Layer 4.</td>
+</tr>
+<tr>
+<td><strong>CMMN</strong></td>
+<td><strong>C</strong>ase <strong>M</strong>anagement <strong>M</strong>odel and <strong>N</strong>otation</td>
+<td>The third OMG sibling, for unordered ad-hoc work. <strong>Not used in this design.</strong></td>
+</tr>
+<tr>
+<td><strong>OMG</strong></td>
+<td><strong>O</strong>bject <strong>M</strong>anagement <strong>G</strong>roup</td>
+<td>The standards body behind all three — and behind UML.</td>
+</tr>
+</tbody>
+</table></div>
+<p>The naming parallel between BPMN and DMN is deliberate: one notates <strong>processes</strong>, the other notates <strong>decisions</strong>. Both are <em>specifications</em>, not software. <strong>Flowable</strong> is the <em>product</em> that executes them, and it ships a separate engine for each — which is why Layer 3 and Layer 4 need only one dependency between them.</p>
+<p>Other acronyms in use: <strong>SP</strong> (Service Partner), <strong>CTI</strong> (Computer Telephony Integration — the screen-pop link between a phone call and an agent's screen, Layer 8), <strong>LLM</strong> (Large Language Model, Layer 5), <strong>RAG</strong> (Retrieval-Augmented Generation — not used in this design, see Layer 13).</p>
+<h2 id="architecture-layer-by-layer">Architecture, layer by layer</h2>
+<pre><code>[SP mobile app]
+      │  (1) client integration — server-driven conversation API
+      ▼
+[Java API layer — Spring Boot REST controllers]
+      │  (2) session/state read-write
+      ▼
+[Help Session / Ticket state — Postgres/MySQL, whatever Yesmadam already runs]
+      │  (3) drives —
+      ▼
+[Flowable engine, embedded in the same Spring Boot app]
+      │  (4) executes BPMN process per L2 concern
+      │
+      ├─(4a) free-text node (e.g. fine-dispute reason) hit? — synchronous REST call —
+      │        ▼
+      │   [Python AI microservice — FastAPI, its own small deployable]
+      │        — wraps the LLM API call, returns {category, confidence, extractedReason}
+      │        — Java never calls an LLM directly; Python never touches the DB or takes actions
+      │        ▼
+      │   (result feeds into the DMN table as an input column, alongside claim frequency etc.)
+      │
+      │  (4b) DMN table evaluates tier/decision logic (Java-side, inside Flowable)
+      ▼
+[Action Executor layer — Java service interfaces, one per capability]
+      │  (5) calls —
+      ▼
+[Internal systems: booking/scheduling, wallet, leave, strike, hub — via empapi/app_server or new endpoints]
+      │
+      ├─(6a) if T0–T2 resolved → CSAT prompt → close
+      └─(6b) if T3 trigger fires → 
+              [Exotel/Ozonetel outbound call API] + [CTI context payload to agent screen]
+                    │
+                    ▼
+              [Human agent (Agent 2)] → resolves → CSAT → close
+
+Cross-cutting, touching every layer:
+  [Idempotency + Audit Log] — every write to an internal system
+  [Reconciliation job] — scheduled, checks ledger vs action log
+  [Feature flags / kill switches] — Togglz (Java-native, free, self-hosted)
+  [Observability] — Micrometer + OpenTelemetry → Prometheus/Grafana
+</code></pre>
+<h2 id="layer-1-client-integration-the-part-youll-finalize-with-frontend">Layer 1 — Client integration (the part you'll finalize with frontend)</h2>
+<p>The pattern, regardless of exact JSON shape you settle on: this is a <strong>server-driven conversational state machine</strong>, not a generic chat API. The client never decides what to show next — it renders whatever the backend's current session state says (a menu of L1 options, an order dropdown, a free-text box for a dispute reason, a resolution message, a CSAT prompt). Concretely, that means at minimum three endpoints: one to start a Help session (<code>POST /help/sessions</code>), one to submit the SP's input for the current step (<code>POST /help/sessions/{id}/input</code>), and one to fetch current state (<code>GET /help/sessions/{id}</code>) — useful for reconnect-after-app-restart. Each response carries a <code>nextStep</code> descriptor (type: menu / dropdown / text / message / csat, plus its options/content) so the client is a thin renderer, not a second copy of the flow logic. This is deliberately left light here since you and frontend own the exact contract — but the "backend owns 100% of the flow logic, client only renders" boundary is the actual design decision worth locking in early, since the alternative (client encodes any flow logic) means the flow lives in two places and drifts.</p>
+<p><strong>Entry with no menu selection at all.</strong> The SP can open Help and type free text as the very first message instead of tapping an L1 option — e.g. "mera aaj strike laga hai usko hatao." That <code>POST /help/sessions</code> call arrives with <code>freeText</code> set and both <code>l1Concern</code>/<code>l2Concern</code> null. Java cannot start a Flowable process yet, because a process is picked by name (<code>startProcessInstanceByKey("&lt;l2-concern&gt;", ...)</code>) and there's no category to pick from. This is not covered by Layer 5's <code>/classify</code> service — that endpoint is only ever given a concern it already knows and asked to extract a reason <em>within</em> it. Unconstrained entry text needs a separate, broader step first — see the new Layer 5b below — before anything else in this document applies. This path exists for real (it's the industry-standard "free text as fallback, not just the front door" pattern), so it isn't an edge case to defer; it's a distinct entry branch every session has to check for.</p>
+<h2 id="layer-2-sessionticket-state-the-backbone">Layer 2 — Session/Ticket state (the backbone)</h2>
+<p>Two distinct entities, not one, because a Help interaction exists before a ticket does (per the BRD's "No gate — T0" case):</p>
+<p><strong>HelpSession</strong> — created the instant the SP taps Help. Fields: <code>id</code>, <code>spId</code>, <code>currentStep</code>, <code>l1Concern</code>, <code>l2Concern</code>, <code>selectedBookingId</code> (nullable), <code>startedAt</code>. Lives and dies within one interaction; if it resolves at T0 (pure deflect), no Ticket is ever created — this is Gate 1 from the BRD, made literal: a Ticket row only gets inserted the moment an L2 concern is selected that needs an answer or action.</p>
+<p><strong>Ticket</strong> — created at Gate 1. Fields: <code>id</code>, <code>helpSessionId</code>, <code>l1</code>, <code>l2</code>, <code>l3</code> (once you've written the L3 rules), <code>tier</code> (T0–T3), <code>bookingId</code>, <code>status</code>, <code>agentOwner</code> (BOT or a human agent id), <code>createdAt</code>, <code>closedAt</code>, <code>csatResult</code>.</p>
+<p><strong>TicketAction</strong> — one row per actual backend action attempted (a wallet credit, a leave mark). Fields: <code>id</code>, <code>ticketId</code>, <code>actionType</code>, <code>idempotencyKey</code> (unique constraint — this is your dedupe-on-retry guarantee), <code>status</code> (pending/succeeded/failed), <code>requestPayload</code>, <code>responsePayload</code>, <code>attemptedAt</code>. This table is also your audit log and your reconciliation job's source of truth — it doesn't need to be a separate system.</p>
+<p><strong>ConversationMessage</strong> — one row per turn, written continuously by the Java API layer on every <code>POST /help/sessions/{id}/input</code> and every response sent back, regardless of tier and regardless of whether the session ever escalates. Fields: <code>id</code>, <code>helpSessionId</code>, <code>ticketId</code> (nullable until Gate 1), <code>sender</code> (<code>SP</code>/<code>BOT</code>), <code>content</code>, <code>stepType</code>, <code>timestamp</code>. This is the raw transcript — kept, but deliberately <em>not</em> the first thing an agent sees (see Layer 8).</p>
+<p><strong>EscalationContext</strong> — one row per ticket that actually escalates, written once by the "Assemble Escalation Context" step at the moment a T3 trigger fires (Layer 10). Fields: <code>ticketId</code>, <code>category</code>, <code>confidenceScore</code>, <code>extractedReason</code> (the plain-language reason Layer 5/5b already pulled out of the SP's free text — this is the "gist," already computed, not something built fresh for the agent), <code>medalBand</code>, <code>recentTicketHistory</code> (a short rollup reusing the same claim-frequency query Layer 4's DMN table already runs — e.g. "3 similar tickets in 30 days, 2 bot-resolved, 1 escalated"), <code>priorTicketActions</code>, <code>triggerReason</code> (which of the three T3 entries fired), <code>createdAt</code>. This is what the agent's screen loads first — computed facts, not a transcript.</p>
+<h2 id="layer-3-orchestration-flowable-embedded">Layer 3 — Orchestration: Flowable, embedded</h2>
+<p>Given Java + solo developer + wanting to avoid new paid infrastructure, <strong>Flowable embedded directly in your existing Spring Boot service</strong> is the concrete recommendation, not just "a BPMN engine" in the abstract. Concretely: Flowable ships as a Maven dependency (<code>flowable-spring-boot-starter</code>), runs inside your existing app's JVM, and persists its own process state into the same database you already run — no separate service to deploy, no new infrastructure, no license cost. You author each L2 concern as an actual BPMN diagram (using Flowable's free web modeler or the desktop Eclipse-based one) instead of hand-writing a state machine in Java — which is the direct answer to "every connection I need to understand": the diagram <em>is</em> the logic, and you can point at it and explain exactly what happens at each box.</p>
+<p>Concretely, per L2 concern: one BPMN process definition, with Service Tasks calling your Action Executor beans (Flowable calls a Java class you write — a <code>JavaDelegate</code> — at each Service Task node), Gateways implementing the tier/trigger branching, and a User Task (assigned to a queue, e.g. <code>agent-2-standard</code> or <code>agent-2-priority</code> per medal band) for the T3 handoff — Flowable gives you task-queue semantics natively, so "route to Agent 2" is a real primitive, not something you build by hand.</p>
+<h2 id="layer-4-decision-logic-dmn-for-the-l3-rules-specifically">Layer 4 — Decision logic: DMN, for the L3 rules specifically</h2>
+<p>The L3 "genuine case Yes/No" rules (the gap we identified in your Rough tab) become actual DMN decision tables — also free, also embedded in Flowable, also editable via a web modeler. Concretely: input columns (concern reason, claim frequency in last 30 days, order value), output column (auto-approve / needs-review / auto-deny). This is where you'd later graft in the claim-history scoring idea from the industry study, as an additional input column computed by a small Java service before the DMN table is evaluated — not as a wholesale LLM decision.</p>
+<h2 id="layer-5-the-python-ai-microservice-language-understanding-only-never-the-decision">Layer 5 — The Python AI microservice (language understanding only, never the decision)</h2>
+<p>Grounded in Swiggy's own published approach now, not just inference: their system uses <strong>tiered model complexity</strong> — cheap/fast handling for simple cases, larger reasoning models reserved for genuinely hard ones — and explicitly moved away from letting one LLM make routing/assignment decisions end-to-end, because that only hit 90% accuracy; they got to higher accuracy by combining <strong>rule-based routing with a small, dedicated model for one narrow decision</strong>. Your architecture should draw the same boundary, made concrete: Python's job is strictly <em>understanding language</em>, never <em>deciding the outcome</em>. The actual business decision (auto-approve / needs-review / auto-deny) stays in Java's DMN table, which combines Python's output with other business inputs (claim frequency, order value) that Java computes from its own database. That split matters because the business rule is something ops will want to tune over time (via the DMN table), while the language-understanding model is something you'll want to swap or upgrade independently — coupling them would make either change risk breaking the other.</p>
+<p><strong>Concretely, the service:</strong> a small FastAPI app (genuinely small — a wrapper around one LLM API call plus a Pydantic schema for the response, not an ML infrastructure project), deployed as its own lightweight container — fits your existing Jenkins + Argo CD/EKS pipeline as one more small deployment, not a new platform. It's called from three places: the free-text fine-dispute-reason step, the low-confidence/fallback check (Trigger C) — both via <code>/classify</code> — and the entry-point intent router described next, via a second endpoint.</p>
+<h3 id="layer-5b-entry-point-intent-routing-classify-intent-a-distinct-broader-job-from-classify">Layer 5b — Entry-point intent routing (<code>/classify-intent</code>): a distinct, broader job from <code>/classify</code></h3>
+<p><code>/classify</code> and <code>/classify-intent</code> are not the same task wearing two names — keep them mentally separate. <code>/classify</code> already knows the L2 concern (Java passes it in) and only extracts a reason <em>within</em> that one concern's fixed category set — e.g. is this fine dispute "health issue," "family emergency," or "other." <code>/classify-intent</code> gets called when Java has no concern at all yet — raw free text typed before any menu selection — and has to match it against your <em>entire</em> L1/L2 taxonomy (everything in the SOP tab), which is a materially bigger classification surface than any single concern's reason set. Treat it as its own endpoint on the same FastAPI app, not a mode flag on <code>/classify</code>, so each can be tuned (prompt, model, evaluation) independently as the taxonomy grows.</p>
+<p><strong>The contract:</strong></p>
+<pre><code>POST /classify-intent
+Request:  { &quot;sessionId&quot;: &quot;...&quot;, &quot;freeText&quot;: &quot;mera aaj strike laga hai usko hatao&quot; }
+Response: { &quot;l1Concern&quot;: &quot;Strike&quot;, &quot;l2Concern&quot;: &quot;Strike appeal&quot;, &quot;confidenceScore&quot;: 0.95 }
+</code></pre>
+<p><strong>What Java does with the result:</strong> on confidence above threshold, Java back-fills the <code>HelpSession</code>'s <code>l1Concern</code>/<code>l2Concern</code> and starts the matching Flowable process exactly as if the SP had picked it from a menu — everything downstream (Layers 3–10) is identical from that point on, with one addition: whatever <code>EscalationContext</code> eventually gets built for this ticket should also carry the original free text, the matched category, and the confidence score, so a reader (agent or engineer) can see <em>how</em> the system arrived at that category, not just where it ended up.</p>
+<p><strong>On low confidence: an open policy choice, not yet decided.</strong> Two honest options exist — fall back to showing the L1 menu and asking the SP to pick manually, or route straight to a T3 human handoff tagged "unclassified free text." Either is workable; which one is a product call, not an architecture one, and nothing else in this design depends on the answer.</p>
+<p><strong>Implementation note, not a requirement:</strong> a cheap keyword/regex fast-path (e.g. "strike" → <code>Strike appeal</code> directly) before ever calling the LLM is a legitimate optimization here, in the same spirit as Swiggy's tiered-model-complexity pattern already cited in this layer — simple, unambiguous phrases don't need a model call at all. Worth doing once volume data shows which phrasings are common; not a blocker to building the LLM path first.</p>
+<p><strong>The contract, concretely — not "Python does AI":</strong></p>
+<pre><code>POST /classify
+Request:  { &quot;ticketId&quot;: &quot;...&quot;, &quot;l2Concern&quot;: &quot;Leaves fine&quot;, &quot;freeText&quot;: &quot;...&quot; }
+Response: { &quot;category&quot;: &quot;health_issue&quot;, &quot;confidenceScore&quot;: 0.87, &quot;extractedReason&quot;: &quot;...&quot; }
+</code></pre>
+<p>Java's <code>JavaDelegate</code> for that Service Task makes this call with a short timeout (e.g. 3s) and, on timeout, non-2xx, or confidence below your threshold, sets a process variable that routes the Gateway straight to the Agent-2 User Task — Trigger C, made literal, rather than blocking the ticket on a flaky external call. Worth wrapping the call in Resilience4j's circuit breaker (a standard Java library, works well with Spring) so a struggling Python service degrades to "route to human" automatically rather than piling up timeouts.</p>
+<p><strong>Why this split earns its keep</strong>, beyond "Python is good at AI": it means the Python service has zero database credentials and zero ability to take an action — it can misclassify, but it can never wrongly credit a wallet, because it structurally can't reach the wallet. That's a real safety property, not just a tidy architecture diagram.</p>
+<h2 id="layer-6-action-executors-integration-adapters">Layer 6 — Action Executors / integration adapters</h2>
+<p>One Java interface per capability, e.g. <code>WalletActionService.creditTransport(spId, orderId, amount, idempotencyKey)</code>, <code>LeaveActionService.markLeave(...)</code>, <code>HubActionService.addHub(...)</code>. Each interface has exactly one implementation for now, which either calls an existing REST endpoint on <code>empapi</code>/<code>app_server</code> (if it exists) or the direct service-layer call if you're in the same codebase — the interface boundary means this decision is invisible to everything above it. Whether those endpoints already exist is a real open question (audit <code>empapi</code>/<code>app_server</code>/<code>admin</code> for it), but it's not gating anything else in this design — the interface abstraction is exactly what lets every other layer be designed independently of the answer. Pick this up whenever it's next in your own sequence.</p>
+<h2 id="layer-7-safety-idempotency-reconciliation-kill-switches">Layer 7 — Safety: idempotency, reconciliation, kill switches</h2>
+<p>Idempotency: the unique constraint on <code>TicketAction.idempotencyKey</code> already described — generate it as a hash of (ticketId, actionType), so a retried call is a no-op, not a double-credit. Reconciliation: a Spring <code>@Scheduled</code> job, running daily, that sums <code>TicketAction</code> credits per SP against the actual wallet ledger and flags mismatches — this can be a plain cron-annotated method, no new infrastructure. Kill switches: <strong>Togglz</strong> — a Java-native, Spring-integrated, free feature-flag library, purpose-built for exactly "flip this flow off instantly without a redeploy." One flag per L2 concern going live is the right granularity.</p>
+<h2 id="layer-8-agent-connect-t3">Layer 8 — Agent-connect (T3)</h2>
+<p>When a Gateway routes to the User Task for Agent 2: a Java call to Exotel's (or Ozonetel's) outbound-call REST API, triggering the call, passing only the <code>ticketId</code> as call metadata — not the context itself, just enough for the screen-pop.</p>
+<p><strong>What "the whole context" actually means, made concrete — two calls, not one, and not equal weight:</strong></p>
+<ol>
+<li><strong><code>GET /tickets/{id}/escalation-context</code></strong> — the agent's screen calls this first, before the call even connects. Returns the <code>EscalationContext</code> row (Layer 2): category, confidence, the already-extracted plain-language reason, medal band, recent-ticket-history rollup, prior actions, and which trigger fired. This is computed facts, not a chat log — matching the industry pattern of showing an agent what happened, not a transcript to re-read.</li>
+<li><strong><code>GET /tickets/{id}/conversation</code></strong> — a second, separate endpoint, called lazily (behind a "view full conversation" control on the agent's screen, not auto-loaded). Java queries <code>ConversationMessage</code> (Layer 2) by <code>ticketId</code>/<code>helpSessionId</code>, ordered by timestamp, and returns the full turn-by-turn SP↔bot exchange. This exists for the cases where the structured summary genuinely isn't enough — but it's secondary by design, not the primary view.</li>
+</ol>
+<p>Deliberately not built here: an LLM call to generate a prose summary of the conversation for the agent. <code>EscalationContext.extractedReason</code> already <em>is</em> the summary — structured, not prose — reused from the classification step that already ran. Adding a third LLM touchpoint just to re-summarize what's already been extracted would be scope creep, not a missing piece; revisit only if real agent usage shows the structured view genuinely isn't enough.</p>
+<p>Whether the destination for either endpoint is your existing ticketing/CRM tool (if it has a way to embed this) or a small purpose-built screen is still open — worth confirming what agents currently look at today before deciding. That choice doesn't change either endpoint's contract above.</p>
+<h2 id="layer-9-observability">Layer 9 — Observability</h2>
+<p>Micrometer (Java's standard metrics facade, works natively with Spring Boot) instrumented at each layer, exported via the OpenTelemetry Java agent, into Prometheus + Grafana if self-hosting (free), or whatever Yesmadam's EKS cluster already runs for <code>app_server</code>/<code>admin</code> (worth checking — you may already have this for free). Dashboard the same numbers the BRD itself defines as KPIs: automation rate, agent-connect rate, reconciliation accuracy, CSAT — plus, borrowing directly from Swiggy's real pattern, explicit alert thresholds (e.g., alert if agent-connect rate exceeds 20% or reconciliation mismatch &gt; 0) rather than a dashboard nobody's watching.</p>
+<h2 id="layer-10-illustrative-end-to-end-flows-t0-through-t3-client-request-client-response">Layer 10 — Illustrative end-to-end flows, T0 through T3 (client request → client response)</h2>
+<p>Every step below names one block, and says what it <strong>receives</strong>, what it <strong>does</strong>, and what it <strong>sends</strong> onward — so every arrow in the architecture diagram has a real request/response behind it, not just a label.</p>
+<h3 id="t0-how-do-i-update-my-bank-details-pure-deflect">T0 — "How do I update my bank details" (pure deflect)</h3>
+<ol>
+<li><strong>SP App</strong> — Receives: n/a (start). Does: SP selects a fixed menu option. Sends: <code>POST /help/sessions/{id}/input {selectedOption}</code> → Java API layer.</li>
+<li><strong>Java API layer</strong> — Receives: that request. Does: creates a <code>HelpSession</code> only (no <code>Ticket</code>); matches the option against a static canned-answer list — no Flowable, no DMN, no Python, since there's no branching to model. Sends: composes the response itself.</li>
+<li><strong>Java API layer → SP App</strong> — Sends: <code>{nextStep: {type: "message", content, ctaLink}}</code>.</li>
+<li><strong>SP App</strong> — Receives/renders it. Result: session closes; no <code>Ticket</code>, no <code>TicketAction</code>, nothing for reconciliation to see.</li>
+</ol>
+<h3 id="t1-why-was-my-rule-break-fine-deducted-bot-answers-ticket-exists-nothing-changed">T1 — "Why was my rule-break fine deducted" (bot answers, ticket exists, nothing changed)</h3>
+<ol>
+<li><strong>SP App</strong> — Selects "Rule-break fine" → "Why was this deducted." Sends <code>{l2Concern, subIntent: "explain_reason"}</code> → Java.</li>
+<li><strong>Java API layer</strong> — Receives that. Creates <code>HelpSession</code>. Recognizes this needs a real per-SP decision, not a canned answer. Sends: <code>Flowable.startProcessInstanceByKey("fine-query-informational", {l2Concern, spId, fineId})</code>.</li>
+<li><strong>Flowable</strong> — Receives the start call. Begins the BPMN diagram; first node is a Business Rule Task. Sends: calls the DMN table with <code>{l2Concern, requestType: "informational"}</code>.</li>
+<li><strong>DMN table</strong> — Receives those inputs. Matches its rule row → <code>{tier: T1, action: explain-reason}</code>. Sends: that result back to Flowable.</li>
+<li><strong>Flowable</strong> — Receives it. T1 means "needs a real answer" — this is Gate 1, so it calls back into Java to insert the <code>Ticket</code> row. Moves to a Service Task. Sends: invokes <code>JavaDelegate FineReasonLookupDelegate.execute(fineId)</code>.</li>
+<li><strong>Java (JavaDelegate)</strong> — Receives <code>fineId</code>. Queries the fines table for the reason code. Sends: returns it to Flowable.</li>
+<li><strong>Flowable</strong> — Receives the reason code. Fills a fixed message template (plain templating, not an LLM — fixed reason-code set). Marks <code>Ticket.status = Bot Resolved</code>. Ends the process. Sends: the message up through Java's API layer.</li>
+<li><strong>SP App</strong> — Receives/renders it. Result: <code>Ticket</code> exists for reporting; no <code>TicketAction</code> — nothing was changed, only explained.</li>
+</ol>
+<h3 id="t2-i-was-sick-yesterday-please-waive-my-leave-fine-bot-takes-a-real-action">T2 — "I was sick yesterday, please waive my leave fine" (bot takes a real action)</h3>
+<ol>
+<li><strong>SP App</strong> — Selects "Leaves fine," types free text (free text specifically because the reason can't come from a fixed menu). Sends <code>{l2Concern, freeText}</code> → Java.</li>
+<li><strong>Java API layer</strong> — Creates/updates <code>HelpSession</code>. Sends: <code>Flowable.startProcessInstanceByKey("leave-fine-dispute", {spId, l2Concern, freeText})</code>.</li>
+<li><strong>Flowable</strong> — Receives the start call. First node is a Service Task built for this free-text step. Sends: <code>POST /classify {ticketId, l2Concern, freeText}</code> to Python, behind a Resilience4j circuit breaker with a 3s timeout (both configured Java-side).</li>
+<li><strong>Python (<code>/classify</code>)</strong> — Receives that request. Builds a prompt, calls the LLM API, parses into a fixed schema. Sends: <code>{category: health_issue, confidenceScore: 0.91, extractedReason: "sick leave"}</code> back to Flowable.</li>
+<li><strong>Flowable</strong> — Receives the classification. Next node is a Business Rule Task. Sends: calls DMN with <code>{category, confidenceScore, claimFrequencyLast30Days, medalBand}</code> — the last two fetched by Java from the DB just before this call.</li>
+<li><strong>DMN table</strong> — Receives those four inputs. High confidence, recognized category, low claim frequency → matches "auto-approve." Sends: <code>{tier: T2, action: waive_fine}</code> back to Flowable.</li>
+<li><strong>Flowable</strong> — Receives that. Confirms the <code>Ticket</code> with <code>tier=T2</code>. Before acting, next Service Task checks the kill switch. Sends: calls <code>Togglz.isActive("leave-fine-auto-waive")</code> — an in-process call, no network hop.</li>
+<li><strong>Togglz</strong> — Receives that check. Looks up the flag. Sends: returns <code>true</code> to Flowable.</li>
+<li><strong>Flowable</strong> — Receives <code>true</code>. Proceeds to the real action. Sends: calls <code>FineActionService.waiveLeaveFine(spId, fineId, idempotencyKey)</code>.</li>
+<li><strong>Java (Action Executor)</strong> — Receives that call. In strict order: writes a <code>TicketAction</code> row (<code>ATTEMPTED</code> + idempotency key) → calls the downstream fines system → flips the row to <code>SUCCEEDED</code>. Sends: returns success to Flowable.</li>
+<li><strong>Flowable</strong> — Receives success. Marks <code>Ticket.status = Bot Resolved/T2</code>. Ends the process. Sends: confirmation message up through Java's API layer.</li>
+<li><strong>SP App</strong> — Receives/renders "Your leave fine has been waived." Result: tonight's reconciliation job checks this <code>TicketAction</code> against the real ledger; every step 3–11 left an OTel trace span.</li>
+</ol>
+<h3 id="t3-agent-connect-three-entries-one-shared-path-after">T3 — agent connect (three entries, one shared path after)</h3>
+<p><strong>Entry A (Trigger C, low confidence):</strong> identical to T2 steps 1–5, except Python returns <code>confidenceScore: 0.42</code> in step 4. In step 6, DMN's rows don't match "auto-approve" at that confidence — a fallback row matches instead, returning <code>{tier: T3, action: route-to-agent}</code>. No Action Executor is ever called.</p>
+<p><strong>Entry B (Trigger A, dissatisfaction):</strong> T2's full flow already completed. SP taps an explicit "talk to a human" button (assumed a UI action, not inferred from free text — still open). Sends <code>{action: request_human}</code> → Java, which signals the ticket's Flowable process into the shared path below.</p>
+<p><strong>Entry C (unconstrained free text at Help entry, no menu selection — e.g. "mera aaj strike laga hai usko hatao"):</strong>
+1. <strong>SP App</strong> — Does: types free text as the first message, no L1/L2 selected. Sends: <code>POST /help/sessions {freeText}</code> → Java.
+2. <strong>Java API layer</strong> — Receives that. Creates <code>HelpSession</code> with <code>l1Concern</code>/<code>l2Concern</code> null — can't pick a Flowable process by name yet. Sends: <code>POST /classify-intent {sessionId, freeText}</code> → Python (see Layer 5b).
+3. <strong>Python (<code>/classify-intent</code>)</strong> — Receives raw text, no category hint. Matches against the full L1/L2 taxonomy. Sends: <code>{l1Concern: "Strike", l2Concern: "Strike appeal", confidenceScore: 0.95}</code> back to Java.
+4. <strong>Java</strong> — Receives that. Confidence is above threshold, so it back-fills the <code>HelpSession</code>'s category fields and proceeds as if the SP had picked this from a menu. Sends: <code>Flowable.startProcessInstanceByKey("strike-appeal", {spId, l2Concern: "Strike appeal"})</code>.
+5. <strong>Flowable</strong> — Receives the start call. Strike is Wave 4 — human-owned by design, not automated — so this process has no DMN auto-approve/deny branch at all; its one meaningful node is a Gateway that routes straight into the shared T3 path below. Sends: same as steps A–C below, except the <code>EscalationContext</code> payload also carries the original free text, the matched category, and the confidence score, so the agent (or anyone reading this later) can see how the system arrived at "Strike," not just that it did.</p>
+<p>(On low confidence at step 3 instead: Java either falls back to showing the L1 menu and asks the SP to pick manually, or routes straight into the shared T3 path tagged "unclassified free text" — see Layer 5b for why this choice isn't locked yet.)</p>
+<p>From any of the three entries:
+- <strong>A. Flowable</strong> — Receives the <code>tier=T3</code> decision (or signal). Routes to a Service Task. Sends: calls <code>EscalationContextBuilder.build(ticketId)</code>.
+- <strong>B. Java (EscalationContextBuilder)</strong> — Receives <code>ticketId</code>. Queries the <code>Ticket</code>, classify result if any (including <code>extractedReason</code>), medal band, prior <code>TicketAction</code>s, and a recent-history rollup (reusing Layer 4's claim-frequency query); assembles one <code>EscalationContext</code> row (schema in Layer 2). Sends: writes it, keyed by <code>ticketId</code> — this single write is the "context save." The full <code>ConversationMessage</code> transcript is <em>not</em> re-packaged here — it already exists continuously (Layer 2) and the agent's screen fetches it separately, only if asked for (Layer 8).
+- <strong>C. Flowable</strong> — Receives confirmation it saved. Next Service Task calls telephony. Sends: <code>POST</code> to Exotel/Ozonetel with <code>{ticketId, spPhoneNumber}</code> — just enough to route the call, not the context itself.
+- <strong>D. Exotel/Ozonetel</strong> — Receives that request. Places/queues the call; on connect, passes <code>ticketId</code> as call metadata (the screen-pop). Sends: nothing back into your system yet.
+- <strong>E. Flowable</strong> — Reaches a User Task on an agent queue (e.g. <code>agent-2-priority</code> for a Titanium SP) and waits.
+- <strong>F. Agent's screen (existing admin panel)</strong> — Receives <code>ticketId</code> from the screen-pop. Sends: <code>GET /tickets/{id}/escalation-context</code> → Java.
+- <strong>G. Java API layer</strong> — Receives that GET. Looks up the row from step B. Sends: returns it as JSON.
+- <strong>H. Agent's screen</strong> — Receives the JSON. Renders it as a case summary. Result: agent resolves the issue in the existing admin system, outside this flow.
+- <strong>I. Existing admin system → Flowable</strong> — Some mechanism (webhook or polling job — still open, Layer 8) tells the waiting User Task the ticket closed. Sends: completes the User Task.
+- <strong>J. Flowable</strong> — Marks <code>Ticket.status = Agent Resolved</code>, ends the process. SP App's "connecting you..." state updates to "resolved."</p>
+<h2 id="layer-11-access-control-permissions-placeholder-not-yet-designed">Layer 11 — Access control / permissions (PLACEHOLDER — not yet designed)</h2>
+<p><strong>Why this exists, concretely, not abstractly:</strong> Layer 8's two agent-facing endpoints (<code>GET /tickets/{id}/escalation-context</code> and <code>GET /tickets/{id}/conversation</code>) return an SP's health reason (e.g. <code>extractedReason: "sick leave"</code>), financial actions, and full chat history. Nothing in the design today says which agents can call these for which tickets, or logs who did. Sourced from re-reading Swiggy's own architecture (their "AI Gateway" centralizes permissions and rate limits for anything touching the agent) — this is the one piece of their stack we have no equivalent of at all.</p>
+<p><strong>Not yet decided:</strong> whether this rides on an existing auth system (if the admin panel already has agent logins/roles) or needs its own; whether access should be scoped per-queue (e.g. an agent only sees tickets in their assigned medal-band queue) or open to any logged-in agent; whether viewing <code>EscalationContext</code>/<code>ConversationMessage</code> needs its own audit log distinct from <code>TicketAction</code>'s. Pick this up whenever it's next in your sequence — flagged here so it's not silently missing from the doc, not because it blocks anything above it.</p>
+<h2 id="layer-12-llm-guardrails-placeholder-not-yet-designed">Layer 12 — LLM guardrails (PLACEHOLDER — not yet designed)</h2>
+<p><strong>Why this exists, concretely:</strong> Python's response to <code>/classify</code>/<code>/classify-intent</code> flows straight into Java's DMN table today with no validation — nothing checks that <code>confidenceScore</code> is actually between 0 and 1, that <code>category</code> is one of the values Java's DMN table actually recognizes, or that <code>extractedReason</code> isn't empty or garbled. Going the other direction, an SP's raw free text flows straight into an LLM prompt with no defense against text specifically crafted to manipulate the classifier's output. Since <code>/classify</code>'s result can trigger real money movement in T2 (Layer 3's walk-through), this is a real risk surface, not a theoretical one. Sourced from the same re-read of Swiggy's architecture — their gateway explicitly "blocks unsafe, non-compliant, or harmful data at model endpoints."</p>
+<p><strong>Not yet decided:</strong> where this validation lives (a thin wrapper in Java right after the <code>/classify</code> call, before the result reaches Flowable's DMN task, is the natural place given Python has no DB access to enforce anything itself); whether "unrecognized category" should hard-fail to T3 (safe default) or retry once; whether free-text input needs any pre-filtering before it reaches the LLM at all, or whether a strict output-side check is sufficient given the narrow, closed-set nature of both endpoints.</p>
+<p><strong>Related, smaller, likely folds into Layer 9 rather than needing its own layer:</strong> LLM-specific evaluation — whether <code>/classify</code>'s real-world accuracy is holding steady or drifting over time, which is a different question from Layer 9's uptime/latency observability or the BRD's business KPIs. Even a simple periodic sample-and-manually-review process would close this; not urgent enough to be its own layer at this scale.</p>
+<h2 id="layer-13-ai-agents-for-the-wave-4-long-tail-future-explicitly-out-of-scope-for-waves-13">Layer 13 — AI agents for the Wave 4 long tail (FUTURE, explicitly out of scope for Waves 1–3)</h2>
+<p><strong>What an AI agent is, and why it's different from everything else in this document:</strong> every LLM call in this design so far (<code>/classify</code>, <code>/classify-intent</code>) is single-shot — one input, one call, one structured output, no ability to act. An AI agent is different in kind, not degree: it runs a loop — observe, decide on an action (often a tool call — check an order, look up a policy, issue a refund), act, observe the result, decide again — until it judges the task done. Uber's COTA (agent-assist, a human still decides) versus Intercom Fin (a true autonomous agent that decides and acts) is the same distinction in an already-cited real-world pair.</p>
+<p><strong>Why this is the right shape specifically for Wave 4's "Other any issue" bucket, and nowhere else in this design:</strong> that bucket is open-ended by definition — no fixed menu, no fixed BPMN diagram, no closed category set for a classifier to sort into. That's the same gap that made RAG a plausible future fit for this exact bucket (noted when RAG was first discussed) — an agent with retrieval (RAG, for grounding in real policy/SOP text) and a small set of safe tools is the natural real-world answer once you get there. It is not proposed for T0–T3: Swiggy's own sourced result (already driving the Java/Python split) is that one model deciding routing/action end-to-end capped out lower than hybrid rule-based routing plus a narrow model for one decision — an autonomous agent deciding tier and action itself is exactly the pattern that result argues against, and Python having zero ability to take actions (Layer 5) is a safety property a true agent would need to break by definition. For flows that move real fines and wallet credits, "DMN rule 4 fired" is a defensible answer to an SP dispute; "the agent decided" is not.</p>
+<p><strong>Not yet decided, and not urgent:</strong> nothing here is designed — this is a placeholder marking where an agent (and RAG) would go if Wave 4 is ever tackled, not a component to build now. When you do reach it: what tools it would be safely allowed to call (read-only lookups are far safer than anything action-shaped), what document corpus RAG would retrieve from, and whether it still reports into the same <code>Ticket</code>/<code>TicketAction</code> model or needs its own.</p>
+<h2 id="whats-still-genuinely-open-pick-these-up-in-whatever-order-suits-you-none-gate-the-others-thanks-to-the-interface-boundaries-above">What's still genuinely open (pick these up in whatever order suits you — none gate the others thanks to the interface boundaries above)</h2>
+<ol>
+<li>Does <code>empapi</code>/<code>app_server</code>/<code>admin</code> already expose wallet-credit/leave-mark/hub-add as callable service methods, or only as admin-UI handlers? (Layer 6.)</li>
+<li>What does an agent's screen show today for existing tickets — is there a system with an API we hand context to, or are we building that view? (Layer 8.)</li>
+<li>Does Yesmadam's EKS stack already run Prometheus/Grafana or an APM tool? (Layer 9 — might be free reuse instead of new setup.)</li>
+<li>Confirm Spring Boot specifically (vs. another Java framework) — assumed above since it's the dominant choice, but worth stating explicitly since Flowable's embedding story is cleanest with it.</li>
+<li>NEW: which LLM API does the Python service call — Claude, OpenAI, something self-hosted? Doesn't block the architecture (the REST contract to Java is identical either way) but you'll want it decided before writing that service.</li>
+<li>On low-confidence entry-point intent routing (Layer 5b): fall back to the L1 menu, or route straight to a tagged T3 handoff? Product call, not architecture — nothing else depends on the answer.</li>
+<li>Whether a cheap keyword/regex fast-path sits in front of <code>/classify-intent</code> for common unambiguous phrasings (Layer 5b) — an optimization, not a requirement, worth revisiting once real free-text volume exists.</li>
+</ol>
+<hr />
+<p><em>Source for Layer 5 and the "tiered model complexity" framing: <a href="https://www.databricks.com/blog/redefining-customer-support-swiggys-enterprise-scale-ai-agent-built-databricks">Swiggy's Enterprise-Scale AI Agent, built on Databricks</a> — thanks for sending this, it's the first genuinely sourced (not inferred) industry reference in this project.</em></p>
+  </main>
+
+  <footer>
+    Companion documents — <a href="https://claude.ai/code/artifact/59ebff15-5103-46e6-9bb0-78e92cd366b2">Layer Reference</a> (tabbed deep-dive per layer) · <a href="https://claude.ai/code/artifact/9c1c15c9-5c33-4d8b-9d8a-3191e158e92c">Flow Map</a> (T0–T3 visual)
+  </footer>
+</div>

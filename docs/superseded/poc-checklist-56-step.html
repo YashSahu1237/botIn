@@ -1,0 +1,361 @@
+<title>Leave Fine POC Checklist</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#F6F7FA; --surface:#FFFFFF; --panel:#EAEDF2; --panel-border:#D2D8E1;
+    --ink:#1B2029; --ink-soft:#4A5262; --muted:#8891A0; --line:#C6CCD6;
+    --accent:#33415C; --mono-bg:#EDEFF3; --code-ink:#33415C;
+    --t0:#167C6B; --t1:#2F63C9; --t2:#9C5D0B; --t3:#93356B;
+    --check:#1C7A55; --check-bg:#EAF5EF;
+    --gate:#A5590B; --gate-bg:#FBF0E4;
+    --font-sans:'IBM Plex Sans',system-ui,-apple-system,sans-serif;
+    --font-mono:'IBM Plex Mono',ui-monospace,SFMono-Regular,Menlo,monospace;
+  }
+  @media (prefers-color-scheme: dark){
+    :root:not([data-theme="light"]){
+      --bg:#12151B; --surface:#171B22; --panel:#1E2430; --panel-border:#2B3240;
+      --ink:#E7EAF0; --ink-soft:#B7BEC9; --muted:#6B7484; --line:#313846;
+      --accent:#9FB2DE; --mono-bg:#1B212B; --code-ink:#B9C6E6;
+      --t0:#35C0A4; --t1:#6C97F0; --t2:#E0A23C; --t3:#D273A8;
+      --check:#3FBE94; --check-bg:#152420;
+      --gate:#E0A23C; --gate-bg:#241E14;
+    }
+  }
+  :root[data-theme="dark"]{
+    --bg:#12151B; --surface:#171B22; --panel:#1E2430; --panel-border:#2B3240;
+    --ink:#E7EAF0; --ink-soft:#B7BEC9; --muted:#6B7484; --line:#313846;
+    --accent:#9FB2DE; --mono-bg:#1B212B; --code-ink:#B9C6E6;
+    --t0:#35C0A4; --t1:#6C97F0; --t2:#E0A23C; --t3:#D273A8;
+    --check:#3FBE94; --check-bg:#152420; --gate:#E0A23C; --gate-bg:#241E14;
+  }
+
+  *{box-sizing:border-box;}
+  body{margin:0; background:var(--bg); color:var(--ink); font-family:var(--font-sans);
+       line-height:1.55; -webkit-font-smoothing:antialiased;}
+  .wrap{max-width:900px; margin:0 auto; padding:48px 24px 100px;}
+
+  .eyebrow{font-family:var(--font-mono); font-size:12px; letter-spacing:.08em;
+           text-transform:uppercase; color:var(--muted); margin:0 0 10px;}
+  h1{font-size:clamp(27px,4vw,36px); font-weight:600; margin:0 0 12px; letter-spacing:-.015em;}
+  .dek{color:var(--ink-soft); font-size:15.5px; margin:0 0 8px; max-width:68ch;}
+
+  .progress{
+    position:sticky; top:0; z-index:5; background:var(--bg);
+    padding:16px 0 14px; margin:26px 0 8px; border-bottom:1px solid var(--line);
+  }
+  .bar{height:7px; background:var(--panel); border-radius:99px; overflow:hidden;}
+  .bar span{display:block; height:100%; width:0%; background:var(--check);
+            border-radius:99px; transition:width .25s ease;}
+  .progress .meta{display:flex; justify-content:space-between; align-items:baseline;
+                  font-family:var(--font-mono); font-size:12px; color:var(--muted); margin-top:9px;}
+  .progress button{
+    font-family:var(--font-mono); font-size:11.5px; color:var(--muted);
+    background:none; border:1px solid var(--line); border-radius:5px;
+    padding:4px 9px; cursor:pointer;
+  }
+  .progress button:hover{color:var(--ink); background:var(--panel);}
+
+  section{margin-top:34px;}
+  .phase-head{display:flex; align-items:baseline; gap:12px; flex-wrap:wrap; margin-bottom:6px;}
+  .phase-head h2{font-size:18px; font-weight:600; margin:0; letter-spacing:-.01em;}
+  .phase-head .est{font-family:var(--font-mono); font-size:11.5px; color:var(--muted);}
+  .phase-why{color:var(--ink-soft); font-size:14px; margin:0 0 14px; max-width:70ch;}
+
+  ul.steps{list-style:none; margin:0; padding:0; display:flex; flex-direction:column; gap:2px;}
+  li.step{border-radius:6px; transition:background .12s ease;}
+  li.step label{
+    display:grid; grid-template-columns:auto auto 1fr; gap:11px; align-items:start;
+    padding:9px 11px; cursor:pointer;
+  }
+  li.step:hover{background:var(--panel);}
+  li.step input{
+    appearance:none; width:17px; height:17px; margin:2px 0 0; flex:none;
+    border:1.5px solid var(--line); border-radius:4px; background:var(--surface);
+    cursor:pointer; position:relative;
+  }
+  li.step input:checked{background:var(--check); border-color:var(--check);}
+  li.step input:checked::after{
+    content:"✓"; position:absolute; inset:0; display:flex; align-items:center;
+    justify-content:center; color:#fff; font-size:12px; font-weight:700;
+  }
+  li.step input:focus-visible{outline:2px solid var(--accent); outline-offset:2px;}
+  li.step .num{font-family:var(--font-mono); font-size:12px; color:var(--muted);
+               min-width:20px; padding-top:1px;}
+  li.step .txt{font-size:14.5px;}
+  li.step input:checked ~ .txt{color:var(--muted); text-decoration:line-through;
+                               text-decoration-color:var(--line);}
+  li.step input:checked ~ .num{color:var(--line);}
+  li.step .note{display:block; margin-top:4px; font-size:13px; color:var(--ink-soft);}
+  li.step input:checked ~ .txt .note{color:var(--muted);}
+
+  li.step.gate{background:var(--gate-bg); border:1px solid color-mix(in srgb, var(--gate) 32%, var(--panel-border));}
+  li.step.gate:hover{background:var(--gate-bg);}
+  li.step.gate .txt{font-weight:600;}
+  li.step.gate .flag{
+    display:inline-block; font-family:var(--font-mono); font-size:10.5px; font-weight:600;
+    letter-spacing:.05em; text-transform:uppercase; color:var(--gate);
+    border:1px solid color-mix(in srgb, var(--gate) 45%, transparent);
+    border-radius:4px; padding:1px 6px; margin-right:8px; vertical-align:1px;
+  }
+
+  code{font-family:var(--font-mono); background:var(--mono-bg); color:var(--code-ink);
+       padding:1.5px 6px; border-radius:4px; font-size:12.5px;}
+
+  .callout{background:var(--panel); border:1px solid var(--panel-border);
+           border-radius:6px; padding:16px 18px; margin:18px 0 0; font-size:14px;
+           color:var(--ink-soft);}
+  .callout strong{color:var(--ink);}
+
+  .table-scroll{overflow-x:auto; margin-top:14px;}
+  table{width:100%; border-collapse:collapse; font-size:14px;}
+  th,td{text-align:left; padding:9px 12px; border-bottom:1px solid var(--line); vertical-align:top;}
+  th{font-family:var(--font-mono); font-size:11px; text-transform:uppercase;
+     letter-spacing:.05em; color:var(--muted); font-weight:500;}
+  tr:last-child td{border-bottom:none;}
+
+  footer{margin-top:46px; padding-top:18px; border-top:1px solid var(--line);
+         font-size:13px; color:var(--muted); font-family:var(--font-mono);}
+  footer a{color:var(--accent);}
+</style>
+
+<div class="wrap">
+  <p class="eyebrow">BOTIn Mod · Proof of Concept</p>
+  <h1>Leave Fine POC — Build Checklist</h1>
+  <p class="dek">One concern, end to end, in ~3 weeks. The goal is to answer five questions that would be expensive to get wrong later — not to build a small version of everything.</p>
+
+  <div class="progress">
+    <div class="bar"><span id="bar"></span></div>
+    <div class="meta">
+      <span id="count">0 of 56 done</span>
+      <button id="reset" type="button">Reset all</button>
+    </div>
+  </div>
+
+  <div class="callout">
+    <strong>What this POC proves.</strong> (1) Flowable really pauses and resumes across a restart. (2) The LLM hits usable accuracy on real Hinglish. (3) <code>REQUIRES_NEW</code> protects the money record through a rollback. (4) Whether the leave/fine APIs exist in <code>empapi</code>. (5) Whether a DMN edit changes behaviour without a redeploy. Everything else in the design is conventional Spring Boot work.
+    <br><br>
+    <strong>Excluded on purpose:</strong> telephony, the SP mobile app, the agent screen, observability, access control, guardrails, and 29 of the 30 concerns. The hosting decision (standalone vs inside <code>empapi</code>) stays deferred — build standalone.
+  </div>
+
+  <section>
+    <div class="phase-head"><h2>Phase 0 — Decisions and data</h2><span class="est">2–3 days</span></div>
+    <p class="phase-why">The unglamorous phase people skip. Without steps 3–5 the classifier measurement in Phase 10 produces an impression instead of a number.</p>
+    <ul class="steps">
+      <li class="step"><label><input type="checkbox"><span class="num">1</span><span class="txt">Lock scope: Leave fine only, T1/T2/T3 paths, no telephony, no agent screen, no mobile app<span class="note">Done — written up as the <a href="https://claude.ai/code/artifact/fadeaced-ed53-4812-9455-db3f625ada34" style="color:var(--accent)">Scope Lock</a> decision record. Not closed until the three open questions in it are signed off.</span></span></label></li>
+      <li class="step gate"><label><input type="checkbox"><span class="num">2</span><span class="txt"><span class="flag">Start now</span>Begin the LLM API key approval<span class="note">Procurement lag is the one thing you can't compress later in the schedule.</span></span></label></li>
+      <li class="step"><label><input type="checkbox"><span class="num">3</span><span class="txt">Extract every free-text leave-fine dispute reason from the May + July ticket dumps into a CSV</span></label></li>
+      <li class="step"><label><input type="checkbox"><span class="num">4</span><span class="txt">Hand-label 150–200 of them into the six categories <strong>named in the SOP</strong><span class="note"><code>health_issue</code> · <code>product_unavailability</code> · <code>emergency_leave</code> · <code>leave_impact</code> · <code>personal_reasons</code> · <code>other</code> — source: Partner Support SOP step 1. Do not invent categories; if the labelling throws up a real cluster outside this list, raise it as an SOP amendment.</span></span></label></li>
+      <li class="step"><label><input type="checkbox"><span class="num">5</span><span class="txt">Confirm that labelled file now serves two purposes: the DMN category list, and the classifier test set</span></label></li>
+      <li class="step"><label><input type="checkbox"><span class="num">6</span><span class="txt">Audit <code>empapi</code> — does a leave-fine waive/reverse method already exist?<span class="note">Write down the answer either way. This closes open question #2 by inspection, no code needed.</span></span></label></li>
+      <li class="step"><label><input type="checkbox"><span class="num">7</span><span class="txt">Pick the test environment: which database, which throwaway SP account</span></label></li>
+    </ul>
+  </section>
+
+  <section>
+    <div class="phase-head"><h2>Phase 1 — Project skeleton</h2><span class="est">1 day</span></div>
+    <ul class="steps">
+      <li class="step"><label><input type="checkbox"><span class="num">8</span><span class="txt">Spring Boot 3.x, Java 17+, <strong>standalone</strong> — not inside <code>empapi</code><span class="note">The hosting decision stays deferred; Layer 6's interface boundary means it can move later without rework.</span></span></label></li>
+      <li class="step"><label><input type="checkbox"><span class="num">9</span><span class="txt">Dependencies: <code>spring-boot-starter-web</code>, <code>spring-boot-starter-data-jpa</code>, <code>flowable-spring-boot-starter</code>, <code>togglz-spring-boot-starter-web</code>, <code>resilience4j-spring-boot3</code>, DB driver, Lombok</span></label></li>
+      <li class="step"><label><input type="checkbox"><span class="num">10</span><span class="txt"><code>application.yml</code>: datasource, <code>flowable.history-level: audit</code>, async executor enabled</span></label></li>
+      <li class="step gate"><label><input type="checkbox"><span class="num">11</span><span class="txt"><span class="flag">Checkpoint</span>App starts and ~25 <code>ACT_*</code> tables appear in the database on their own</span></label></li>
+    </ul>
+  </section>
+
+  <section>
+    <div class="phase-head"><h2>Phase 2 — Database and domain</h2><span class="est">1–2 days</span></div>
+    <ul class="steps">
+      <li class="step"><label><input type="checkbox"><span class="num">12</span><span class="txt">Flyway migration for four tables: <code>concern_catalogue</code>, <code>help_session</code>, <code>ticket</code>, <code>ticket_action</code></span></label></li>
+      <li class="step"><label><input type="checkbox"><span class="num">13</span><span class="txt">Unique constraint on <code>ticket_action.idempotency_key</code></span></label></li>
+      <li class="step"><label><input type="checkbox"><span class="num">14</span><span class="txt">Index on <code>ticket(sp_id, created_at)</code><span class="note">Needed before launch — the claim-frequency read is on the critical path of every T2 decision.</span></span></label></li>
+      <li class="step"><label><input type="checkbox"><span class="num">15</span><span class="txt">Seed one <code>concern_catalogue</code> row for <code>LEAVE_FINE</code><span class="note"><code>process_key=leave-fine</code> · <code>fact_provider=LEAVE_FINE</code> · <code>dmn_key=leave-fine-genuine</code> · <code>togglz_flag=leave-fine-auto-waive</code> · <code>wave=1</code></span></span></label></li>
+      <li class="step"><label><input type="checkbox"><span class="num">16</span><span class="txt">JPA entities and Spring Data repositories for all four tables</span></label></li>
+      <li class="step"><label><input type="checkbox"><span class="num">17</span><span class="txt">Write <code>HelpSessionService</code>, <code>TicketService</code>, <code>TicketActionRecorder</code></span></label></li>
+      <li class="step gate"><label><input type="checkbox"><span class="num">18</span><span class="txt"><span class="flag">Critical</span>Annotate <code>recordAttempt()</code> with <code>@Transactional(propagation = REQUIRES_NEW)</code><span class="note">This single line is what Phase 8's rollback test verifies. Without it, a Flowable rollback erases the money record after the money already moved.</span></span></label></li>
+    </ul>
+  </section>
+
+  <section>
+    <div class="phase-head"><h2>Phase 3 — The BPMN process</h2><span class="est">2–3 days</span></div>
+    <p class="phase-why">Budget generously here — the modeler setup and the BPMN learning curve are where this schedule usually slips.</p>
+    <ul class="steps">
+      <li class="step"><label><input type="checkbox"><span class="num">19</span><span class="txt">Install the Flowable modeler, or commit to hand-authoring the XML</span></label></li>
+      <li class="step"><label><input type="checkbox"><span class="num">20</span><span class="txt">Author <code>src/main/resources/processes/leave-fine.bpmn20.xml</code><span class="note">Nodes in order: Start Event → Service Task <code>fetchFactsDelegate</code> → Service Task <code>classifyDelegate</code> → Business Rule Task (DMN <code>leave-fine-genuine</code>) → Exclusive Gateway on <code>${tier}</code> → Exclusive Gateway on <code>${togglzActive}</code> → Service Task <code>waiveFineDelegate</code> → Service Task <code>escalationContextDelegate</code> → User Task (queue <code>agent-2-standard</code>) → Service Task <code>finalizeDelegate</code> → two End Events.</span></span></label></li>
+      <li class="step gate"><label><input type="checkbox"><span class="num">21</span><span class="txt"><span class="flag">Checkpoint</span>App starts and a <code>leave-fine</code> row appears in <code>ACT_RE_PROCDEF</code></span></label></li>
+    </ul>
+  </section>
+
+  <section>
+    <div class="phase-head"><h2>Phase 4 — Delegates, everything stubbed</h2><span class="est">1 day</span></div>
+    <ul class="steps">
+      <li class="step"><label><input type="checkbox"><span class="num">22</span><span class="txt"><code>LeaveFineFactProvider</code> — real DB reads<span class="note">Returns <code>fineExists</code>, <code>fineAmount</code>, <code>fineAgeDays</code>, <code>alreadyRefunded</code>, <code>leaveBalance</code>, <code>claimFreq30d</code>, <code>medalBand</code>. <code>alreadyRefunded</code> exists because the SOP already ships a second template for it — it is the idempotency guard, read from the ledger not from our own tables.</span></span></label></li>
+      <li class="step"><label><input type="checkbox"><span class="num">23</span><span class="txt"><code>fetchFactsDelegate</code> — the generic one that resolves a provider by <code>l2Concern</code></span></label></li>
+      <li class="step"><label><input type="checkbox"><span class="num">24</span><span class="txt"><code>classifyDelegate</code> — <strong>stubbed</strong>, returns <code>{category:"health_issue", confidence:0.9}</code></span></label></li>
+      <li class="step"><label><input type="checkbox"><span class="num">25</span><span class="txt"><code>waiveFineDelegate</code> — <strong>stubbed</strong>, logs only, moves no money</span></label></li>
+      <li class="step"><label><input type="checkbox"><span class="num">26</span><span class="txt"><code>escalationContextDelegate</code> — writes the snapshot</span></label></li>
+      <li class="step"><label><input type="checkbox"><span class="num">27</span><span class="txt"><code>finalizeDelegate</code> — sets <code>Ticket.status</code> and writes <code>nextStep</code> onto the <code>HelpSession</code><span class="note">Not into process variables — those are deleted when a process completes.</span></span></label></li>
+    </ul>
+  </section>
+
+  <section>
+    <div class="phase-head"><h2>Phase 5 — The DMN table</h2><span class="est">1 day</span></div>
+    <ul class="steps">
+      <li class="step"><label><input type="checkbox"><span class="num">28</span><span class="txt">Author <code>src/main/resources/dmn/leave-fine-genuine.dmn</code>, hit policy <code>FIRST</code></span></label></li>
+      <li class="step"><label><input type="checkbox"><span class="num">29</span><span class="txt">Enter the rules in this order — order is semantically significant under <code>FIRST</code></span></label></li>
+    </ul>
+    <div class="table-scroll">
+      <table>
+        <caption style="text-align:left;font-family:var(--font-mono);font-size:12px;color:var(--muted);padding-bottom:8px;">Rows top to bottom; the catch-all must stay last</caption>
+        <thead><tr><th>#</th><th>Condition</th><th>→ tier</th><th>→ action</th></tr></thead>
+        <tbody>
+          <tr><td>1</td><td><code>confidence &lt; 0.7</code></td><td><span style="color:var(--t3)">T3</span></td><td><code>route_agent</code></td></tr>
+          <tr><td>2</td><td><code>fineExists = false</code></td><td><span style="color:var(--t1)">T1</span></td><td><code>explain_no_fine</code></td></tr>
+          <tr><td>3</td><td><code>alreadyRefunded = true</code></td><td><span style="color:var(--t1)">T1</span></td><td><code>explain_already_refunded</code></td></tr>
+          <tr><td>4</td><td><code>fineAgeDays &gt; 30</code></td><td><span style="color:var(--t1)">T1</span></td><td><code>explain_too_old</code></td></tr>
+          <tr><td>5</td><td><code>leave_impact</code> + <code>leaveBalance = 0</code></td><td><span style="color:var(--t2)">T2</span></td><td><code>auto_waive</code></td></tr>
+          <tr><td>6</td><td><code>health_issue</code> + <code>claimFreq30d &lt;= 2</code></td><td><span style="color:var(--t2)">T2</span></td><td><code>auto_waive</code></td></tr>
+          <tr><td>7</td><td><code>health_issue</code> + <code>claimFreq30d &gt; 2</code> + medal in <code>TITANIUM,QUEEN</code></td><td><span style="color:var(--t2)">T2</span></td><td><code>auto_waive</code></td></tr>
+          <tr><td>8</td><td><code>emergency_leave</code> + <code>claimFreq30d &lt;= 1</code></td><td><span style="color:var(--t2)">T2</span></td><td><code>auto_waive</code></td></tr>
+          <tr><td>9</td><td><code>product_unavailability</code></td><td><span style="color:var(--t3)">T3</span></td><td><code>route_agent</code> — needs ops to verify the stock claim</td></tr>
+          <tr><td>10</td><td><code>personal_reasons</code></td><td><span style="color:var(--t3)">T3</span></td><td><code>route_agent</code> — judgement call, never auto-waived</td></tr>
+          <tr><td>11</td><td>catch-all</td><td><span style="color:var(--t3)">T3</span></td><td><code>route_agent</code></td></tr>
+        </tbody>
+      </table>
+    </div>
+    <ul class="steps" style="margin-top:10px;">
+      <li class="step gate"><label><input type="checkbox"><span class="num">30</span><span class="txt"><span class="flag">Checkpoint</span>Unit test feeding fact maps straight to <code>DmnDecisionService</code>, asserting each row fires</span></label></li>
+    </ul>
+  </section>
+
+  <section>
+    <div class="phase-head"><h2>Phase 6 — Controllers and the client contract</h2><span class="est">1 day</span></div>
+    <ul class="steps">
+      <li class="step"><label><input type="checkbox"><span class="num">31</span><span class="txt"><code>HelpSessionController</code> — <code>POST /help/sessions</code>, <code>POST /help/sessions/{id}/input</code>, <code>GET /help/sessions/{id}</code></span></label></li>
+      <li class="step"><label><input type="checkbox"><span class="num">32</span><span class="txt"><code>nextStep</code> sequence for this concern: <code>menu</code> → <code>dropdown</code> (pick the fine) → <code>text</code> (reason) → <code>message</code></span></label></li>
+      <li class="step"><label><input type="checkbox"><span class="num">33</span><span class="txt">One response template per DMN <code>action</code> output — seven now, including <code>explain_already_refunded</code><span class="note">Two already exist in the SOP in Hinglish (<em>"Aapka fine refund kar diya gaya hai"</em> and the already-refunded variant). Use the SOP wording rather than inventing copy; English-only is fine for the rest of the POC.</span></span></label></li>
+    </ul>
+  </section>
+
+  <section>
+    <div class="phase-head"><h2>Phase 7 — First end-to-end</h2><span class="est">half a day</span></div>
+    <ul class="steps">
+      <li class="step"><label><input type="checkbox"><span class="num">34</span><span class="txt">Drive the whole happy path with curl: start session → pick Leave fine → pick a fine → type a reason → receive "your fine has been waived"</span></label></li>
+      <li class="step gate"><label><input type="checkbox"><span class="num">35</span><span class="txt"><span class="flag">Major checkpoint</span>Everything still stubbed — but the skeleton is now real</span></label></li>
+    </ul>
+  </section>
+
+  <section>
+    <div class="phase-head"><h2>Phase 8 — The two tests that de-risk the design</h2><span class="est">2 days</span></div>
+    <p class="phase-why">If either of these fails, stop and redesign before writing another line. That is the entire point of doing them this early.</p>
+    <ul class="steps">
+      <li class="step"><label><input type="checkbox"><span class="num">36</span><span class="txt">Force <code>confidence = 0.4</code> so the flow lands on the User Task</span></label></li>
+      <li class="step gate"><label><input type="checkbox"><span class="num">37</span><span class="txt"><span class="flag">The restart test</span>Kill the JVM, restart it, then <code>taskService.complete(...)</code> and watch the process resume and finish<span class="note">If this fails, re-evaluate Flowable before anything else — the whole reason Layer 3 exists is this behaviour.</span></span></label></li>
+      <li class="step gate"><label><input type="checkbox"><span class="num">38</span><span class="txt"><span class="flag">The rollback test</span><code>recordAttempt</code> → simulate a successful external call → throw from a later delegate → assert the Flowable transaction rolled back <em>and</em> the <code>TicketAction</code> row survived<span class="note">If this fails, <code>REQUIRES_NEW</code> isn't doing what we think and the money-safety model needs redesign.</span></span></label></li>
+    </ul>
+  </section>
+
+  <section>
+    <div class="phase-head"><h2>Phase 9 — The Python service</h2><span class="est">2–3 days</span></div>
+    <ul class="steps">
+      <li class="step"><label><input type="checkbox"><span class="num">39</span><span class="txt">FastAPI app with one <code>POST /classify</code> endpoint</span></label></li>
+      <li class="step"><label><input type="checkbox"><span class="num">40</span><span class="txt">Pydantic response model: <code>category</code> (enum of the six), <code>confidenceScore</code> (0–1), <code>extractedReason</code>, <code>detectedLanguage</code></span></label></li>
+      <li class="step"><label><input type="checkbox"><span class="num">41</span><span class="txt">Prompt describing the six categories, with 2–3 Hinglish examples each drawn from the real labelled data</span></label></li>
+      <li class="step"><label><input type="checkbox"><span class="num">42</span><span class="txt">Dockerfile; deploy through the existing pipeline</span></label></li>
+      <li class="step"><label><input type="checkbox"><span class="num">43</span><span class="txt">Replace the stub with a real <code>ClassifierClient</code> — 3s timeout, Resilience4j circuit breaker</span></label></li>
+      <li class="step"><label><input type="checkbox"><span class="num">44</span><span class="txt">Both the circuit-open and timeout paths set <code>tier = T3</code></span></label></li>
+    </ul>
+  </section>
+
+  <section>
+    <div class="phase-head"><h2>Phase 10 — Measure the classifier</h2><span class="est">1 day</span></div>
+    <p class="phase-why">This produces the POC's headline number. Everything in Phase 0 steps 3–5 existed to make this measurable.</p>
+    <ul class="steps">
+      <li class="step"><label><input type="checkbox"><span class="num">45</span><span class="txt">Run all 150–200 labelled samples through <code>/classify</code></span></label></li>
+      <li class="step gate"><label><input type="checkbox"><span class="num">46</span><span class="txt"><span class="flag">The number</span>Report accuracy <em>and</em> a confusion matrix<span class="note">Which categories get confused with each other matters more than the average — two categories bleeding into each other is fixable by merging them.</span></span></label></li>
+      <li class="step"><label><input type="checkbox"><span class="num">47</span><span class="txt">Tune the confidence threshold against the real distribution instead of assuming 0.7</span></label></li>
+      <li class="step"><label><input type="checkbox"><span class="num">48</span><span class="txt">Kill the Python service mid-session; confirm the flow degrades to T3 rather than erroring</span></label></li>
+    </ul>
+  </section>
+
+  <section>
+    <div class="phase-head"><h2>Phase 11 — Real action and the kill switch</h2><span class="est">2 days</span></div>
+    <ul class="steps">
+      <li class="step"><label><input type="checkbox"><span class="num">49</span><span class="txt">Point <code>waiveFineDelegate</code> at the real <strong>non-production</strong> fines system or test SP</span></label></li>
+      <li class="step gate"><label><input type="checkbox"><span class="num">50</span><span class="txt"><span class="flag">Idempotency</span>Fire the identical waive twice → assert one credit, and the second attempt short-circuits on the existing key</span></label></li>
+      <li class="step"><label><input type="checkbox"><span class="num">51</span><span class="txt">Add the <code>BotinFeature</code> enum, <code>JDBCStateRepository</code>, and <code>/togglz-console</code></span></label></li>
+      <li class="step gate"><label><input type="checkbox"><span class="num">52</span><span class="txt"><span class="flag">Checkpoint</span>Flip the flag <em>while the app is running</em> — the next request routes to T3 with no restart</span></label></li>
+      <li class="step gate"><label><input type="checkbox"><span class="num">53</span><span class="txt"><span class="flag">Checkpoint</span>Edit a DMN threshold, redeploy only the <code>.dmn</code> file, confirm behaviour changes with no Java rebuild</span></label></li>
+    </ul>
+  </section>
+
+  <section>
+    <div class="phase-head"><h2>Phase 12 — Demo and decision pack</h2><span class="est">1–2 days</span></div>
+    <ul class="steps">
+      <li class="step"><label><input type="checkbox"><span class="num">54</span><span class="txt">A crude single-page HTML client hitting the three endpoints<span class="note">Optional, but a live demo lands far better than curl in a room of stakeholders.</span></span></label></li>
+      <li class="step"><label><input type="checkbox"><span class="num">55</span><span class="txt">Write up: classifier accuracy + confusion matrix, restart-test result, rollback-test result, <code>empapi</code> audit finding</span></label></li>
+      <li class="step"><label><input type="checkbox"><span class="num">56</span><span class="txt">State the verdict against the exit criteria below</span></label></li>
+    </ul>
+  </section>
+
+  <section>
+    <div class="phase-head"><h2>Exit criteria</h2><span class="est">what makes this a POC, not early development</span></div>
+    <div class="table-scroll">
+      <table>
+        <thead><tr><th>Result</th><th>Verdict</th></tr></thead>
+        <tbody>
+          <tr><td>Classifier ≥ 90% on the labelled set</td><td>Design holds — proceed</td></tr>
+          <tr><td>Classifier 75–90%</td><td>Proceed, but raise the confidence threshold and expect a higher agent-connect rate than the BRD's 10–20%</td></tr>
+          <tr><td>Classifier &lt; 75%</td><td>Rethink — narrow the categories, or make free text a fallback rather than a primary path</td></tr>
+          <tr><td><strong>Restart test fails</strong></td><td><strong>Stop.</strong> Re-evaluate Flowable before anything else</td></tr>
+          <tr><td><strong>Rollback test fails</strong></td><td><strong>Stop.</strong> The money-safety model needs redesign</td></tr>
+          <tr><td><code>empapi</code> APIs don't exist</td><td>Not a blocker — but re-estimate Layer 6 as a build, not an integration</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="callout">
+      <strong>Two sequencing notes.</strong> Phases 1–8 need nothing from Phase 0 except step 7, so the labelling in steps 3–5 can run in parallel if three weeks is too long. And steps 3–4 are the ones people skip — without them, Phase 10 produces an impression instead of a number, which is the whole reason for doing this.
+    </div>
+  </section>
+
+  <footer>
+    Companion documents — <a href="https://claude.ai/code/artifact/fadeaced-ed53-4812-9455-db3f625ada34">Scope Lock</a> · <a href="https://claude.ai/code/artifact/3cca1921-0e15-4ab2-af96-fc11e449a2d5">Tech Design</a> · <a href="https://claude.ai/code/artifact/59ebff15-5103-46e6-9bb0-78e92cd366b2">Layer Reference</a> · <a href="https://claude.ai/code/artifact/9c1c15c9-5c33-4d8b-9d8a-3191e158e92c">Flow Map</a>
+    <br>Progress is saved in this browser only.
+  </footer>
+</div>
+
+<script>
+  (function(){
+    var KEY = 'botin-poc-checklist-v1';
+    var boxes = Array.prototype.slice.call(document.querySelectorAll('li.step input'));
+    var bar = document.getElementById('bar');
+    var count = document.getElementById('count');
+
+    function load(){
+      try {
+        var raw = localStorage.getItem(KEY);
+        if(!raw) return;
+        var saved = JSON.parse(raw);
+        if(Object.prototype.toString.call(saved) !== '[object Array]') return;
+        boxes.forEach(function(b,i){ b.checked = !!saved[i]; });
+      } catch(e){ /* private window, blocked storage — render unchecked */ }
+    }
+    function save(){
+      try { localStorage.setItem(KEY, JSON.stringify(boxes.map(function(b){ return b.checked; }))); }
+      catch(e){ /* non-fatal */ }
+    }
+    function paint(){
+      var done = boxes.filter(function(b){ return b.checked; }).length;
+      bar.style.width = (boxes.length ? (done/boxes.length*100) : 0) + '%';
+      count.textContent = done + ' of ' + boxes.length + ' done';
+    }
+
+    boxes.forEach(function(b){ b.addEventListener('change', function(){ save(); paint(); }); });
+    document.getElementById('reset').addEventListener('click', function(){
+      boxes.forEach(function(b){ b.checked = false; });
+      save(); paint();
+    });
+
+    load(); paint();
+  })();
+</script>

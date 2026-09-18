@@ -1,0 +1,163 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<definitions xmlns="http://www.omg.org/spec/BPMN/20100524/MODEL"
+             xmlns:flowable="http://flowable.org/bpmn"
+             targetNamespace="http://yesmadam.in/botin">
+
+  <!--
+    ONE PROCESS, EVERY CONCERN.
+
+    Nothing in this file names a concern. Which facts to fetch, which decision table to
+    consult and which kill switch applies are all read at runtime from the
+    concern_catalogue row (ADR-006), so adding a concern adds a catalogue row, a fact
+    provider bean and a .dmn file — and never a BPMN file.
+
+    That is a deliberate reversal of the obvious design. A process per concern reads
+    well in a modeller and rots in practice: thirty-eight files that are 95% identical,
+    where a fix to the shared shape has to be applied thirty-eight times and will not
+    be. The shape IS the same for every concern — read the world, decide, cross Gate 1
+    if it deserves a ticket, then either answer or hand to a person — so it is written
+    once.
+
+    THE SHAPE:
+
+      start
+        -> preFlight            trigger B. Mandatory-human concerns stop deciding here.
+        -> fetchFacts           reads UAT. Concludes nothing. Cannot throw at a partner.
+        -> decide               the concern's own DMN table. The only step that decides.
+        -> openTicket           GATE 1. A T0 leaves here having created nothing.
+        -> <agentRequired?>
+             yes -> escalationContext   the handover, written before the wait
+                 -> agentHandoff        tells the partner, does NOT close the session
+                 -> agentConnect        USER TASK — the process sleeps here
+                 -> agentCompletion     runs whenever the agent finishes, restart or not
+             no  -> resolve             answer, close ticket and session
+        -> end
+
+    WHAT IS NOT HERE YET, AND WHERE IT GOES:
+
+      * The order-ID capture step, before fetchFacts (Phase 6, plan step 54). Transport
+        cannot look anything up without it.
+      * A gateway on the Togglz kill switch, between decide and openTicket (Phase 6).
+        Today DecideDelegate escalates every T2 instead, because no action service
+        exists — the semantics are already "do not automate, send to a human", so the
+        gateway replaces a condition rather than adding a concept.
+      * Stage 2, the shared agent-connect-triggers table for trigger D, between
+        fetchFacts and decide. Blocked on open question O-14.
+      * The CSAT step after resolve (Phase 10), and trigger A, which fires after this
+        instance has already completed.
+  -->
+
+  <process id="concern-generic" name="Concern — generic flow" isExecutable="true">
+
+    <startEvent id="start"/>
+    <sequenceFlow id="f-start" sourceRef="start" targetRef="preFlight"/>
+
+    <!-- STAGE 1. Trigger B is an override, not a fallback, so it is checked before
+         anything is fetched or decided. For these concerns there is nothing to decide. -->
+    <serviceTask id="preFlight" name="Pre-flight gate (trigger B)"
+                 flowable:delegateExpression="${preFlightDelegate}"/>
+    <sequenceFlow id="f-preflight" sourceRef="preFlight" targetRef="fetchFacts"/>
+
+    <!-- Reads the world, concludes nothing. Facts are fetched even for a mandatory-human
+         concern: the agent picking the case up still wants to know what we knew. -->
+    <serviceTask id="fetchFacts" name="Fetch facts"
+                 flowable:delegateExpression="${fetchFactsDelegate}"/>
+    <sequenceFlow id="f-facts" sourceRef="fetchFacts" targetRef="decide"/>
+
+    <!-- STAGE 3. The concern's own decision table, named by concern_catalogue.dmn_key. -->
+    <serviceTask id="decide" name="Decide (concern DMN)"
+                 flowable:delegateExpression="${decideDelegate}"/>
+    <sequenceFlow id="f-decide" sourceRef="decide" targetRef="openTicket"/>
+
+    <!-- GATE 1, and the only place it is crossed. T0 passes through creating nothing. -->
+    <serviceTask id="openTicket" name="Gate 1 — open ticket"
+                 flowable:delegateExpression="${openTicketDelegate}"/>
+    <sequenceFlow id="f-gate1" sourceRef="openTicket" targetRef="needsAgent"/>
+
+    <!-- Branches on agentRequired, NOT on tier. Tier is the concern table's answer;
+         agentRequired is the whole system's, and the pre-flight gate can have set it
+         before any table ran. One variable, so there is one thing to read. -->
+    <exclusiveGateway id="needsAgent" name="Agent required?" default="f-no-agent"/>
+
+    <sequenceFlow id="f-agent" sourceRef="needsAgent" targetRef="escalationContext">
+      <conditionExpression xsi:type="tFormalExpression"
+                           xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+        ${agentRequired == true}
+      </conditionExpression>
+    </sequenceFlow>
+
+    <!-- Second branch: the partner is in the wrong concern and the table named the
+         right one. Evaluated after the agent branch on purpose — a risk-flagged text
+         reaches a person even when the model was confident about where it belonged. -->
+    <sequenceFlow id="f-reroute" sourceRef="needsAgent" targetRef="reroute">
+      <conditionExpression xsi:type="tFormalExpression"
+                           xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+        ${rerouteRequired == true}
+      </conditionExpression>
+    </sequenceFlow>
+
+    <sequenceFlow id="f-no-agent" sourceRef="needsAgent" targetRef="performAction"/>
+
+    <!-- Ends this concern and starts the target's process against the SAME session.
+         The target writes its own nextStep, exactly as it would have if the partner
+         had arrived through the menu — nothing downstream can tell the difference. -->
+    <serviceTask id="reroute" name="Reroute to the right concern"
+                 flowable:delegateExpression="${rerouteDelegate}"/>
+    <sequenceFlow id="f-rerouted" sourceRef="reroute" targetRef="end"/>
+
+    <!-- ================================================================ agent path -->
+
+    <!-- Written BEFORE the wait. Recomputing it when the agent opens the case would
+         show them a different world from the one the decision was made in. -->
+    <serviceTask id="escalationContext" name="Write escalation context"
+                 flowable:delegateExpression="${escalationContextDelegate}"/>
+    <sequenceFlow id="f-context" sourceRef="escalationContext" targetRef="agentHandoff"/>
+
+    <!-- Tells the partner an agent is coming, and leaves the session OPEN. -->
+    <serviceTask id="agentHandoff" name="Tell the partner"
+                 flowable:delegateExpression="${agentHandoffDelegate}"/>
+    <sequenceFlow id="f-handoff" sourceRef="agentHandoff" targetRef="agentConnect"/>
+
+    <!-- THE PROCESS SLEEPS HERE, in the database, for as long as the queue takes.
+         This is the element ADR-001 was chosen for: no thread is held, no memory is
+         held, and the wait survives a restart or a deployment. -->
+    <userTask id="agentConnect" name="Agent connect"
+              flowable:candidateGroups="${agentQueue}"/>
+    <sequenceFlow id="f-claimed" sourceRef="agentConnect" targetRef="agentCompletion"/>
+
+    <serviceTask id="agentCompletion" name="Close out the agent's resolution"
+                 flowable:delegateExpression="${agentCompletionDelegate}"/>
+    <sequenceFlow id="f-agent-end" sourceRef="agentCompletion" targetRef="end"/>
+
+    <!-- =============================================================== bot resolved -->
+
+    <!-- THE ONLY PLACE MONEY OR STATE MOVES, and a no-op for every tier but T2.
+         Attempt recorded and committed BEFORE the external call, outcome recorded
+         after, both in their own transactions — see PerformActionDelegate for why
+         that order is the whole safety argument. -->
+    <serviceTask id="performAction" name="Perform the action (T2 only)"
+                 flowable:delegateExpression="${performActionDelegate}"/>
+    <sequenceFlow id="f-acted" sourceRef="performAction" targetRef="actionOutcome"/>
+
+    <!-- An action that FAILED becomes a person's problem rather than a retry: the
+         gateway may have done the thing and failed to say so, and retrying that pays
+         twice. This gateway is how a failure rejoins the agent path. -->
+    <exclusiveGateway id="actionOutcome" name="Did the action need a human?" default="f-resolved"/>
+
+    <sequenceFlow id="f-action-failed" sourceRef="actionOutcome" targetRef="escalationContext">
+      <conditionExpression xsi:type="tFormalExpression"
+                           xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+        ${agentRequired == true}
+      </conditionExpression>
+    </sequenceFlow>
+
+    <sequenceFlow id="f-resolved" sourceRef="actionOutcome" targetRef="resolve"/>
+
+    <serviceTask id="resolve" name="Answer and close"
+                 flowable:delegateExpression="${resolveDelegate}"/>
+    <sequenceFlow id="f-closed" sourceRef="resolve" targetRef="end"/>
+
+    <endEvent id="end"/>
+
+  </process>
+</definitions>

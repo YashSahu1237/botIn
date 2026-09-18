@@ -1,0 +1,114 @@
+l2_code,rule_seq,condition,bot_outcome,outcome_type,tier,hit_policy
+TRANSPORT_NOT_RECEIVED,1,Already credited for this Order ID,"Inform already paid, close",BOT,T1,FIRST
+TRANSPORT_NOT_RECEIVED,2,Path 1: customer-paid transport charged but not in SP wallet,Auto-credit (sub-action: Transport),BOT,T2,FIRST
+TRANSPORT_NOT_RECEIVED,3,Path 2: arrivedAt300metre = FALSE,Deny - SP did not travel,BOT,T1,FIRST
+TRANSPORT_NOT_RECEIVED,4,Path 2: arrived TRUE + Cancelled NR / Cancelled by Agent,Eligible - auto-credit,BOT,T2,FIRST
+TRANSPORT_NOT_RECEIVED,5,Path 2: Cancelled CR + last-min cashback credited,Deny - cashback compensates travel,BOT,T1,FIRST
+TRANSPORT_NOT_RECEIVED,6,Path 2: Cancelled CR + cashback NOT credited,Create ticket - anomaly,TICKET,T3,FIRST
+TRANSPORT_NOT_RECEIVED,7,"Path 3: haversine(job, hub) <= hub_radius",Deny - within hub,BOT,T1,FIRST
+TRANSPORT_NOT_RECEIVED,8,Path 3: distance > radius,Credit (distance - radius) x Rs50,BOT,T2,FIRST
+TRANSPORT_NOT_RECEIVED,9,ANY path: computed amount > Rs300,Create ticket - exceeds cap,TICKET,T3,FIRST
+ONLINE_BOOKING_MONEY,1,Mis-tagged (approx 85% of bucket),Global reroute to correct L1/L2,REROUTE,-,FIRST
+ONLINE_BOOKING_MONEY,2,Prepaid flag TRUE but no/short wallet credit,Auto-credit shortfall (dup-guard),BOT,T2,FIRST
+ONLINE_BOOKING_MONEY,3,Already credited,"Show credited entry, close",BOT,T1,FIRST
+ONLINE_BOOKING_MONEY,4,Commission dispute (expects prepaid-only),Explain commission is on prepaid+COD per policy,V2,OUT,FIRST
+ONLINE_BOOKING_MONEY,5,Genuine mixed/COD credit dispute,Create ticket w/ expected vs actual entry,TICKET,T3,FIRST
+SAVING_UNDER_5K,1,All cases,Retire L2 from picker; global reroute,DEPRECATED,OUT,FIRST
+RECHARGE_DEBIT_NO_CREDIT,1,PayU = Pending,Create ticket,TICKET,T3,FIRST
+RECHARGE_DEBIT_NO_CREDIT,2,PayU = Success and not already credited,"Auto-credit wallet, ref PayU txn ID",BOT,T2,FIRST
+RECHARGE_DEBIT_NO_CREDIT,3,PayU = Failed,Ask to recharge again + 'refund in 2-3 din',BOT,T1,FIRST
+RECHARGE_DEBIT_NO_CREDIT,4,PayU = Failed and SP not satisfied,Create ticket on SP request,TICKET,T3,FIRST
+FORGET_MPIN,1,All cases,Show reset deeplink in chat - SP self-resets,SELF-SERVE,T0,FIRST
+ARW_TO_BANK,1,Main wallet negative,Explain: clear negative balance first,BOT,T1,FIRST
+ARW_TO_BANK,2,Advance pending on SP,Explain: blocked till advance cleared,BOT,T1,FIRST
+ARW_TO_BANK,3,5 withdrawals already this month,Explain monthly count limit,BOT,T1,FIRST
+ARW_TO_BANK,4,"More than Rs40,000 withdrawn this month",Explain monthly amount limit,BOT,T1,FIRST
+ARW_TO_BANK,5,All checks pass + Cashfree balance low,Tell SP wait 2-3 hrs + BATCHED stakeholder alert,BOT,T1,FIRST
+ARW_TO_BANK,6,All checks pass + Cashfree fine,Create ticket - cause unknown,TICKET,T3,FIRST
+MAIN_WALLET_TO_BANK,1,Withdrawal would leave balance < Rs500,Explain Rs500 floor rule,BOT,T1,FIRST
+MAIN_WALLET_TO_BANK,2,Cashfree balance low,Wait 2-3 hrs + batched stakeholder alert,BOT,T1,FIRST
+MAIN_WALLET_TO_BANK,3,Neither,Create ticket,TICKET,T3,FIRST
+REFERRAL_NOT_RECEIVED,1,No SP found on that phone number,Deny - not eligible,BOT,T1,FIRST
+REFERRAL_NOT_RECEIVED,2,Referee found but not yet onboarded,Explain bonus comes after onboarding,BOT,T1,FIRST
+REFERRAL_NOT_RECEIVED,3,"Raiser is NOT the referrer, SP accepts",Close - not the referrer,BOT,T1,FIRST
+REFERRAL_NOT_RECEIVED,4,"Raiser is NOT the referrer, SP disputes",Create ticket,TICKET,T3,FIRST
+REFERRAL_NOT_RECEIVED,5,Raiser IS referrer + cashback credited,Show txn date/time/amount,BOT,T1,FIRST
+REFERRAL_NOT_RECEIVED,6,Raiser IS referrer + cashback NOT credited,Create ticket,TICKET,T3,FIRST
+CASHBACK_NOT_RECEIVED,1,Booking created via app (iOS/Android/Web),Not eligible - explain,BOT,T1,FIRST
+CASHBACK_NOT_RECEIVED,2,"Admin-created, not completed",Cashback credits after completion,BOT,T1,FIRST
+CASHBACK_NOT_RECEIVED,3,"Admin-created, completed, already credited",Show credited detail,BOT,T1,FIRST
+CASHBACK_NOT_RECEIVED,4,"Admin-created, completed, not credited",Auto-credit Rs30 + confirm satisfaction,BOT,T2,FIRST
+VIOL_ARCHITECTURE,1,Bot accepts challenge,Remove violation in backend,BOT,T2,FIRST
+VIOL_ARCHITECTURE,2,Bot rejects challenge,Uphold + explain,UPHOLD,T1,FIRST
+VIOL_ARCHITECTURE,3,Needs human judgement,"Create ticket, tell SP TAT",TICKET,T3,FIRST
+VIOL_T1_SAMEDAY_LEAVE,1,Chat reason does not match app-recorded / challenged reason,Uphold - anti-gaming,UPHOLD,T1,FIRST
+VIOL_T1_SAMEDAY_LEAVE,2,Reasons match but not a substantial emergency,Uphold + explain,UPHOLD,T1,FIRST
+VIOL_T1_SAMEDAY_LEAVE,3,Match + substantial emergency + under pooled cap,Remove violation,BOT,T2,FIRST
+VIOL_T1_SAMEDAY_LEAVE,4,Match + emergency + pooled cap reached,Create ticket (3rd+ this month),TICKET,T3,FIRST
+VIOL_R1_FAR_JOB,1,Exclusive hub AND exclusive booking,Uphold - far is not a valid out,UPHOLD,T1,FIRST
+VIOL_R1_FAR_JOB,2,"Other hubs: haversine(job, hub centre) > radius",Remove - genuinely far,BOT,T2,FIRST
+VIOL_R1_FAR_JOB,3,Other hubs: distance <= radius,Uphold - job was inside the hub,UPHOLD,T1,FIRST
+VIOL_R2_NOT_RESPONDING,1,A partner-customer call was attempted for this job,Create ticket - 'not responding' contradicted,TICKET,T3,FIRST
+VIOL_R2_NOT_RESPONDING,2,No such call + reassigned BEFORE cutoff,Remove - premature reassignment,BOT,T2,FIRST
+VIOL_R2_NOT_RESPONDING,3,No such call + reassigned AT/AFTER cutoff,Uphold - deadline missed and unreachable,UPHOLD,T1,FIRST
+VIOL_R3_DELAYED_PREV,1,No preceding booking in the 2-hr window,Premise false - ask real issue - reroute,REROUTE,-,FIRST
+VIOL_R3_DELAYED_PREV,2,SR1: reached previous job late,Uphold - SP's own planning,UPHOLD,T1,FIRST
+VIOL_R3_DELAYED_PREV,3,"SR2: extra services added, 1st in current cycle",Warning + remove,BOT,T2,FIRST
+VIOL_R3_DELAYED_PREV,4,"SR2: extra services added, 2nd+ in cycle",Uphold - allowance used,UPHOLD,T1,FIRST
+VIOL_R3_DELAYED_PREV,5,SR3: arrived early but customer delayed OTP/start,Remove - customer-caused wait,BOT,T2,FIRST
+VIOL_R4_OTHERS,1,Free text matches a defined reason,Route to that reason's flow,REROUTE,-,FIRST
+VIOL_R4_OTHERS,2,No match - genuine other,Create ticket,TICKET,T3,FIRST
+VIOL_R5_PERIODS,1,1st period leave this month,Remove - valid,BOT,T2,FIRST
+VIOL_R5_PERIODS,2,2nd or more this month,Uphold - one per month is the limit,UPHOLD,T1,FIRST
+VIOL_R6_RUDE,1,Tag is RIGHT - genuine conduct incident,Coaching remark + create ticket (agent decides),TICKET,T3,FIRST
+VIOL_R6_RUDE,2,Tag is WRONG - SP names a different operational reason,Free text - route to derived reason flow,REROUTE,-,FIRST
+VIOL_R7_SMALL_BOOKING,1,Order value < Rs800,Create ticket - discretionary call,TICKET,T3,FIRST
+VIOL_R7_SMALL_BOOKING,2,Order value >= Rs800,Uphold - premise false,UPHOLD,T1,FIRST
+VIOL_R8_R10_EMERGENCY,1,Not a substantial emergency,Uphold,UPHOLD,T1,FIRST
+VIOL_R8_R10_EMERGENCY,2,Substantial emergency + under pooled cap,Remove (counts toward pooled cap),BOT,T2,FIRST
+VIOL_R8_R10_EMERGENCY,3,Substantial emergency + cap reached,Create ticket,TICKET,T3,FIRST
+VIOL_R9_NO_PRODUCT,1,No order placed,Uphold + remind SP to order,UPHOLD,T1,FIRST
+VIOL_R9_NO_PRODUCT,2,Ordered but past its delivery TAT (logistics failure),Create ticket: remove violation + agent fixes logistics,TICKET,T3,FIRST
+VIOL_R9_NO_PRODUCT,3,"Ordered, delivered or in-transit within TAT, allowance available",Remove,BOT,T2,FIRST
+VIOL_R9_NO_PRODUCT,4,Ordered but allowance already used this cycle,Uphold,UPHOLD,T1,FIRST
+VIOL_R11_VEHICLE,1,Any vehicle/ride issue,Always uphold + coaching to use alternative transport,UPHOLD,T1,FIRST
+VIOL_R13_CX_UNSATISFIED,1,Any case,Collect SP account - upheld posture + create ticket,TICKET,T3,FIRST
+VIOL_T3_OBD_DENIED,1,"Customer denied on OBD, SP accepts",Uphold - strike stands,UPHOLD,T1,FIRST
+VIOL_T3_OBD_DENIED,2,SP pushes back (v1),Create ticket - agent reviews call recording,TICKET,T3,FIRST
+VIOL_T3_OBD_DENIED,3,SP pushes back (v2),Auto-analyse recording for cancellation intent,V2,OUT,FIRST
+VIOL_T5_JOB_REJECT,1,Door ki job hai,Route to R1 (hub distance),REROUTE,-,FIRST
+VIOL_T5_JOB_REJECT,2,Choti job hai,Route to R7 (<Rs800 - ticket),REROUTE,-,FIRST
+VIOL_T5_JOB_REJECT,3,Product nahi hai job ka,Route to R9 (order-placed gate),REROUTE,-,FIRST
+VIOL_T5_JOB_REJECT,4,Emergency in family,Route to R10 (pooled cap),REROUTE,-,FIRST
+VIOL_T5_JOB_REJECT,5,Health issues,Route to R8 (pooled cap),REROUTE,-,FIRST
+VIOL_T5_JOB_REJECT,6,Delay in previous job,Route to R3 (premise + SR1/2/3),REROUTE,-,FIRST
+VIOL_T5_JOB_REJECT,7,Do not want to go: served before AND partner-customer call >= 30s,Remove - genuine denial,BOT,T2,FIRST
+VIOL_T5_JOB_REJECT,8,Do not want to go: criteria not met,Uphold (v1 judges threat claim on call timing only),UPHOLD,T1,FIRST
+VIOL_T6_REJECT_OVER_CALL,1,Call duration < 30 secs,"Remove - minimal engagement, customer cancelled wrongly",BOT,T2,FIRST
+VIOL_T6_REJECT_OVER_CALL,2,>= 30s + cross-gender request,Remove (hard-check gender fields where available),BOT,T2,FIRST
+VIOL_T6_REJECT_OVER_CALL,3,>= 30s + customer-side service condition,Remove,BOT,T2,FIRST
+VIOL_T6_REJECT_OVER_CALL,4,>= 30s + customer asked for another time,Remove + guide SP to raise a reschedule request,BOT,T2,FIRST
+VIOL_T6_REJECT_OVER_CALL,5,>= 30s + SP-fault: far,Route to R1 objective check,REROUTE,-,FIRST
+VIOL_T6_REJECT_OVER_CALL,6,>= 30s + SP-fault: no product,Route to R9 objective check,REROUTE,-,FIRST
+VIOL_T6_REJECT_OVER_CALL,7,">= 30s + plain refusal, no valid ground",Uphold,UPHOLD,T1,FIRST
+VIOL_T4_TRAINING,1,All cases,Out of scope for current build,DEPRECATED,OUT,FIRST
+PROD_OUT_OF_STOCK,1,Product not in SP's own category,Explain own-category-only rule,BOT,T1,FIRST
+PROD_OUT_OF_STOCK,2,In category + inventory available,Guide to purchase/retry + ticket logging false out-of-stock,TICKET,T3,FIRST
+PROD_OUT_OF_STOCK,3,In category + inventory NOT available,Create ticket - genuine stock-out / restock,TICKET,T3,FIRST
+PROD_DELIVERY_DELAY,1,Past the 11 PM deadline for its TAT,Create ticket - logistics escalation,TICKET,T3,FIRST
+PROD_DELIVERY_DELAY,2,Still within TAT,"Show expected delivery date, ask to wait",BOT,T1,FIRST
+PROD_APP_FAILURE,1,Genuine app/ordering failure,Create ticket - app/tech issue,TICKET,T3,FIRST
+PROD_APP_FAILURE,2,Description actually maps to another concern,Reroute to correct flow,REROUTE,-,FIRST
+OTHER_FREETEXT_TRIAGE,1,Matches a concern covered elsewhere,Reroute to that flow,REROUTE,-,FIRST
+OTHER_FREETEXT_TRIAGE,2,Matches none of the defined concerns,Create ticket with transcript summary,TICKET,T3,FIRST
+OTHER_LEGAL,1,Any legal issue,Take input - create ticket,TICKET,T3,FIRST
+OTHER_BOOKING_REQ,1,All cases,Deeplink to SP booking-panel request flow,SELF-SERVE,T0,FIRST
+OTHER_HUB_TIME,1,Hub change,Create ticket - agent handles,TICKET,T3,FIRST
+OTHER_HUB_TIME,2,Time change - INCREASE hours,Deeplink to self-serve entry point,SELF-SERVE,T0,FIRST
+OTHER_HUB_TIME,3,Time change - REDUCE hours,Not supported by the link,MIXED,OUT,FIRST
+OTHER_ID_ACTIVATE,1,Reason matches activation/deactivation intent,Take reason - create ticket,TICKET,T3,FIRST
+OTHER_WRONG_DATA,1,Concern is only about data,Take input - create ticket,TICKET,T3,FIRST
+OTHER_BLOCK_CUSTOMER,1,"SP selects the order/customer, confirms",Block customer from backend - fully automated,BOT,T2,FIRST
+LEAVE_ALL,1,SP able to use the app,Guide to app self-serve entry point,SELF-SERVE,T0,FIRST
+LEAVE_ALL,2,SP unable to apply/remove in app (app failure),Create ticket - human intervention,TICKET,T3,FIRST
+FINE_ALL,1,All cases,No standalone flow - fines link to strike system only; route to Violations,DEPRECATED,OUT,FIRST

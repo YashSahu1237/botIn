@@ -1,0 +1,76 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<definitions xmlns="https://www.omg.org/spec/DMN/20191111/MODEL/"
+             id="defs-viol-r4-others-decision"
+             name="viol-r4-others-decision"
+             namespace="http://yesmadam.in/botin">
+
+  <!-- VIOL_R4_OTHERS — 2 rules. The partner picked "other" and typed a reason.
+
+       REROUTE has no tier, and the mapping writes it as "-". The process branches on
+       outcomeType first, so tier is only read for BOT, TICKET and UPHOLD.
+
+       The 0.7 confidence floor is carried from the classifier spike. It lives in this
+       table, so tuning it is a redeploy of one file and not a code change. Free text is
+       trusted for ROUTING ONLY — the flow it routes to re-validates against the backend.
+  -->
+
+  <decision id="viol-r4-others-decision" name="viol-r4-others-decision">
+    <decisionTable id="dt-viol-r4-others-decision" hitPolicy="FIRST">
+
+      <input id="i1" label="classificationMatched">
+        <inputExpression id="ie1" typeRef="boolean"><text>classificationMatched</text></inputExpression>
+      </input>
+      <input id="i2" label="classifierConfidence">
+        <inputExpression id="ie2" typeRef="number"><text>classifierConfidence</text></inputExpression>
+      </input>
+      <input id="i3" label="rerouteTarget">
+        <inputExpression id="ie3" typeRef="string"><text>rerouteTarget</text></inputExpression>
+      </input>
+      <input id="i4" label="riskFlagged">
+        <inputExpression id="ie4" typeRef="boolean"><text>riskFlagged</text></inputExpression>
+      </input>
+
+      <output id="o1" label="tier" name="tier" typeRef="string"/>
+      <output id="o2" label="action" name="action" typeRef="string"/>
+      <output id="o3" label="outcomeType" name="outcomeType" typeRef="string"/>
+
+      <!-- 0. TRIGGER E. Abuse or risk in the text: a person sees this now, whatever it
+           is about and however confidently the model placed it. FIRST ROW, because
+           under FIRST a confident match below would otherwise win and send someone
+           describing an accident into a self-serve flow. Inert until a real model
+           supplies the flags; the stub only sets them on fixture words. -->
+      <rule id="r0">
+        <inputEntry id="r0i1"><text></text></inputEntry>
+        <inputEntry id="r0i2"><text></text></inputEntry>
+        <inputEntry id="r0i3"><text></text></inputEntry>
+        <inputEntry id="r0i4"><text>true</text></inputEntry>
+        <outputEntry id="r0o1"><text>&quot;T3&quot;</text></outputEntry>
+        <outputEntry id="r0o2"><text>&quot;AGENT_RISK_FLAGGED&quot;</text></outputEntry>
+        <outputEntry id="r0o3"><text>&quot;TICKET&quot;</text></outputEntry>
+      </rule>
+
+      <!-- 1. Text names a reason we have a flow for, confidently enough to act on. -->
+      <rule id="r1">
+        <inputEntry id="r1i1"><text>true</text></inputEntry>
+        <inputEntry id="r1i2"><text>&gt;= 0.7</text></inputEntry>
+        <inputEntry id="r1i3"><text></text></inputEntry>
+        <inputEntry id="r1i4"><text></text></inputEntry>
+        <outputEntry id="r1o1"><text>&quot;-&quot;</text></outputEntry>
+        <outputEntry id="r1o2"><text>&quot;REROUTE_TO_CONCERN&quot;</text></outputEntry>
+        <outputEntry id="r1o3"><text>&quot;REROUTE&quot;</text></outputEntry>
+      </rule>
+
+      <!-- 2. CATCH-ALL. Must stay last. Without it, an unmatched case returns null and the gateway reading tier has nowhere to go. Genuine other, or the classifier was unsure. -->
+      <rule id="r2">
+        <inputEntry id="r2i1"><text></text></inputEntry>
+        <inputEntry id="r2i2"><text></text></inputEntry>
+        <inputEntry id="r2i3"><text></text></inputEntry>
+        <inputEntry id="r2i4"><text></text></inputEntry>
+        <outputEntry id="r2o1"><text>&quot;T3&quot;</text></outputEntry>
+        <outputEntry id="r2o2"><text>&quot;CREATE_TICKET_OTHER&quot;</text></outputEntry>
+        <outputEntry id="r2o3"><text>&quot;TICKET&quot;</text></outputEntry>
+      </rule>
+
+    </decisionTable>
+  </decision>
+</definitions>

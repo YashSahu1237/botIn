@@ -1,0 +1,135 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<definitions xmlns="https://www.omg.org/spec/DMN/20191111/MODEL/"
+             id="defs-recharge-debit-no-credit-decision"
+             name="recharge-debit-no-credit-decision"
+             namespace="http://yesmadam.in/botin">
+
+  <!-- RECHARGE_DEBIT_NO_CREDIT — 883/month.
+
+       REWRITTEN AGAINST THE REAL DATA. The first version compared "SUCCESS" and
+       "FAILED", taken from the concern mapping's prose. The column actually holds
+       lower-case values, so the row that credits a wallet would never have matched
+       and every claim would have reached an agent — with no error anywhere, only a
+       rising queue. Counted over the whole UAT table:
+
+           success      74,796
+           NULL         26,374   <- 26% of every row
+           failure          36
+           Not Found        11
+
+       payuStatus is therefore a NORMALISED fact, not the raw column. See
+       PayuStatusNormaliser for the mapping and why it is done in Java.
+
+       THE MAPPING'S "PENDING" DOES NOT EXIST. No row in the table carries it. NULL
+       does, on a quarter of all rows, and it means a recharge was begun and no
+       gateway callback was ever recorded. That is NO_RESPONSE below, and it is the
+       single most common non-success state — it needed its own row rather than a
+       fall-through to the catch-all.
+
+       ROW ORDER: "failed AND not satisfied" must precede plain "failed", or the
+       general row swallows the specific one and a dissatisfied partner is told to
+       recharge again instead of getting a ticket.
+
+       ONE ROW BEYOND THE MAPPING — row 4, success + already credited. NEEDS
+       CONFIRMATION before this concern goes live.
+  -->
+
+  <!-- ROW 3 WAS DELETED, AND THE REASON MATTERS MORE THAN THE ROW.
+
+       It read `payuStatus = FAILED AND spSatisfied = false` and produced
+       TICKET_ON_SP_REQUEST — "the recharge failed, the partner is not happy with being
+       told to try again, so give them a person".
+
+       The Decision Matrix confirms that behaviour ("Create ticket on SP request"). It does
+       NOT need a row here, because THE SYSTEM ALREADY DOES IT: row 6 answers, the partner
+       answers the satisfaction question with No, and trigger A escalates that same ticket
+       to an agent. Built, tested, demonstrable.
+
+       Keeping both would be two mechanisms for one behaviour — and the one that gets fixed
+       is the one that gets demoed. It would also have stayed permanently dead: the table is
+       evaluated DURING the decision and satisfaction is answered AFTER it, so `spSatisfied`
+       could never be anything but null at the moment this row was read. -->
+
+  <decision id="recharge-debit-no-credit-decision" name="recharge-debit-no-credit-decision">
+    <decisionTable id="dt-recharge-debit-no-credit-decision" hitPolicy="FIRST">
+
+      <input id="i1" label="payuStatus">
+        <inputExpression id="ie1" typeRef="string"><text>payuStatus</text></inputExpression>
+      </input>
+      <input id="i2" label="alreadyCredited">
+        <inputExpression id="ie2" typeRef="boolean"><text>alreadyCredited</text></inputExpression>
+      </input>
+      <!-- Declared so the provider may supply it and the action may read it. No rule
+           branches on the amount: what to pay is a FACT the gateway reports, not a
+           decision this table makes. The cap that WOULD be a decision lives in the
+           transport table, where there is one. -->
+      <input id="i4" label="amountPaise">
+        <inputExpression id="ie4" typeRef="number"><text>amountPaise</text></inputExpression>
+      </input>
+
+      <output id="o1" label="tier" name="tier" typeRef="string"/>
+      <output id="o2" label="action" name="action" typeRef="string"/>
+      <output id="o3" label="outcomeType" name="outcomeType" typeRef="string"/>
+
+      <!-- 1. NO gateway response was ever recorded. The mapping's 'pending', as the data actually has it. -->
+      <rule id="r1">
+        <inputEntry id="r1i1"><text>&quot;NO_RESPONSE&quot;</text></inputEntry>
+        <inputEntry id="r1i2"><text></text></inputEntry>
+        <inputEntry id="r1i4"><text></text></inputEntry>
+        <outputEntry id="r1o1"><text>&quot;T3&quot;</text></outputEntry>
+        <outputEntry id="r1o2"><text>&quot;TICKET_PAYU_NO_RESPONSE&quot;</text></outputEntry>
+        <outputEntry id="r1o3"><text>&quot;TICKET&quot;</text></outputEntry>
+      </rule>
+
+      <!-- 2. The gateway has no record of the transaction. Rare, and not something to guess at. -->
+      <rule id="r2">
+        <inputEntry id="r2i1"><text>&quot;NOT_FOUND&quot;</text></inputEntry>
+        <inputEntry id="r2i2"><text></text></inputEntry>
+        <inputEntry id="r2i4"><text></text></inputEntry>
+        <outputEntry id="r2o1"><text>&quot;T3&quot;</text></outputEntry>
+        <outputEntry id="r2o2"><text>&quot;TICKET_PAYU_NOT_FOUND&quot;</text></outputEntry>
+        <outputEntry id="r2o3"><text>&quot;TICKET&quot;</text></outputEntry>
+      </rule>
+
+      <!-- 4. ADDED, NOT IN THE MAPPING. Success but we already credited it — the duplicate guard. -->
+      <rule id="r4">
+        <inputEntry id="r4i1"><text>&quot;SUCCESS&quot;</text></inputEntry>
+        <inputEntry id="r4i2"><text>true</text></inputEntry>
+        <inputEntry id="r4i4"><text></text></inputEntry>
+        <outputEntry id="r4o1"><text>&quot;T1&quot;</text></outputEntry>
+        <outputEntry id="r4o2"><text>&quot;INFORM_ALREADY_CREDITED&quot;</text></outputEntry>
+        <outputEntry id="r4o3"><text>&quot;BOT&quot;</text></outputEntry>
+      </rule>
+
+      <!-- 5. Success and not yet credited. THE ONLY ROW HERE THAT MOVES MONEY. -->
+      <rule id="r5">
+        <inputEntry id="r5i1"><text>&quot;SUCCESS&quot;</text></inputEntry>
+        <inputEntry id="r5i2"><text>false</text></inputEntry>
+        <inputEntry id="r5i4"><text></text></inputEntry>
+        <outputEntry id="r5o1"><text>&quot;T2&quot;</text></outputEntry>
+        <outputEntry id="r5o2"><text>&quot;AUTO_CREDIT_WALLET&quot;</text></outputEntry>
+        <outputEntry id="r5o3"><text>&quot;BOT&quot;</text></outputEntry>
+      </rule>
+
+      <!-- 6. Failed, no complaint. The gateway refunds on its own timeline. -->
+      <rule id="r6">
+        <inputEntry id="r6i1"><text>&quot;FAILED&quot;</text></inputEntry>
+        <inputEntry id="r6i2"><text></text></inputEntry>
+        <inputEntry id="r6i4"><text></text></inputEntry>
+        <outputEntry id="r6o1"><text>&quot;T1&quot;</text></outputEntry>
+        <outputEntry id="r6o2"><text>&quot;ASK_RECHARGE_AGAIN&quot;</text></outputEntry>
+        <outputEntry id="r6o3"><text>&quot;BOT&quot;</text></outputEntry>
+      </rule>
+
+      <!-- 7. CATCH-ALL, last. Also catches UNRECOGNISED — a status string nobody has seen before. -->
+      <rule id="r7">
+        <inputEntry id="r7i1"><text></text></inputEntry>
+        <inputEntry id="r7i2"><text></text></inputEntry>
+        <inputEntry id="r7i4"><text></text></inputEntry>
+        <outputEntry id="r7o1"><text>&quot;T3&quot;</text></outputEntry>
+        <outputEntry id="r7o2"><text>&quot;AGENT_UNMATCHED&quot;</text></outputEntry>
+        <outputEntry id="r7o3"><text>&quot;TICKET&quot;</text></outputEntry>
+      </rule>
+    </decisionTable>
+  </decision>
+</definitions>

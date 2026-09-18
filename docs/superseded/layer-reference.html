@@ -1,0 +1,1711 @@
+<title>BOTIn Mod Layer Reference</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#F6F7FA; --surface:#FFFFFF; --panel:#EAEDF2; --panel-border:#D2D8E1;
+    --ink:#1B2029; --ink-soft:#4A5262; --muted:#8891A0; --line:#C6CCD6;
+    --accent:#33415C;
+    --t0:#167C6B; --t1:#2F63C9; --t2:#9C5D0B; --t3:#93356B;
+    --mono-bg:#EDEFF3; --code-ink:#33415C;
+    --pro:#1C7A55; --pro-bg:#EAF5EF; --con:#A5590B; --con-bg:#FBF0E4;
+    --font-sans:'IBM Plex Sans',system-ui,-apple-system,sans-serif;
+    --font-mono:'IBM Plex Mono',ui-monospace,SFMono-Regular,Menlo,monospace;
+  }
+  @media (prefers-color-scheme: dark){
+    :root:not([data-theme="light"]){
+      --bg:#12151B; --surface:#171B22; --panel:#1E2430; --panel-border:#2B3240;
+      --ink:#E7EAF0; --ink-soft:#B7BEC9; --muted:#6B7484; --line:#313846;
+      --accent:#9FB2DE;
+      --t0:#35C0A4; --t1:#6C97F0; --t2:#E0A23C; --t3:#D273A8;
+      --mono-bg:#1B212B; --code-ink:#B9C6E6;
+      --pro:#4FCB A0; --pro:#3FBE94; --pro-bg:#152420; --con:#E0A23C; --con-bg:#241E14;
+    }
+  }
+  :root[data-theme="dark"]{
+    --bg:#12151B; --surface:#171B22; --panel:#1E2430; --panel-border:#2B3240;
+    --ink:#E7EAF0; --ink-soft:#B7BEC9; --muted:#6B7484; --line:#313846;
+    --accent:#9FB2DE;
+    --t0:#35C0A4; --t1:#6C97F0; --t2:#E0A23C; --t3:#D273A8;
+    --mono-bg:#1B212B; --code-ink:#B9C6E6;
+    --pro:#3FBE94; --pro-bg:#152420; --con:#E0A23C; --con-bg:#241E14;
+  }
+
+  *{box-sizing:border-box;}
+  body{margin:0; background:var(--bg); color:var(--ink); font-family:var(--font-sans); line-height:1.55; -webkit-font-smoothing:antialiased;}
+  .wrap{max-width:1180px; margin:0 auto; padding:48px 26px 90px;}
+
+  header.page{margin-bottom:32px;}
+  .eyebrow{font-family:var(--font-mono); font-size:12px; letter-spacing:.08em; text-transform:uppercase; color:var(--muted); margin:0 0 10px;}
+  h1{font-size:clamp(26px,4vw,34px); font-weight:600; margin:0 0 10px; text-wrap:balance; letter-spacing:-.01em;}
+  .dek{color:var(--ink-soft); font-size:15.5px; margin:0; max-width:68ch;}
+
+  /* tabs */
+  .tabbar{
+    display:flex; flex-wrap:wrap; gap:6px; margin:30px 0 0;
+    border-bottom:1px solid var(--line); padding-bottom:0;
+  }
+  .tab{
+    font-family:var(--font-mono); font-size:12.5px; font-weight:500;
+    color:var(--ink-soft); background:none; border:1px solid transparent;
+    padding:9px 13px; border-radius:6px 6px 0 0; cursor:pointer;
+    white-space:nowrap; transition:background .12s ease, color .12s ease;
+  }
+  .tab:hover{background:var(--panel); color:var(--ink);}
+  .tab[aria-selected="true"]{
+    color:var(--ink); background:var(--surface);
+    border-color:var(--line); border-bottom-color:var(--surface);
+    margin-bottom:-1px; font-weight:600;
+  }
+  .tab.done::before{content:"● "; color:var(--t1);}
+  .tab.pending::before{content:"○ "; color:var(--muted);}
+
+  .panel{ background:var(--surface); border:1px solid var(--line); border-radius:0 8px 8px 8px; padding:32px clamp(20px,4vw,40px) 40px; }
+  .panel[hidden]{display:none;}
+
+  .layer-tag{font-family:var(--font-mono); font-size:12px; color:var(--muted); letter-spacing:.05em; text-transform:uppercase; margin:0 0 6px;}
+  .layer-title{font-size:24px; font-weight:600; margin:0 0 22px; letter-spacing:-.01em;}
+
+  h3.section{
+    font-family:var(--font-mono); font-size:12.5px; letter-spacing:.06em; text-transform:uppercase;
+    color:var(--muted); font-weight:600; margin:34px 0 14px; padding-top:22px; border-top:1px solid var(--line);
+  }
+  h3.section:first-of-type{margin-top:0; padding-top:0; border-top:none;}
+
+  ul.brief{margin:0; padding:0; list-style:none; display:flex; flex-direction:column; gap:10px;}
+  ul.brief li{padding-left:20px; position:relative; font-size:15px;}
+  ul.brief li::before{content:"—"; position:absolute; left:0; color:var(--muted);}
+  ul.brief code, p code, td code{font-family:var(--font-mono); background:var(--mono-bg); color:var(--code-ink); padding:1px 6px; border-radius:4px; font-size:12.5px;}
+
+  figure.diagram{background:var(--panel); border:1px solid var(--panel-border); border-radius:6px; padding:16px 16px 4px; margin:0;}
+  .diagram-scroll{overflow-x:auto;}
+  figure.diagram svg{display:block; width:100%; height:auto; min-width:560px;}
+  figcaption{font-size:13.5px; color:var(--ink-soft); padding:12px 2px 4px;}
+
+  table{width:100%; border-collapse:collapse; font-size:14px; margin-top:6px;}
+  caption{text-align:left; font-size:12.5px; color:var(--muted); padding-bottom:8px; font-family:var(--font-mono);}
+  th,td{text-align:left; padding:9px 12px; border-bottom:1px solid var(--line); vertical-align:top;}
+  th{font-family:var(--font-mono); font-size:11px; text-transform:uppercase; letter-spacing:.05em; color:var(--muted); font-weight:500;}
+  tr:last-child td{border-bottom:none;}
+  .table-scroll{overflow-x:auto;}
+  .dot{display:inline-block; width:9px; height:9px; border-radius:50%; margin-right:7px;}
+  .dot.t0{background:var(--t0);} .dot.t1{background:var(--t1);} .dot.t2{background:var(--t2);} .dot.t3{background:var(--t3);}
+
+  .procon{display:grid; grid-template-columns:1fr 1fr; gap:18px;}
+  @media (max-width:640px){.procon{grid-template-columns:1fr;}}
+  .procon .col{border-radius:6px; padding:16px 18px;}
+  .procon .pros{background:var(--pro-bg); border:1px solid color-mix(in srgb, var(--pro) 35%, var(--panel-border));}
+  .procon .cons{background:var(--con-bg); border:1px solid color-mix(in srgb, var(--con) 35%, var(--panel-border));}
+  .procon h4{margin:0 0 10px; font-size:13px; font-family:var(--font-mono); text-transform:uppercase; letter-spacing:.05em;}
+  .procon .pros h4{color:var(--pro);} .procon .cons h4{color:var(--con);}
+  .procon ul{margin:0; padding:0; list-style:none; display:flex; flex-direction:column; gap:8px;}
+  .procon li{padding-left:16px; position:relative; font-size:14px;}
+  .procon .pros li::before{content:"+"; position:absolute; left:0; color:var(--pro); font-weight:700;}
+  .procon .cons li::before{content:"–"; position:absolute; left:0; color:var(--con); font-weight:700;}
+
+  ul.rnd{margin:0; padding:0; list-style:none; display:flex; flex-direction:column; gap:10px;}
+  ul.rnd li{padding-left:22px; position:relative; font-size:14.5px;}
+  ul.rnd li::before{content:"↝"; position:absolute; left:0; color:var(--accent);}
+
+  .placeholder{padding:30px 6px; color:var(--ink-soft);}
+  .placeholder .layer-title{color:var(--muted);}
+  .placeholder p{font-size:14.5px; max-width:56ch;}
+  .placeholder .note{
+    display:inline-block; margin-top:14px; font-family:var(--font-mono); font-size:12px;
+    color:var(--muted); background:var(--panel); border:1px dashed var(--panel-border);
+    padding:8px 12px; border-radius:6px;
+  }
+
+  footer{margin-top:44px; padding-top:18px; border-top:1px solid var(--line); font-size:13px; color:var(--muted); font-family:var(--font-mono);}
+
+  /* svg tokens (no <style> inside svg; styled from here) */
+  .rect-a{ fill:var(--surface); stroke:var(--line); stroke-width:1.5; }
+  .rect-b{ fill:var(--panel); stroke:var(--panel-border); stroke-width:1.5; stroke-dasharray:6 5; }
+  .lbl-name{ font-family:var(--font-sans); font-weight:600; fill:var(--ink); font-size:14px; }
+  .lbl-sub{ font-family:var(--font-mono); fill:var(--ink-soft); font-size:11px; }
+  .lbl-edge{ font-family:var(--font-mono); fill:var(--ink-soft); font-size:11px; }
+  .edge{ stroke:var(--accent); stroke-width:2; fill:none; }
+  .edge-dashed{ stroke:var(--muted); stroke-width:2; fill:none; stroke-dasharray:6 5; }
+  .fill-accent{ fill:var(--accent); }
+  .fill-muted{ fill:var(--muted); }
+</style>
+
+<div class="wrap">
+  <header class="page">
+    <p class="eyebrow">BOTIn Mod — Tech Design Deep-Dive</p>
+    <h1>Layer Reference</h1>
+    <p class="dek">One tab per layer of <code>botin_mod_tech_design_v0.1.md</code>. Filled in one at a time, in whatever order you pick — ● means detailed here, ○ means still just a preview.</p>
+  </header>
+
+  <div class="tabbar" role="tablist" aria-label="Layers">
+    <button class="tab done" role="tab" aria-selected="false" data-panel="p0">0 · Deployment</button>
+    <button class="tab done" role="tab" aria-selected="false" data-panel="p1">1 · Client</button>
+    <button class="tab done" role="tab" aria-selected="false" data-panel="p2">2 · Data Model</button>
+    <button class="tab done" role="tab" aria-selected="false" data-panel="p3">3 · Flowable</button>
+    <button class="tab done" role="tab" aria-selected="true" data-panel="p4">4 · DMN</button>
+    <button class="tab done" role="tab" aria-selected="false" data-panel="p5">5 · /classify</button>
+    <button class="tab pending" role="tab" aria-selected="false" data-panel="p5b">5b · Intent Routing</button>
+    <button class="tab pending" role="tab" aria-selected="false" data-panel="p6">6 · Action Executors</button>
+    <button class="tab done" role="tab" aria-selected="false" data-panel="p7">7 · Safety</button>
+    <button class="tab pending" role="tab" aria-selected="false" data-panel="p8">8 · Agent Connect</button>
+    <button class="tab pending" role="tab" aria-selected="false" data-panel="p9">9 · Observability</button>
+    <button class="tab pending" role="tab" aria-selected="false" data-panel="p10">10 · Flow Examples</button>
+    <button class="tab pending" role="tab" aria-selected="false" data-panel="p11">11 · Access Control</button>
+    <button class="tab pending" role="tab" aria-selected="false" data-panel="p12">12 · Guardrails</button>
+    <button class="tab pending" role="tab" aria-selected="false" data-panel="p13">13 · AI Agents (Future)</button>
+  </div>
+
+  <!-- DEPLOYMENT VIEW -->
+  <div class="panel" id="p0" role="tabpanel" hidden>
+    <p class="layer-tag">Cross-cutting</p>
+    <h2 class="layer-title">Deployment View — where the code actually lives</h2>
+
+    <h3 class="section">The distinction this tab exists to fix</h3>
+    <ul class="brief">
+      <li><strong>Layers are logical, not physical.</strong> "Layer 3 calls Layer 6" describes a dependency, not a network hop — most of those calls are ordinary Java method calls inside one process.</li>
+      <li><strong>We build exactly two deployables.</strong> Everything else is either a vendor (Exotel) or an existing Yesmadam system.</li>
+      <li>Layers 1, 2, 3, 4, 6, 7, 8, 9 — and 11/12 when built — are <strong>all one Spring Boot process</strong>. Flowable, its DMN engine, and Togglz are libraries inside it, not services.</li>
+      <li>Only Layers 5 and 5b live somewhere else: the Python classifier. That's the single process boundary inside our own system.</li>
+      <li><strong>Which existing app hosts that Spring Boot process is a pending team decision</strong> — see the last section. It is <em>not</em> <code>app_server</code>: that one is customer-facing, and BOTIn serves Service Providers.</li>
+    </ul>
+
+    <h3 class="section">Which existing app is which</h3>
+    <div class="table-scroll">
+      <table>
+        <caption>Yesmadam's existing apps, and each one's relationship to BOTIn</caption>
+        <thead><tr><th>App</th><th>Whose data / audience</th><th>Role for BOTIn</th></tr></thead>
+        <tbody>
+          <tr><td><code>app_server</code></td><td>Customers</td><td><strong>Ruled out.</strong> Wrong audience — BOTIn serves SPs, not customers.</td></tr>
+          <tr><td><code>empapi</code></td><td><strong>Service Providers</strong> — SP identity, wallet, leave, fines</td><td>Candidate host for the BOTIn backend. Also where Layer 6's ledger actions live either way.</td></tr>
+          <tr><td><code>admin</code></td><td>Internal agents / ops</td><td><strong>Renders the agent screen</strong> (a UI concern). Not a candidate to host the backend.</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <h3 class="section">The two deployables</h3>
+    <figure class="diagram">
+      <div class="diagram-scroll">
+      <svg viewBox="0 0 920 420" role="img" aria-label="The BOTIn Spring Boot backend, whose host is undecided between a new service and empapi, contains three controller classes and the embedded Flowable, DMN and Togglz libraries, and holds layers 1,2,3,4,6,7,8,9. It calls out to the Python classifier service, the Exotel telephony vendor, and the SP wallet, leave and fines systems that live in empapi. The SP mobile app and the admin panel call into it. app_server is not involved.">
+        <defs>
+          <marker id="d1" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="fill-accent"/></marker>
+          <marker id="d2" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="fill-muted"/></marker>
+        </defs>
+
+        <text x="120" y="20" text-anchor="middle" class="lbl-edge">CONSUMERS</text>
+        <text x="455" y="20" text-anchor="middle" class="lbl-edge">WE BUILD THIS</text>
+        <text x="800" y="20" text-anchor="middle" class="lbl-edge">EXTERNAL</text>
+
+        <rect x="20" y="60" width="200" height="56" rx="4" class="rect-b"/>
+        <text x="120" y="84" text-anchor="middle" class="lbl-name">SP mobile app</text>
+        <text x="120" y="102" text-anchor="middle" class="lbl-sub">not ours</text>
+
+        <rect x="20" y="150" width="200" height="56" rx="4" class="rect-b"/>
+        <text x="120" y="174" text-anchor="middle" class="lbl-name">admin</text>
+        <text x="120" y="192" text-anchor="middle" class="lbl-sub">existing — renders agent screen</text>
+
+        <rect x="270" y="50" width="370" height="330" rx="6" class="rect-a"/>
+        <text x="455" y="76" text-anchor="middle" class="lbl-name">BOTIn backend · Spring Boot</text>
+        <text x="455" y="94" text-anchor="middle" class="lbl-sub">one process — host undecided: new service or empapi</text>
+        <line x1="290" y1="110" x2="620" y2="110" class="edge-dashed"/>
+
+        <rect x="292" y="126" width="326" height="40" rx="3" class="rect-b"/>
+        <text x="305" y="151" class="lbl-sub">HelpSessionController — 3 SP endpoints</text>
+        <rect x="292" y="174" width="326" height="40" rx="3" class="rect-b"/>
+        <text x="305" y="199" class="lbl-sub">AgentContextController — 2 agent endpoints</text>
+        <rect x="292" y="222" width="326" height="40" rx="3" class="rect-b"/>
+        <text x="305" y="247" class="lbl-sub">TicketCallbackController — if webhook</text>
+
+        <line x1="290" y1="282" x2="620" y2="282" class="edge-dashed"/>
+        <text x="455" y="306" text-anchor="middle" class="lbl-sub">embedded libraries — not services</text>
+        <text x="455" y="326" text-anchor="middle" class="lbl-sub">Flowable · DMN engine · Togglz</text>
+        <text x="455" y="352" text-anchor="middle" class="lbl-sub">layers 1 · 2 · 3 · 4 · 6 · 7 · 8 · 9</text>
+
+        <rect x="690" y="60" width="210" height="66" rx="4" class="rect-a"/>
+        <text x="795" y="86" text-anchor="middle" class="lbl-name">Python classifier</text>
+        <text x="795" y="104" text-anchor="middle" class="lbl-sub">DEPLOYABLE 2 · layers 5, 5b</text>
+
+        <rect x="690" y="160" width="210" height="56" rx="4" class="rect-b"/>
+        <text x="795" y="184" text-anchor="middle" class="lbl-name">Exotel / Ozonetel</text>
+        <text x="795" y="202" text-anchor="middle" class="lbl-sub">vendor</text>
+
+        <rect x="690" y="250" width="210" height="66" rx="4" class="rect-b"/>
+        <text x="795" y="274" text-anchor="middle" class="lbl-name">SP wallet · leave · fines</text>
+        <text x="795" y="292" text-anchor="middle" class="lbl-sub">lives in empapi</text>
+        <text x="795" y="308" text-anchor="middle" class="lbl-sub">hop disappears if BOTIn ⊂ empapi</text>
+
+        <text x="455" y="404" text-anchor="middle" class="lbl-sub">app_server (customer-facing) is not involved</text>
+
+        <line x1="220" y1="88" x2="270" y2="120" class="edge" marker-end="url(#d1)"/>
+        <line x1="220" y1="178" x2="270" y2="196" class="edge" marker-end="url(#d1)"/>
+        <line x1="640" y1="120" x2="690" y2="95" class="edge-dashed" marker-end="url(#d2)"/>
+        <line x1="640" y1="190" x2="690" y2="188" class="edge-dashed" marker-end="url(#d2)"/>
+        <line x1="640" y1="250" x2="690" y2="278" class="edge-dashed" marker-end="url(#d2)"/>
+      </svg>
+      </div>
+      <figcaption>Solid arrows are inbound calls to us; dashed are our outbound calls. Every line crossing the big box is a real network hop; everything inside it is a method call. <strong>The bottom-right hop is the one the hosting decision actually moves</strong> — if BOTIn ships inside <code>empapi</code>, the SP wallet/leave/fines calls stop being network calls at all.</figcaption>
+    </figure>
+
+    <h3 class="section">Endpoint → class → deployable</h3>
+    <div class="table-scroll">
+      <table>
+        <caption>All seven inbound endpoints we own, and the class each lives in</caption>
+        <thead><tr><th>Endpoint</th><th>Controller class</th><th>Deployable</th><th>Called by</th></tr></thead>
+        <tbody>
+          <tr><td><code>POST /help/sessions</code></td><td><code>HelpSessionController</code></td><td>BOTIn backend</td><td>SP app</td></tr>
+          <tr><td><code>POST /help/sessions/{id}/input</code></td><td><code>HelpSessionController</code></td><td>BOTIn backend</td><td>SP app</td></tr>
+          <tr><td><code>GET /help/sessions/{id}</code></td><td><code>HelpSessionController</code></td><td>BOTIn backend</td><td>SP app</td></tr>
+          <tr><td><code>GET /tickets/{id}/escalation-context</code></td><td><code>AgentContextController</code></td><td>BOTIn backend</td><td><code>admin</code> — <strong>cross-origin</strong></td></tr>
+          <tr><td><code>GET /tickets/{id}/conversation</code></td><td><code>AgentContextController</code></td><td>BOTIn backend</td><td><code>admin</code> — <strong>cross-origin</strong></td></tr>
+          <tr><td><code>POST /internal/tickets/{id}/closed</code></td><td><code>TicketCallbackController</code></td><td>BOTIn backend</td><td><code>admin</code> — only if webhook, not polling</td></tr>
+          <tr><td><code>POST /classify</code> · <code>/classify-intent</code></td><td>FastAPI route handlers</td><td>Python classifier</td><td>BOTIn backend</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <h3 class="section">Outbound clients — same app, no separate deployable</h3>
+    <div class="table-scroll">
+      <table>
+        <caption>The three things the BOTIn backend calls out to, and the class that owns each call</caption>
+        <thead><tr><th>Client class</th><th>Calls</th><th>Failure handling</th></tr></thead>
+        <tbody>
+          <tr><td><code>ClassifierClient</code></td><td>Python <code>/classify</code>, <code>/classify-intent</code></td><td>3s timeout + Resilience4j circuit breaker → route to T3</td></tr>
+          <tr><td><code>TelephonyClient</code></td><td>Exotel / Ozonetel outbound-call API</td><td>Not yet designed — retry policy open</td></tr>
+          <tr><td><code>WalletActionService</code>, <code>LeaveActionService</code>, <code>FineActionService</code></td><td>SP wallet / leave / fines in <code>empapi</code> — HTTP <em>or</em> in-process, per the pending decision</td><td><code>TicketAction</code> row committed before the call (Layer 2)</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <h3 class="section">The pending decision — new service, or inside empapi</h3>
+    <ul class="brief">
+      <li><code>app_server</code> is ruled out on audience grounds: it serves customers, BOTIn serves SPs. That was never a real candidate once the audience was named.</li>
+      <li><code>admin</code> isn't a candidate either, but for a different reason — it hosts the <em>agent screen UI</em>, which is a frontend concern. Where the backend runs is a separate question.</li>
+      <li>So the live choice is binary: <strong>a new standalone Spring Boot service</strong>, or <strong>a module inside <code>empapi</code></strong>. This needs a team discussion, not a unilateral call — captured here so the trade-offs are on the table when that conversation happens.</li>
+      <li>Either way, <code>admin</code> calls <code>AgentContextController</code> across a service boundary — so CORS and admin→BOTIn auth are needed regardless. That part of Layer 11 isn't affected by the decision.</li>
+    </ul>
+    <div class="table-scroll">
+      <table>
+        <caption>What actually changes between the two options — for the team discussion</caption>
+        <thead><tr><th>Dimension</th><th>New standalone service</th><th>Module inside <code>empapi</code></th></tr></thead>
+        <tbody>
+          <tr><td><strong>Layer 6 ledger calls</strong> (wallet, leave, fines)</td><td>HTTP to <code>empapi</code> — needs endpoints to exist, plus timeout/retry handling on every action</td><td><strong>In-process method calls</strong> — no HTTP, no new endpoints, the "do these APIs exist" question dissolves</td></tr>
+          <tr><td>SP identity / auth</td><td>Must federate or duplicate <code>empapi</code>'s SP auth</td><td>Already there — reuse it directly</td></tr>
+          <tr><td>Database</td><td>Own schema, clean ownership; Flowable's tables isolated</td><td>Flowable's tables land in <code>empapi</code>'s DB alongside existing SP data</td></tr>
+          <tr><td>Deploy blast radius</td><td>Independent — a BOTIn bug can't take down SP-facing APIs</td><td>Shared — a Flowable or classifier-client bug ships with <code>empapi</code></td></tr>
+          <tr><td>Release cadence</td><td>Ship BOTIn on its own schedule</td><td>Tied to <code>empapi</code>'s release train</td></tr>
+          <tr><td>Operational load (solo dev)</td><td>New pipeline, new monitoring, new on-call surface</td><td>Rides existing pipeline and monitoring</td></tr>
+          <tr><td>Kill switch (Togglz, Layer 7)</td><td>Independent — flip BOTIn off without touching <code>empapi</code></td><td>Same flags, but the process is shared with live SP traffic</td></tr>
+          <tr><td>Agent endpoints from <code>admin</code></td><td>Cross-service — CORS + auth needed</td><td>Cross-service — CORS + auth needed <em>(no difference)</em></td></tr>
+        </tbody>
+      </table>
+    </div>
+    <ul class="brief">
+      <li><strong>The sharpest trade-off is the first row.</strong> Hosting inside <code>empapi</code> removes an entire integration surface — every T2 money action becomes a local call with no network failure mode. Against that, it puts an embedded workflow engine and an LLM-calling client into the process that already serves live SP traffic.</li>
+      <li>Nothing else in this document depends on the answer. Layer 6's interface boundary (<code>WalletActionService</code> et al.) was designed precisely so its implementation can be an HTTP client or a direct call without anything above it changing.</li>
+    </ul>
+  </div>
+
+  <!-- LAYER 1 — DETAILED -->
+  <div class="panel" id="p1" role="tabpanel" hidden>
+    <p class="layer-tag">Layer 1</p>
+    <h2 class="layer-title">Client Integration</h2>
+
+    <h3 class="section">In brief</h3>
+    <ul class="brief">
+      <li>A <strong>server-driven conversational state machine</strong>, not a generic chat API — the client never decides what to show next, it only renders.</li>
+      <li>Three endpoints cover it: <code>POST /help/sessions</code> (start), <code>POST /help/sessions/{id}/input</code> (submit the SP's answer), <code>GET /help/sessions/{id}</code> (reconnect after an app restart).</li>
+      <li>Every response carries one <code>nextStep</code> descriptor — a type plus its content/options — so the client is a thin renderer, never a second copy of the flow logic.</li>
+      <li>One entry variant breaks the pattern on purpose: the SP can type free text as the very first message, before any menu selection — that request carries no <code>l1Concern</code>/<code>l2Concern</code> at all, and forks into Layer 5b before anything else applies.</li>
+    </ul>
+
+    <h3 class="section">Flow diagram</h3>
+    <figure class="diagram">
+      <div class="diagram-scroll">
+      <svg viewBox="0 0 900 260" role="img" aria-label="SP App and Java API layer exchange input and nextStep responses in a loop; a second, dashed path shows free text entered before any menu selection forking toward Layer 5b intent routing.">
+        <defs>
+          <marker id="ar1" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="fill-accent"/></marker>
+          <marker id="ar2" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="fill-muted"/></marker>
+        </defs>
+        <rect x="40" y="55" width="160" height="66" rx="4" class="rect-a"/>
+        <text x="120" y="82" text-anchor="middle" class="lbl-name">SP App</text>
+        <text x="120" y="99" text-anchor="middle" class="lbl-sub">thin renderer</text>
+
+        <rect x="470" y="55" width="200" height="66" rx="4" class="rect-a"/>
+        <text x="570" y="82" text-anchor="middle" class="lbl-name">Java API Layer</text>
+        <text x="570" y="99" text-anchor="middle" class="lbl-sub">owns 100% of flow logic</text>
+
+        <line x1="200" y1="75" x2="470" y2="75" class="edge" marker-end="url(#ar1)"/>
+        <text x="215" y="66" class="lbl-edge">POST /help/sessions/{id}/input</text>
+        <line x1="470" y1="100" x2="200" y2="100" class="edge" marker-end="url(#ar1)"/>
+        <text x="215" y="118" class="lbl-edge">nextStep: {type, content}</text>
+
+        <rect x="40" y="175" width="220" height="66" rx="4" class="rect-b"/>
+        <text x="150" y="200" text-anchor="middle" class="lbl-name">SP App</text>
+        <text x="150" y="217" text-anchor="middle" class="lbl-sub">types free text first — no menu tap</text>
+
+        <line x1="260" y1="208" x2="470" y2="130" class="edge-dashed" marker-end="url(#ar2)"/>
+        <text x="290" y="175" class="lbl-edge">no l1Concern / l2Concern yet</text>
+        <text x="620" y="150" class="lbl-edge">→ forks to Layer 5b</text>
+      </svg>
+      </div>
+      <figcaption>The normal loop (top): every step is a request/response pair carrying one <code>nextStep</code>. The variant (bottom): unconstrained free text at entry has nothing for Java to key a Flowable process on, so it forks toward intent routing before this contract's normal branching applies.</figcaption>
+    </figure>
+
+    <h3 class="section">The <code>nextStep</code> contract</h3>
+    <div class="table-scroll">
+      <table>
+        <caption>Every step type the client has to know how to render</caption>
+        <thead><tr><th>Type</th><th>When it's used</th><th>Example payload</th></tr></thead>
+        <tbody>
+          <tr><td><code>menu</code></td><td>L1/L2 concern selection</td><td><code>{options:["Rule-break fine","Leaves fine",...]}</code></td></tr>
+          <tr><td><code>dropdown</code></td><td>Picking a specific booking/order to attach the concern to</td><td><code>{options:[{id,label:"Booking #4521, 12 Aug"}]}</code></td></tr>
+          <tr><td><code>text</code></td><td>Free-text input needed — a dispute reason, or unconstrained entry</td><td><code>{placeholder:"Tell us what happened"}</code></td></tr>
+          <tr><td><code>message</code></td><td>Bot's answer, explanation, confirmation, or a status update</td><td><code>{content:"Your leave fine has been waived."}</code></td></tr>
+          <tr><td><code>csat</code></td><td>End of any resolved interaction, any tier</td><td><code>{prompt:"How was this?", scale:5}</code></td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <h3 class="section">What each tier looks like to the client</h3>
+    <div class="table-scroll">
+      <table>
+        <caption>Same contract, different endings</caption>
+        <thead><tr><th>Tier</th><th>What the SP sees</th><th><code>nextStep.type</code></th><th>Example</th></tr></thead>
+        <tbody>
+          <tr><td><span class="dot t0"></span>T0</td><td>Instant deflect, no waiting</td><td><code>message</code> (+ CTA link)</td><td>"Here's how to update bank details: …"</td></tr>
+          <tr><td><span class="dot t1"></span>T1</td><td>An explanation, no action taken</td><td><code>message</code></td><td>"Your fine was applied because: late check-in."</td></tr>
+          <tr><td><span class="dot t2"></span>T2</td><td>A confirmation that something changed</td><td><code>message</code></td><td>"Your leave fine has been waived."</td></tr>
+          <tr><td><span class="dot t3"></span>T3</td><td>A waiting state, then an async resolution — no menu, no free text expected from the SP in between</td><td><code>message</code> ×2 ("connecting…" then "resolved")</td><td>"Connecting you to an agent…" → "Resolved by Agent Priya."</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <h3 class="section">Pros &amp; cons</h3>
+    <div class="procon">
+      <div class="col pros">
+        <h4>Pros</h4>
+        <ul>
+          <li>One contract for all four tiers — the client never forks its own logic per tier, it only renders whatever <code>nextStep</code> says.</li>
+          <li>Decouples app release cycles from flow changes — a new BPMN diagram or a DMN rule change never needs an app store update.</li>
+          <li>Clean reconnect story: <code>GET /help/sessions/{id}</code> rebuilds the exact same screen after a crash or app restart.</li>
+        </ul>
+      </div>
+      <div class="col cons">
+        <h4>Cons</h4>
+        <ul>
+          <li>Every new step type needs client-side rendering support shipped <em>before</em> the backend can rely on it — a real coordination cost with frontend.</li>
+          <li>Fully thin-client means zero offline capability — every step needs connectivity, even a T0 deflect.</li>
+          <li>The free-text-first entry path (Layer 5b) still needs a UX decision — does the client always show a text box alongside the menu, or only as a fallback link?</li>
+        </ul>
+      </div>
+    </div>
+
+    <h3 class="section">R&amp;D for scale / efficiency</h3>
+    <ul class="rnd">
+      <li>At higher T3 volume, swap client polling of <code>GET /help/sessions/{id}</code> for a push channel (WebSocket or SSE) so "agent resolved" arrives instantly instead of on the next poll.</li>
+      <li>Add a client-generated idempotency key on <code>POST .../input</code> so a dropped connection and a client retry can't double-submit the same step.</li>
+      <li>Template localization: the SOP already mixes Hindi/Hinglish free text (the "strike" example) — <code>message</code> content will need multi-language templates before Wave 2+, not just English.</li>
+    </ul>
+  </div>
+
+  <!-- PLACEHOLDER PANELS -->
+  <div class="panel" id="p2" role="tabpanel" hidden>
+    <p class="layer-tag">Layer 2</p>
+    <h2 class="layer-title">Session/Ticket State</h2>
+
+    <h3 class="section">What this layer is, and what it does</h3>
+    <ul class="brief">
+      <li>It is <strong>not a service</strong> — it's a package inside the existing Spring Boot app, sharing one DataSource with Flowable's own tables. Nothing new to deploy.</li>
+      <li>Its actual job is <strong>owning every write</strong> to the five entities, and enforcing <em>when</em> and <em>in which transaction</em> each write happens — the tables are the easy part; the transaction boundaries are the design.</li>
+      <li><strong>Gate 1</strong> lives here: a <code>Ticket</code> row is only inserted once a concern needs a real answer or action. Pure deflects never create one.</li>
+      <li>It classifies its own writes by criticality — three are synchronous and must not be lost, one is deferrable and written off the request thread.</li>
+      <li>It is the single enforcement point for idempotency (<code>TicketAction.idempotencyKey</code>) — the thing that makes a retried action a no-op instead of a double credit.</li>
+    </ul>
+
+    <h3 class="section">Where it lives in the codebase</h3>
+    <div class="table-scroll">
+      <table>
+        <caption>One package, four sub-packages — no new deployable</caption>
+        <thead><tr><th>Package</th><th>Contains</th><th>Responsibility</th></tr></thead>
+        <tbody>
+          <tr><td><code>domain/</code></td><td>The five JPA entities</td><td>Schema definition, nothing else — no logic</td></tr>
+          <tr><td><code>repository/</code></td><td>Spring Data JPA interfaces</td><td>Query methods, incl. the claim-frequency and history lookups Layers 4 and 8 depend on</td></tr>
+          <tr><td><code>service/</code></td><td><code>HelpSessionService</code>, <code>TicketService</code>, <code>TicketActionRecorder</code>, <code>EscalationContextBuilder</code></td><td>Owns writes and transaction boundaries — the real content of this layer</td></tr>
+          <tr><td><code>event/</code></td><td>The async <code>ConversationMessage</code> listener</td><td>Keeps transcript writes off the request path</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <h3 class="section">Who touches this layer, and why</h3>
+    <figure class="diagram">
+      <div class="diagram-scroll">
+      <svg viewBox="0 0 920 400" role="img" aria-label="Four writers on the left — the Java API layer, Flowable, the Action Executor and the EscalationContextBuilder — write into the Layer 2 persistence package holding five entities; four readers on the right — the DMN table, the reconciliation job, the agent screen and observability — read from it.">
+        <defs>
+          <marker id="w1" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="fill-accent"/></marker>
+          <marker id="r1" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="fill-muted"/></marker>
+        </defs>
+
+        <text x="145" y="22" text-anchor="middle" class="lbl-edge">WRITERS →</text>
+        <text x="775" y="22" text-anchor="middle" class="lbl-edge">→ READERS</text>
+
+        <rect x="340" y="30" width="230" height="340" rx="4" class="rect-a"/>
+        <text x="455" y="60" text-anchor="middle" class="lbl-name">Layer 2</text>
+        <text x="455" y="78" text-anchor="middle" class="lbl-sub">persistence package</text>
+        <line x1="362" y1="96" x2="548" y2="96" class="edge-dashed"/>
+        <text x="455" y="128" text-anchor="middle" class="lbl-sub">HelpSession</text>
+        <text x="455" y="156" text-anchor="middle" class="lbl-sub">Ticket</text>
+        <text x="455" y="184" text-anchor="middle" class="lbl-sub">TicketAction</text>
+        <text x="455" y="212" text-anchor="middle" class="lbl-sub">ConversationMessage</text>
+        <text x="455" y="240" text-anchor="middle" class="lbl-sub">EscalationContext</text>
+        <line x1="362" y1="270" x2="548" y2="270" class="edge-dashed"/>
+        <text x="455" y="296" text-anchor="middle" class="lbl-sub">shares one DataSource</text>
+        <text x="455" y="314" text-anchor="middle" class="lbl-sub">with Flowable's own tables</text>
+
+        <rect x="20" y="40" width="250" height="56" rx="4" class="rect-b"/>
+        <text x="145" y="64" text-anchor="middle" class="lbl-name">Layer 1 · Java API</text>
+        <text x="145" y="82" text-anchor="middle" class="lbl-sub">HelpSession, ConversationMessage</text>
+        <line x1="270" y1="68" x2="340" y2="68" class="edge" marker-end="url(#w1)"/>
+
+        <rect x="20" y="118" width="250" height="56" rx="4" class="rect-b"/>
+        <text x="145" y="142" text-anchor="middle" class="lbl-name">Layer 3 · Flowable</text>
+        <text x="145" y="160" text-anchor="middle" class="lbl-sub">Ticket status, tier</text>
+        <line x1="270" y1="146" x2="340" y2="146" class="edge" marker-end="url(#w1)"/>
+
+        <rect x="20" y="196" width="250" height="56" rx="4" class="rect-b"/>
+        <text x="145" y="220" text-anchor="middle" class="lbl-name">Layer 6 · Action Executor</text>
+        <text x="145" y="238" text-anchor="middle" class="lbl-sub">TicketAction — own transaction</text>
+        <line x1="270" y1="224" x2="340" y2="224" class="edge" marker-end="url(#w1)"/>
+
+        <rect x="20" y="274" width="250" height="56" rx="4" class="rect-b"/>
+        <text x="145" y="298" text-anchor="middle" class="lbl-name">Layer 8 · Escalation Builder</text>
+        <text x="145" y="316" text-anchor="middle" class="lbl-sub">EscalationContext, once</text>
+        <line x1="270" y1="302" x2="340" y2="302" class="edge" marker-end="url(#w1)"/>
+
+        <rect x="650" y="40" width="250" height="56" rx="4" class="rect-b"/>
+        <text x="775" y="64" text-anchor="middle" class="lbl-name">Layer 4 · DMN</text>
+        <text x="775" y="82" text-anchor="middle" class="lbl-sub">Ticket history — critical path</text>
+        <line x1="570" y1="68" x2="650" y2="68" class="edge-dashed" marker-end="url(#r1)"/>
+
+        <rect x="650" y="118" width="250" height="56" rx="4" class="rect-b"/>
+        <text x="775" y="142" text-anchor="middle" class="lbl-name">Layer 7 · Reconcile job</text>
+        <text x="775" y="160" text-anchor="middle" class="lbl-sub">TicketAction — nightly heavy scan</text>
+        <line x1="570" y1="146" x2="650" y2="146" class="edge-dashed" marker-end="url(#r1)"/>
+
+        <rect x="650" y="196" width="250" height="56" rx="4" class="rect-b"/>
+        <text x="775" y="220" text-anchor="middle" class="lbl-name">Layer 8 · Agent screen</text>
+        <text x="775" y="238" text-anchor="middle" class="lbl-sub">context always, transcript on demand</text>
+        <line x1="570" y1="224" x2="650" y2="224" class="edge-dashed" marker-end="url(#r1)"/>
+
+        <rect x="650" y="274" width="250" height="56" rx="4" class="rect-b"/>
+        <text x="775" y="298" text-anchor="middle" class="lbl-name">Layer 9 · Observability</text>
+        <text x="775" y="316" text-anchor="middle" class="lbl-sub">counts and aggregates only</text>
+        <line x1="570" y1="302" x2="650" y2="302" class="edge-dashed" marker-end="url(#r1)"/>
+      </svg>
+      </div>
+      <figcaption>Two things this map shows that an entity list can't: Layer 4's read sits on the <strong>critical path of every T2 decision</strong> (so it needs its index before launch, not after), and Layer 7's nightly scan is the one genuinely <strong>heavy</strong> read — the thing that would eventually justify partitioning.</figcaption>
+    </figure>
+
+    <h3 class="section">API surface — none of it is HTTP</h3>
+    <ul class="brief">
+      <li>This layer exposes <strong>zero HTTP endpoints</strong>. Every SP-facing endpoint belongs to Layer 1; every agent-facing endpoint belongs to Layer 8. Layer 2 supplies the data behind them, nothing more.</li>
+      <li>What it exposes instead is a set of <strong>in-process Java interfaces</strong> — plain method calls inside the same JVM: no serialization, no network, no timeout or retry handling needed at this boundary.</li>
+      <li>It also makes <strong>zero outbound calls</strong> — it talks only to the database. That makes it a leaf: it can never be the source of a timeout, a circuit-breaker trip, or a cascading failure. Same kind of absolute boundary as "Python has no DB access."</li>
+    </ul>
+    <div class="table-scroll">
+      <table>
+        <caption>The in-process interfaces this layer publishes, and who calls each</caption>
+        <thead><tr><th>Service</th><th>Methods</th><th>Called by</th></tr></thead>
+        <tbody>
+          <tr><td><code>HelpSessionService</code></td><td><code>start(spId)</code><br><code>recordInput(sessionId, input)</code><br><code>findById(sessionId)</code><br><code>resolveCategory(sessionId, l1, l2)</code></td><td>Layer 1; <code>resolveCategory</code> by Layer 5b's back-fill after intent routing</td></tr>
+          <tr><td><code>TicketService</code></td><td><code>createAtGate1(...)</code><br><code>updateTier(...)</code><br><code>updateStatus(...)</code><br><code>recordCsat(...)</code><br><code>claimHistory(spId, window)</code></td><td>Layer 3 for lifecycle; <code>claimHistory</code> by Layer 4 — on the <strong>critical path of every T2 decision</strong></td></tr>
+          <tr><td><code>TicketActionRecorder</code></td><td><code>recordAttempt(...)</code> — <code>REQUIRES_NEW</code><br><code>recordOutcome(...)</code> — <code>REQUIRES_NEW</code><br><code>findByIdempotencyKey(key)</code><br><code>findForReconciliation(day)</code></td><td>Layer 6 writes; Layer 7 reads for the nightly job</td></tr>
+          <tr><td><code>ConversationRecorder</code></td><td><code>publish(turn)</code> — fire-and-forget<br><code>transcriptFor(ticketId)</code></td><td>Layer 1 publishes on every turn; Layer 8 reads on demand</td></tr>
+          <tr><td><code>EscalationContextBuilder</code></td><td><code>build(ticketId, reason)</code><br><code>findByTicketId(ticketId)</code></td><td>Layer 8 — writes once at trigger, reads on screen-pop</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="table-scroll">
+      <table>
+        <caption>Full HTTP inventory across the design — where each endpoint is actually built, and whether it touches this layer</caption>
+        <thead><tr><th>Endpoint</th><th>Direction</th><th>Owned by</th><th>Uses Layer 2</th><th>Status</th></tr></thead>
+        <tbody>
+          <tr><td><code>POST /help/sessions</code></td><td>inbound · SP app</td><td>Layer 1</td><td>writes <code>HelpSession</code></td><td>designed</td></tr>
+          <tr><td><code>POST /help/sessions/{id}/input</code></td><td>inbound · SP app</td><td>Layer 1</td><td>writes session + transcript</td><td>designed</td></tr>
+          <tr><td><code>GET /help/sessions/{id}</code></td><td>inbound · SP app</td><td>Layer 1</td><td>reads <code>HelpSession</code></td><td>designed</td></tr>
+          <tr><td><code>GET /tickets/{id}/escalation-context</code></td><td>inbound · agent screen</td><td>Layer 8</td><td>reads <code>EscalationContext</code></td><td>designed</td></tr>
+          <tr><td><code>GET /tickets/{id}/conversation</code></td><td>inbound · agent screen</td><td>Layer 8</td><td>reads <code>ConversationMessage</code></td><td>designed</td></tr>
+          <tr><td><code>POST /classify</code></td><td><strong>outbound</strong> → Python</td><td>Layer 5</td><td>no</td><td>designed</td></tr>
+          <tr><td><code>POST /classify-intent</code></td><td><strong>outbound</strong> → Python</td><td>Layer 5b</td><td>no</td><td>designed</td></tr>
+          <tr><td>wallet / leave / fines action calls</td><td><strong>outbound</strong> → internal</td><td>Layer 6</td><td>no — Layer 6 records via Layer 2 separately</td><td><strong>existence unknown</strong></td></tr>
+          <tr><td>Exotel / Ozonetel outbound call</td><td><strong>outbound</strong> → telephony</td><td>Layer 8</td><td>no</td><td>designed</td></tr>
+          <tr><td>ticket-closed callback → close User Task</td><td>inbound · admin system</td><td>Layer 8</td><td>writes <code>Ticket</code> status</td><td><strong>undecided — webhook vs polling</strong></td></tr>
+        </tbody>
+      </table>
+    </div>
+    <ul class="brief">
+      <li>Only two of the ten are unresolved — the downstream ledger calls (Layer 6, whether they exist at all) and the ticket-closed callback (Layer 8, webhook vs. polling). <strong>Neither affects Layer 2's design</strong>; both are already on the open list.</li>
+    </ul>
+
+    <h3 class="section">Write paths — by criticality, not uniformly</h3>
+    <div class="table-scroll">
+      <table>
+        <caption>The core design decision in this layer: which writes can wait</caption>
+        <thead><tr><th>Write</th><th>Synchronous?</th><th>Why</th></tr></thead>
+        <tbody>
+          <tr><td><code>HelpSession</code> create/update</td><td><strong>Yes</strong></td><td>The next request reads it to know which step the SP is on</td></tr>
+          <tr><td><code>Ticket</code> create (Gate 1)</td><td><strong>Yes</strong></td><td>Flowable's process instance is keyed to it</td></tr>
+          <tr><td><code>TicketAction</code></td><td><strong>Yes — and in its own transaction</strong></td><td>It's the money record; see the transaction section below</td></tr>
+          <tr><td><code>ConversationMessage</code></td><td>No — deferred</td><td>Nothing in the flow ever reads it <em>during</em> the flow; only the agent screen, later, on demand</td></tr>
+          <tr><td><code>EscalationContext</code></td><td><strong>Yes</strong></td><td>The agent screen may load within a second of the write</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <ul class="brief">
+      <li><strong>How the deferred write works, without new infrastructure:</strong> publish a Spring <code>ApplicationEvent</code> during the request; consume it with <code>@TransactionalEventListener(phase = AFTER_COMMIT)</code> + <code>@Async</code> on a small bounded pool. The write lands off the request thread, after the main transaction commits.</li>
+      <li><strong>The honest trade-off:</strong> if the JVM dies between commit and the async write, one transcript line is lost. Acceptable <em>precisely because</em> <code>ConversationMessage</code> is not the decision record — <code>TicketAction</code> is, and that one stays synchronous. The same trade would be unacceptable for the money table.</li>
+      <li><strong>Why not a real queue (Kafka/SQS):</strong> it would close that gap, but it adds infrastructure to buy durability for the one table that needs it least. Revisit only if transcript completeness becomes a compliance requirement.</li>
+    </ul>
+
+    <h3 class="section">Transaction boundaries — the real hazard</h3>
+    <ul class="brief">
+      <li>Flowable is embedded and shares the DataSource, so a <code>JavaDelegate</code> runs inside <strong>Flowable's</strong> transaction by default. On the T2 path that creates a genuine failure mode.</li>
+      <li>The hazard, concretely: Flowable txn opens → write <code>TicketAction(ATTEMPTED)</code> → call the downstream fines API (<strong>money moves here</strong>) → write <code>SUCCEEDED</code> → a later step throws → <strong>Flowable rolls back and erases both rows</strong>. The credit happened in the real world with zero record of it — invisible to reconciliation.</li>
+      <li>The fix: the <code>ATTEMPTED</code> write runs in its own transaction (<code>@Transactional(propagation = REQUIRES_NEW)</code>) and <strong>commits before the external call</strong>. Everything downstream can roll back; the record survives and reconciliation catches the orphan.</li>
+      <li>This is also what makes the idempotency key work at all — a retry finds the committed row and refuses to double-credit. Without the separate transaction, the key protects nothing.</li>
+    </ul>
+
+    <h3 class="section">Entity relationships</h3>
+    <figure class="diagram">
+      <div class="diagram-scroll">
+      <svg viewBox="0 0 880 300" role="img" aria-label="HelpSession always writes ConversationMessage rows continuously, and optionally becomes a Ticket at Gate 1; a Ticket writes zero or more TicketAction rows and, only if it reaches T3, exactly one EscalationContext row.">
+        <defs>
+          <marker id="e1" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="fill-accent"/></marker>
+          <marker id="e2" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="fill-muted"/></marker>
+        </defs>
+        <rect x="30" y="30" width="190" height="64" rx="4" class="rect-a"/>
+        <text x="125" y="57" text-anchor="middle" class="lbl-name">HelpSession</text>
+        <text x="125" y="74" text-anchor="middle" class="lbl-sub">created on every Help tap</text>
+
+        <rect x="30" y="180" width="190" height="64" rx="4" class="rect-b"/>
+        <text x="125" y="207" text-anchor="middle" class="lbl-name">ConversationMessage</text>
+        <text x="125" y="224" text-anchor="middle" class="lbl-sub">1..N, every turn, always</text>
+        <line x1="125" y1="94" x2="125" y2="180" class="edge" marker-end="url(#e1)"/>
+        <text x="132" y="140" class="lbl-edge">always writes</text>
+
+        <rect x="340" y="30" width="180" height="64" rx="4" class="rect-a"/>
+        <text x="430" y="57" text-anchor="middle" class="lbl-name">Ticket</text>
+        <text x="430" y="74" text-anchor="middle" class="lbl-sub">0 or 1, at Gate 1</text>
+        <line x1="220" y1="62" x2="340" y2="62" class="edge" marker-end="url(#e1)"/>
+        <text x="228" y="52" class="lbl-edge">optionally becomes</text>
+
+        <rect x="340" y="180" width="180" height="64" rx="4" class="rect-b"/>
+        <text x="430" y="207" text-anchor="middle" class="lbl-name">TicketAction</text>
+        <text x="430" y="224" text-anchor="middle" class="lbl-sub">0..N — T2/T3 only</text>
+        <line x1="430" y1="94" x2="430" y2="180" class="edge" marker-end="url(#e1)"/>
+        <text x="440" y="140" class="lbl-edge">writes many</text>
+
+        <rect x="640" y="30" width="200" height="64" rx="4" class="rect-b"/>
+        <text x="740" y="57" text-anchor="middle" class="lbl-name">EscalationContext</text>
+        <text x="740" y="74" text-anchor="middle" class="lbl-sub">0 or 1 — T3 only, written once</text>
+        <line x1="520" y1="62" x2="640" y2="62" class="edge-dashed" marker-end="url(#e2)"/>
+        <text x="528" y="52" class="lbl-edge">only if T3</text>
+      </svg>
+      </div>
+      <figcaption>Solid boxes exist for every session; dashed boxes only exist conditionally, on the path that actually needs them.</figcaption>
+    </figure>
+
+    <h3 class="section">Which entities actually get created, by tier</h3>
+    <div class="table-scroll">
+      <table>
+        <caption>The two-gate design, made concrete</caption>
+        <thead><tr><th>Entity</th><th><span class="dot t0"></span>T0</th><th><span class="dot t1"></span>T1</th><th><span class="dot t2"></span>T2</th><th><span class="dot t3"></span>T3</th></tr></thead>
+        <tbody>
+          <tr><td><code>HelpSession</code></td><td>always</td><td>always</td><td>always</td><td>always</td></tr>
+          <tr><td><code>Ticket</code></td><td>never</td><td>at Gate 1</td><td>yes</td><td>yes</td></tr>
+          <tr><td><code>ConversationMessage</code></td><td>always</td><td>always</td><td>always</td><td>always</td></tr>
+          <tr><td><code>TicketAction</code></td><td>never</td><td>never — nothing done</td><td>yes</td><td>conditional — only if a T2 action ran before escalating</td></tr>
+          <tr><td><code>EscalationContext</code></td><td>never</td><td>never</td><td>never</td><td>once, at trigger</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <h3 class="section">Field reference</h3>
+    <div class="table-scroll">
+      <table>
+        <caption>Usage and structure together, not just columns</caption>
+        <thead><tr><th>Entity</th><th>Key fields</th><th>Written by</th><th>Purpose</th></tr></thead>
+        <tbody>
+          <tr><td><code>HelpSession</code></td><td><code>id, spId, currentStep, l1Concern, l2Concern, selectedBookingId, startedAt</code></td><td>Java, on session start</td><td>Pre-ticket state; l1/l2 nullable until Gate 1 or <code>/classify-intent</code> resolves them</td></tr>
+          <tr><td><code>Ticket</code></td><td><code>id, helpSessionId, l1, l2, l3, tier, bookingId, status, agentOwner, createdAt, closedAt, csatResult</code></td><td>Java, at Gate 1</td><td>The reportable unit — tier, status, ownership</td></tr>
+          <tr><td><code>TicketAction</code></td><td><code>id, ticketId, actionType, idempotencyKey (unique), status, requestPayload, responsePayload, attemptedAt</code></td><td>Action Executor, before + after each real action</td><td>Idempotency + audit + reconciliation source, in one place</td></tr>
+          <tr><td><code>ConversationMessage</code></td><td><code>id, helpSessionId, ticketId, sender, content, stepType, timestamp</code></td><td>Java, every turn</td><td>Raw transcript, always written, rarely the primary read</td></tr>
+          <tr><td><code>EscalationContext</code></td><td><code>ticketId, category, confidenceScore, extractedReason, medalBand, recentTicketHistory, priorTicketActions, triggerReason, createdAt</code></td><td>EscalationContextBuilder, once at T3</td><td>What the agent's screen loads first</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <h3 class="section">Pros &amp; cons</h3>
+    <div class="procon">
+      <div class="col pros">
+        <h4>Pros</h4>
+        <ul>
+          <li>No new deployable — one package, one DataSource shared with Flowable, which is what makes cross-boundary transaction control possible at all.</li>
+          <li>Splitting writes by criticality means the highest-volume write (transcript) costs nothing on the request path, while the money write keeps full durability.</li>
+          <li><code>REQUIRES_NEW</code> on the action record makes idempotency and reconciliation actually load-bearing rather than decorative.</li>
+          <li>T0's deflects never touch <code>Ticket</code> at all — ops reporting and SLA metrics stay clean, not diluted by pure informational taps.</li>
+          <li><code>TicketAction</code> doing three jobs at once (idempotency/audit/reconciliation) is one less table to build and keep consistent.</li>
+        </ul>
+      </div>
+      <div class="col cons">
+        <h4>Cons</h4>
+        <ul>
+          <li>Mixed transaction propagation is subtle code — <code>REQUIRES_NEW</code> in the wrong place silently breaks either atomicity or the orphan-record guarantee, and it won't fail loudly in testing.</li>
+          <li>The deferred transcript write can lose a line on a hard crash; acceptable here, but it's a real (if small) gap someone will eventually ask about.</li>
+          <li>Sharing a DataSource with Flowable means its tables and yours grow in the same database — one noisy neighbour, one backup/restore surface.</li>
+          <li>Five tables now, likely more later (Layer 11's audit log is a strong candidate for a sixth) — entity sprawl risk without a periodic "can we merge any of these" check.</li>
+          <li>No schema-versioning story — a new DMN input field tomorrow means old <code>Ticket</code> rows simply won't have it.</li>
+        </ul>
+      </div>
+    </div>
+
+    <h3 class="section">R&amp;D for scale / efficiency</h3>
+    <ul class="rnd">
+      <li><strong>Index before launch, not after:</strong> Layer 4's claim-frequency check is on the critical path of every T2 decision and Layer 8's <code>recentTicketHistory</code> rollup reuses it — an index on <code>Ticket(spId, createdAt)</code> is needed before Wave 1 goes live.</li>
+      <li><strong>Prove the rollback case deliberately:</strong> write an integration test that forces a Flowable rollback <em>after</em> a simulated successful external call, and assert the <code>TicketAction</code> row survives. This is the one behaviour in this layer that silently regresses.</li>
+      <li><strong>Tune the async pool with a bounded queue and an explicit rejection policy</strong> — an unbounded pool under load turns a deferred transcript write into a memory leak. Decide what happens when it's full: drop and log, or fall back to synchronous.</li>
+      <li><strong>Retention/archival:</strong> <code>HelpSession</code> and <code>ConversationMessage</code> are the highest-write-volume, lowest-value-per-row tables — plan partitioning or cold-storage archival (e.g. older than 90 days) before real traffic forces it.</li>
+      <li><strong>PII policy:</strong> <code>ConversationMessage</code> stores raw free text that can include health and financial details — the same sensitivity flagged in Layers 11/12, so decide its retention/redaction policy alongside those two rather than separately.</li>
+      <li><strong>Partitioning trigger:</strong> Layer 7's nightly full-scan of <code>TicketAction</code> is the read that degrades first — monthly partitioning is the natural answer once that job's runtime starts growing.</li>
+    </ul>
+  </div>
+  <div class="panel" id="p3" role="tabpanel" hidden>
+    <p class="layer-tag">Layer 3</p>
+    <h2 class="layer-title">Orchestration — Flowable, Embedded</h2>
+
+    <h3 class="section">Start here — why a workflow engine at all</h3>
+    <ul class="brief">
+      <li>Here is T2 (waive a leave fine) in plain Java, no Flowable: <code>classify(freeText)</code> → <code>dmnTable.evaluate(...)</code> → <code>fineService.waive(...)</code> → <code>return ok("waived")</code>. <strong>That is completely fine.</strong> Four steps, ~1.5s, returns. T0, T1 and T2 genuinely do not need an engine.</li>
+      <li><strong>T3 is where plain Java runs out.</strong> <code>escalateToAgent()</code> has to return — you can't hold an HTTP connection open — but the work isn't finished. An agent picks it up in twenty minutes, or tomorrow.</li>
+      <li>Which leaves five questions with no home: who remembers this ticket is parked at "waiting for an agent"? where is the queue agents pull from? when the agent finishes, what marks the <code>Ticket</code> resolved and updates the SP's app? what if the app restarts while it's waiting? what if the Exotel call fails — who retries it?</li>
+      <li>Answering those in plain Java means building a <code>ticket_state</code> column, an enum of steps, a <code>switch</code> on that enum, an agent task table, resume logic, retry logic, and a background thread to drive it. <strong>That collection of things is a workflow engine</strong> — Flowable is one that already exists and is already tested.</li>
+      <li><strong>In one sentence:</strong> a Java library that runs multi-step processes which can pause, survive restarts, and resume later — where you describe the steps as a diagram instead of writing the state-tracking plumbing.</li>
+    </ul>
+
+    <h3 class="section">What "a Maven dependency" means here, concretely</h3>
+    <ul class="brief">
+      <li>You add <code>org.flowable:flowable-spring-boot-starter</code> to <code>pom.xml</code>. Same as adding Jackson or Lombok — a JAR that becomes part of your app. <strong>There is no Flowable server to install, no separate process, nothing to deploy.</strong> It runs inside your Spring Boot JVM.</li>
+      <li>On startup it does exactly three things: <strong>(1)</strong> creates ~25 tables in your existing database, all prefixed <code>ACT_</code> — that's where paused processes live, and why a ticket survives a restart; <strong>(2)</strong> scans <code>src/main/resources/processes/</code> for <code>.bpmn20.xml</code> files and loads them as process definitions; <strong>(3)</strong> registers a few Spring beans you can <code>@Autowired</code>.</li>
+    </ul>
+
+    <h3 class="section">BPMN, "process engine", and Flowable — three different things</h3>
+    <div class="table-scroll">
+      <table>
+        <caption>These get called by similar names and are constantly confused</caption>
+        <thead><tr><th>Term</th><th>What it actually is</th><th>Analogy</th></tr></thead>
+        <tbody>
+          <tr><td><strong>BPMN</strong><br><span class="lbl-sub">Business Process Model and Notation</span></td><td>A <em>specification</em> — an OMG (Object Management Group) standard defining what the XML means and how each shape executes. Not software.</td><td>SQL, or HTTP</td></tr>
+          <tr><td><strong>BPMN process engine</strong></td><td>A <em>category</em> of software that reads and executes BPMN</td><td>"relational database"</td></tr>
+          <tr><td><strong>Flowable</strong></td><td>One <em>product</em> in that category — the JAR in <code>pom.xml</code></td><td>PostgreSQL</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <ul class="brief">
+      <li>The naming parallel is deliberate: <strong>BPMN notates <em>processes</em>, DMN notates <em>decisions</em></strong> — same standards body (OMG, also behind UML), same XML-plus-diagram shape. So the engine isn't <em>inside</em> Flowable — <strong>Flowable <em>is</em> a BPMN process engine.</strong> Others in the same category: Camunda, jBPM, Activiti (Flowable is a fork of Activiti, which is why searching turns up near-identical APIs under both names).</li>
+      <li><strong>But Flowable ships more than one engine</strong>, and that matters here: the single <code>flowable-spring-boot-starter</code> dependency contains several independent ones. <strong>Layer 3 and Layer 4 are two different engines from the same dependency</strong> — which is why Layer 4 needs no new library.</li>
+      <li><strong>What "engine" means in Java terms:</strong> not a server, not a process — <strong>an object</strong>. At startup Spring Boot builds a <code>ProcessEngine</code> object holding the configuration and the DataSource; that object is what hands you <code>RuntimeService</code>, <code>TaskService</code>, <code>HistoryService</code>. Same for <code>DmnEngine</code>, which hands you <code>DmnDecisionService</code>. Two object graphs in your JVM, sharing your database.</li>
+    </ul>
+    <div class="table-scroll">
+      <table>
+        <caption>What's inside the one dependency, and what we actually use</caption>
+        <thead><tr><th>Engine</th><th>Executes</th><th>Do we use it?</th></tr></thead>
+        <tbody>
+          <tr><td><strong>Process engine</strong></td><td>BPMN — sequences, gateways, user tasks</td><td><strong>Yes — Layer 3</strong></td></tr>
+          <tr><td><strong>DMN engine</strong></td><td><strong>DMN</strong> — <em>Decision Model and Notation</em>, the OMG sibling spec for decision tables</td><td><strong>Yes — Layer 4</strong></td></tr>
+          <tr><td>CMMN engine</td><td><strong>CMMN</strong> — <em>Case Management Model and Notation</em>, the third OMG sibling: ad-hoc, unordered work</td><td>No</td></tr>
+          <tr><td>Form engine</td><td>Form definitions</td><td>No</td></tr>
+          <tr><td>Event registry</td><td>Kafka / JMS event routing</td><td>No</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <h3 class="section">Process engine vs DMN engine — the sharpest contrast</h3>
+    <ul class="brief">
+      <li><strong>The process engine remembers. The decision engine doesn't.</strong> That single sentence separates Layer 3 from Layer 4.</li>
+    </ul>
+    <div class="table-scroll">
+      <table>
+        <caption>Same dependency, opposite natures</caption>
+        <thead><tr><th></th><th>Process engine (Layer 3)</th><th>DMN engine (Layer 4)</th></tr></thead>
+        <tbody>
+          <tr><td>Question it answers</td><td><em>What happens next?</em></td><td><em>Given these facts, what's the verdict?</em></td></tr>
+          <tr><td>State</td><td><strong>Stateful</strong> — writes every transition to <code>ACT_RU_*</code></td><td><strong>Stateless</strong> — a pure function</td></tr>
+          <tr><td>Can it wait?</td><td>Yes — that's its whole point</td><td>No — returns immediately</td></tr>
+          <tr><td>Survives a restart?</td><td>Yes</td><td>Nothing to survive</td></tr>
+          <tr><td>Input</td><td>An event (start, or a task completed)</td><td>A map of facts</td></tr>
+          <tr><td>Output</td><td>A moved-forward process, or a parked one</td><td>A map of results (<code>tier</code>, <code>action</code>)</td></tr>
+          <tr><td>Our use</td><td>Sequence the leave-fine flow; park at the agent task</td><td>Decide T1/T2/T3 from strike age, reason code, claim count</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <figure class="diagram">
+      <div class="diagram-scroll">
+      <svg viewBox="0 0 880 210" role="img" aria-label="The Flowable dependency contains a process engine and a DMN engine that we use, plus CMMN, form and event engines we do not. A Business Rule Task in the process engine passes facts to the DMN engine and receives tier and action back.">
+        <defs>
+          <marker id="g1" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="fill-accent"/></marker>
+        </defs>
+        <rect x="20" y="20" width="840" height="150" rx="8" class="rect-b"/>
+        <text x="40" y="44" class="lbl-sub">flowable-spring-boot-starter — one Maven dependency</text>
+
+        <rect x="45" y="62" width="230" height="86" rx="5" class="rect-a"/>
+        <text x="160" y="88" text-anchor="middle" class="lbl-name">Process engine</text>
+        <text x="160" y="107" text-anchor="middle" class="lbl-sub">Layer 3 · stateful</text>
+        <text x="160" y="124" text-anchor="middle" class="lbl-sub">writes ACT_RU_* · can wait</text>
+        <text x="160" y="140" text-anchor="middle" class="lbl-sub">RuntimeService, TaskService</text>
+
+        <rect x="400" y="62" width="230" height="86" rx="5" class="rect-a"/>
+        <text x="515" y="88" text-anchor="middle" class="lbl-name">DMN engine</text>
+        <text x="515" y="107" text-anchor="middle" class="lbl-sub">Layer 4 · stateless</text>
+        <text x="515" y="124" text-anchor="middle" class="lbl-sub">a pure function · no memory</text>
+        <text x="515" y="140" text-anchor="middle" class="lbl-sub">DmnDecisionService</text>
+
+        <path d="M275,92 L400,92" class="edge" marker-end="url(#g1)"/>
+        <text x="337" y="84" text-anchor="middle" class="lbl-edge">facts</text>
+        <path d="M400,124 L275,124" class="edge" marker-end="url(#g1)"/>
+        <text x="337" y="140" text-anchor="middle" class="lbl-edge">tier, action</text>
+
+        <rect x="670" y="62" width="165" height="86" rx="5" class="rect-b"/>
+        <text x="752" y="90" text-anchor="middle" class="lbl-sub">CMMN engine</text>
+        <text x="752" y="110" text-anchor="middle" class="lbl-sub">Form engine</text>
+        <text x="752" y="130" text-anchor="middle" class="lbl-sub">Event registry</text>
+        <text x="752" y="165" text-anchor="middle" class="lbl-sub">unused</text>
+
+        <text x="440" y="198" text-anchor="middle" class="lbl-sub">the bridge between them is one BPMN node type: the Business Rule Task</text>
+      </svg>
+      </div>
+      <figcaption>Layer 3 and Layer 4 are two engines from the same JAR. The call between them is synchronous, in-process, and typically sub-millisecond — a table lookup, not a service call.</figcaption>
+    </figure>
+    <ul class="brief">
+      <li><strong>Why separate them at all?</strong> You <em>could</em> put the logic in gateways: <code>${strikeAgeDays &lt;= 7 &amp;&amp; reasonCode == 'SYSTEM_ERROR'}</code>. For two or three conditions that's fine. But the strike table further down has five inputs and six rules — as nested gateways that becomes an unreadable diagram, and every rule change means redrawing it.</li>
+      <li><strong>The split:</strong> gateways express <em>flow</em> branching ("which arrow"); DMN expresses <em>tabular</em> rules ("which of many outcomes"). And a DMN table is a grid an ops person can read and edit — nested gateway expressions are not.</li>
+    </ul>
+
+    <h3 class="section">What BPMN is, and the four shapes we use</h3>
+    <ul class="brief">
+      <li>An XML format for describing a process, which renders as a flowchart. You edit it in a visual modeler, it saves as XML, and <strong>the XML is executable</strong> — not a picture of the code, the code itself.</li>
+    </ul>
+    <figure class="diagram">
+      <div class="diagram-scroll">
+      <svg viewBox="0 0 900 320" role="img" aria-label="The leave fine BPMN flow: start, classify free text, a confidence gateway, evaluate DMN, an auto-approve gateway, then either waive the fine and end as bot resolved, or build escalation context, call Exotel, pause at a user task waiting for an agent, and end as agent resolved.">
+        <defs>
+          <marker id="b1" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="fill-accent"/></marker>
+        </defs>
+        <circle cx="50" cy="60" r="16" class="rect-a"/>
+        <text x="50" y="96" text-anchor="middle" class="lbl-sub">start</text>
+
+        <rect x="105" y="35" width="130" height="50" rx="8" class="rect-a"/>
+        <text x="170" y="58" text-anchor="middle" class="lbl-sub">Classify</text>
+        <text x="170" y="74" text-anchor="middle" class="lbl-sub">free text</text>
+        <line x1="66" y1="60" x2="105" y2="60" class="edge" marker-end="url(#b1)"/>
+
+        <path d="M300,35 L335,60 L300,85 L265,60 Z" class="rect-a"/>
+        <text x="300" y="106" text-anchor="middle" class="lbl-sub">confidence?</text>
+        <line x1="235" y1="60" x2="265" y2="60" class="edge" marker-end="url(#b1)"/>
+
+        <rect x="380" y="35" width="130" height="50" rx="8" class="rect-a"/>
+        <text x="445" y="58" text-anchor="middle" class="lbl-sub">Evaluate</text>
+        <text x="445" y="74" text-anchor="middle" class="lbl-sub">DMN table</text>
+        <line x1="335" y1="60" x2="380" y2="60" class="edge" marker-end="url(#b1)"/>
+        <text x="342" y="50" class="lbl-edge">high</text>
+
+        <path d="M575,35 L610,60 L575,85 L540,60 Z" class="rect-a"/>
+        <text x="575" y="106" text-anchor="middle" class="lbl-sub">approve?</text>
+        <line x1="510" y1="60" x2="540" y2="60" class="edge" marker-end="url(#b1)"/>
+
+        <rect x="655" y="35" width="130" height="50" rx="8" class="rect-a"/>
+        <text x="720" y="58" text-anchor="middle" class="lbl-sub">Waive</text>
+        <text x="720" y="74" text-anchor="middle" class="lbl-sub">the fine</text>
+        <line x1="610" y1="60" x2="655" y2="60" class="edge" marker-end="url(#b1)"/>
+        <text x="616" y="50" class="lbl-edge">yes</text>
+
+        <circle cx="845" cy="60" r="16" class="rect-a"/>
+        <text x="845" y="96" text-anchor="middle" class="lbl-sub">Bot Resolved</text>
+        <line x1="785" y1="60" x2="829" y2="60" class="edge" marker-end="url(#b1)"/>
+
+        <path d="M300,85 L300,150 L180,150 L180,180" class="edge" marker-end="url(#b1)"/>
+        <text x="196" y="143" class="lbl-edge">low confidence</text>
+        <path d="M575,85 L575,150 L302,150" class="edge"/>
+        <text x="430" y="143" class="lbl-edge">no</text>
+
+        <rect x="105" y="180" width="150" height="50" rx="8" class="rect-a"/>
+        <text x="180" y="203" text-anchor="middle" class="lbl-sub">Build escalation</text>
+        <text x="180" y="219" text-anchor="middle" class="lbl-sub">context</text>
+
+        <rect x="320" y="180" width="130" height="50" rx="8" class="rect-a"/>
+        <text x="385" y="203" text-anchor="middle" class="lbl-sub">Call Exotel</text>
+        <text x="385" y="219" text-anchor="middle" class="lbl-sub">(async)</text>
+        <line x1="255" y1="205" x2="320" y2="205" class="edge" marker-end="url(#b1)"/>
+
+        <rect x="515" y="175" width="170" height="60" rx="8" class="rect-b"/>
+        <text x="600" y="198" text-anchor="middle" class="lbl-name">Wait for agent</text>
+        <text x="600" y="217" text-anchor="middle" class="lbl-sub">User Task — PAUSES here</text>
+        <line x1="450" y1="205" x2="515" y2="205" class="edge" marker-end="url(#b1)"/>
+
+        <circle cx="760" cy="205" r="16" class="rect-a"/>
+        <text x="760" y="242" text-anchor="middle" class="lbl-sub">Agent Resolved</text>
+        <line x1="685" y1="205" x2="744" y2="205" class="edge" marker-end="url(#b1)"/>
+
+        <text x="450" y="295" text-anchor="middle" class="lbl-sub">the dashed box is the only node that outlives the HTTP request — it persists as a database row</text>
+      </svg>
+      </div>
+      <figcaption>The leave-fine flow. Everything on the top row completes inside the SP's request. The bottom row is T3: it reaches a User Task and stops, as a row in <code>ACT_RU_EXECUTION</code>, until a human completes it — possibly days later, across restarts and deploys.</figcaption>
+    </figure>
+    <div class="table-scroll">
+      <table>
+        <caption>Four BPMN shapes carry the entire design</caption>
+        <thead><tr><th>Shape</th><th>Called</th><th>What it does</th></tr></thead>
+        <tbody>
+          <tr><td>Rounded box</td><td>Service Task</td><td>Runs a Java class you wrote</td></tr>
+          <tr><td>Diamond</td><td>Gateway</td><td>An <code>if</code> — picks which arrow to follow</td></tr>
+          <tr><td>Box with a person icon</td><td>User Task</td><td><strong>Pauses.</strong> Waits for a human.</td></tr>
+          <tr><td>Circle</td><td>Start / End Event</td><td>Where the process begins and finishes</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <h3 class="section">The Java you actually write</h3>
+    <ul class="brief">
+      <li><strong>For each Service Task, one Spring bean.</strong> It implements <code>JavaDelegate</code>, which has a single method: <code>execute(DelegateExecution execution)</code>. Inside it you read variables, call your own services (<code>fineService.waive(...)</code>), and set a result variable. That's the whole contract.</li>
+      <li>The BPMN box points at it with <code>flowable:delegateExpression="${waiveFineDelegate}"</code> — matching the Spring bean name. That single attribute is the entire wiring between diagram and code.</li>
+      <li><strong>Process variables</strong> are the other core concept: a <code>Map&lt;String,Object&gt;</code> that travels with the instance and is persisted to the database. It's how step 3 sees what step 1 produced. Keep it small — IDs and flags, never blobs.</li>
+    </ul>
+    <div class="table-scroll">
+      <table>
+        <caption>The three Flowable services you inject to drive everything</caption>
+        <thead><tr><th>Service</th><th>What you call it for</th><th>Who calls it</th></tr></thead>
+        <tbody>
+          <tr><td><code>RuntimeService</code></td><td><code>startProcessInstanceByKey("leave-fine", vars)</code> — begin a process</td><td>Layer 1</td></tr>
+          <tr><td><code>TaskService</code></td><td><code>createTaskQuery()</code> to list an agent's queue; <code>complete(taskId)</code> to resume a paused process</td><td>Layer 8</td></tr>
+          <tr><td><code>HistoryService</code></td><td>Query what a finished instance actually did — debugging a specific ticket's path</td><td>Ops / you</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <h3 class="section">What happens at runtime, step by step</h3>
+    <ul class="brief">
+      <li><strong>1.</strong> Layer 1 calls <code>runtimeService.startProcessInstanceByKey("leave-fine", {spId, fineId, freeText})</code>.</li>
+      <li><strong>2.</strong> Flowable writes a row to <code>ACT_RU_EXECUTION</code>: <em>instance #4471, at node "Classify"</em>.</li>
+      <li><strong>3.</strong> It calls <code>classifyDelegate.execute(...)</code> — your code, on the current thread.</li>
+      <li><strong>4.</strong> Moves to the gateway, reads the <code>confidence</code> variable, follows the "yes" arrow, updates the row: <em>now at "Evaluate DMN"</em>.</li>
+      <li><strong>5.</strong> …and so on, until it either hits an End Event (row deleted, process done) or a <strong>User Task</strong> (row stays: <em>#4471 parked at "Wait for agent"</em>).</li>
+      <li><strong>6.</strong> If it finished, the call returns and Layer 1 replies to the SP. <strong>If it parked, the call also returns</strong> — but that database row outlives the request, the deploy, and the restart.</li>
+      <li><strong>7.</strong> Two hours later the agent finishes. Layer 8 calls <code>taskService.complete(taskId)</code>. Flowable finds row #4471, resumes from exactly that node, runs the remaining steps, ends the process.</li>
+      <li><strong>Step 7 is the entire reason this layer exists.</strong> Nothing else in the stack can do that.</li>
+    </ul>
+
+    <h3 class="section">"The diagram is the executable" — the concrete version</h3>
+    <ul class="brief">
+      <li>Here is the same decision written twice. <strong>Plain Java:</strong> <code>var c = classifier.classify(freeText); if (c.confidence &gt;= 0.7) { ... } else { escalateToAgent(); }</code></li>
+      <li><strong>BPMN XML — what actually runs:</strong> a <code>&lt;serviceTask&gt;</code> carrying <code>flowable:delegateExpression="${classifyDelegate}"</code>, an <code>&lt;exclusiveGateway&gt;</code>, and two <code>&lt;sequenceFlow&gt;</code> elements whose <code>&lt;conditionExpression&gt;</code> bodies are <code>${confidence &gt;= 0.7}</code> and <code>${confidence &lt; 0.7}</code>.</li>
+      <li><strong>The point:</strong> <code>${confidence &gt;= 0.7}</code> is not a comment or a label. Flowable's expression engine evaluates it at runtime against the process variables — <em>it is the <code>if</code></em>. Change <code>0.7</code> to <code>0.8</code> in the XML, redeploy the file, and behaviour changes with <strong>no Java recompiled</strong>.</li>
+      <li>Likewise <code>flowable:delegateExpression="${classifyDelegate}"</code> is the actual dependency injection — Flowable resolves that Spring bean by name and invokes it.</li>
+      <li><strong>So there is no generation step and no sync problem.</strong> The modeler renders this XML as boxes and arrows; the engine steps through the same XML. A diagram cannot drift from the code, because the diagram <em>is</em> the file.</li>
+    </ul>
+
+    <h3 class="section">Where L1 and L2 concerns are configured — a sixth table</h3>
+    <ul class="brief">
+      <li>The L1/L2 taxonomy is currently implied everywhere and defined nowhere. <strong>Six places need the same list:</strong> Layer 1 (render the menus), Layer 3 (pick which BPMN process to start), Layer 4 (DMN inputs), Layer 5b (<code>/classify-intent</code> matches free text against the whole taxonomy), Layer 7 (one Togglz flag per L2 concern), Layer 2 (stored on <code>HelpSession.l1Concern</code> and <code>Ticket.l1/l2</code>).</li>
+      <li>That needs a single source of truth — a <strong><code>concern_catalogue</code></strong> table, one row per L2 concern.</li>
+      <li><strong>Important consequence:</strong> adding a new L2 concern is <em>never</em> a pure config change. A new row is useless without a BPMN process, a DMN table, an action executor and a Togglz flag — all of which need a deploy. What the table buys is that labels, ordering and enable/disable are tunable, and that all six layers read one list instead of six drifting copies.</li>
+    </ul>
+    <div class="table-scroll">
+      <table>
+        <caption><code>concern_catalogue</code> — structure and which layer reads each column</caption>
+        <thead><tr><th>Column</th><th>Example</th><th>Used by</th></tr></thead>
+        <tbody>
+          <tr><td><code>l1_code</code> / <code>l1_label</code></td><td><code>FINES</code> / "Fines &amp; Deductions"</td><td>Layer 1 menu</td></tr>
+          <tr><td><code>l2_code</code> / <code>l2_label</code></td><td><code>LEAVE_FINE</code> / "Leaves fine"</td><td>Layer 1 menu, Layer 5b taxonomy</td></tr>
+          <tr><td><code>display_order</code>, <code>active</code></td><td><code>2</code>, <code>true</code></td><td>Layer 1 — reorder or hide without a deploy</td></tr>
+          <tr><td><code>process_key</code></td><td><code>leave-fine</code></td><td><strong>Layer 3</strong> — which BPMN process to start</td></tr>
+          <tr><td><code>fact_provider</code></td><td><code>LEAVE_FINE</code></td><td><strong>Layer 3</strong> — which <code>ConcernFactProvider</code> bean to resolve (see the worked example below)</td></tr>
+          <tr><td><code>dmn_key</code></td><td><code>leave-fine-genuine</code></td><td>Layer 4</td></tr>
+          <tr><td><code>togglz_flag</code></td><td><code>leave-fine-auto-waive</code></td><td>Layer 7</td></tr>
+          <tr><td><code>default_tier</code></td><td><code>T2</code></td><td>Layer 3 routing hint</td></tr>
+          <tr><td><code>wave</code></td><td><code>1</code></td><td>Rollout tracking</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <h3 class="section">Worked example — how "Remove strike" resolves, end to end</h3>
+    <ul class="brief">
+      <li>The question this answers: once the SP picks L1=<code>STRIKE</code>, L2=<code>REMOVE_STRIKE</code>, how does the system know to read the <em>strike</em> table, apply <em>strike</em> conditions, and pick a tier? There is a step between "I know the concern" and "I know what to check" — and it needs a named mechanism.</li>
+    </ul>
+    <figure class="diagram">
+      <div class="diagram-scroll">
+      <svg viewBox="0 0 900 220" role="img" aria-label="The resolution chain: menu selection leads to a catalogue lookup, which starts a BPMN process, which fetches facts via a concern fact provider, evaluates a DMN table, gates on Togglz, and dispatches an action.">
+        <defs>
+          <marker id="r2" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="fill-accent"/></marker>
+        </defs>
+        <rect x="15" y="60" width="118" height="56" rx="4" class="rect-a"/>
+        <text x="74" y="84" text-anchor="middle" class="lbl-sub">SP selects</text>
+        <text x="74" y="100" text-anchor="middle" class="lbl-sub">L1 + L2</text>
+
+        <rect x="163" y="60" width="118" height="56" rx="4" class="rect-a"/>
+        <text x="222" y="78" text-anchor="middle" class="lbl-sub">1. Catalogue</text>
+        <text x="222" y="94" text-anchor="middle" class="lbl-sub">lookup</text>
+        <text x="222" y="110" text-anchor="middle" class="lbl-sub">(DB row)</text>
+        <line x1="133" y1="88" x2="163" y2="88" class="edge" marker-end="url(#r2)"/>
+
+        <rect x="311" y="60" width="118" height="56" rx="4" class="rect-a"/>
+        <text x="370" y="84" text-anchor="middle" class="lbl-sub">2. Start BPMN</text>
+        <text x="370" y="100" text-anchor="middle" class="lbl-sub">process</text>
+        <line x1="281" y1="88" x2="311" y2="88" class="edge" marker-end="url(#r2)"/>
+
+        <rect x="459" y="55" width="128" height="66" rx="4" class="rect-b"/>
+        <text x="523" y="76" text-anchor="middle" class="lbl-name">3. Fetch facts</text>
+        <text x="523" y="93" text-anchor="middle" class="lbl-sub">ConcernFactProvider</text>
+        <text x="523" y="109" text-anchor="middle" class="lbl-sub">→ reads strike table</text>
+        <line x1="429" y1="88" x2="459" y2="88" class="edge" marker-end="url(#r2)"/>
+
+        <rect x="617" y="60" width="118" height="56" rx="4" class="rect-a"/>
+        <text x="676" y="78" text-anchor="middle" class="lbl-sub">4. Evaluate</text>
+        <text x="676" y="94" text-anchor="middle" class="lbl-sub">DMN</text>
+        <text x="676" y="110" text-anchor="middle" class="lbl-sub">→ tier + action</text>
+        <line x1="587" y1="88" x2="617" y2="88" class="edge" marker-end="url(#r2)"/>
+
+        <rect x="765" y="60" width="118" height="56" rx="4" class="rect-a"/>
+        <text x="824" y="78" text-anchor="middle" class="lbl-sub">5. Togglz gate</text>
+        <text x="824" y="94" text-anchor="middle" class="lbl-sub">6. Dispatch</text>
+        <text x="824" y="110" text-anchor="middle" class="lbl-sub">action</text>
+        <line x1="735" y1="88" x2="765" y2="88" class="edge" marker-end="url(#r2)"/>
+
+        <text x="450" y="175" text-anchor="middle" class="lbl-sub">step 3 is the piece that was missing — everything else was already designed</text>
+      </svg>
+      </div>
+      <figcaption>The dashed box is the new mechanism. Steps 1, 2, 4, 5 and 6 already existed in the design; nothing previously said <em>how</em> the system knows which table to read for a given concern.</figcaption>
+    </figure>
+
+    <h3 class="section">Step 3 — Fact Providers, the missing mechanism</h3>
+    <ul class="brief">
+      <li>Every concern needs <strong>different</strong> data. Leave fine reads the fines table; strike removal reads the strike table; transport reads the booking. Thirty concerns means thirty different fetches — but you don't want thirty delegates hardcoded into BPMN diagrams.</li>
+      <li><strong>The pattern:</strong> one interface <code>ConcernFactProvider</code> with <code>String concernCode()</code> and <code>Map&lt;String,Object&gt; fetchFacts(FactRequest)</code>. One implementation per concern. Spring injects all of them into a map keyed by concern code.</li>
+      <li><code>StrikeFactProvider</code> returns <code>strikeExists</code>, <code>strikeReasonCode</code> (<code>NO_SHOW</code>/<code>LATE</code>/<code>SYSTEM_ERROR</code>…), <code>strikeAgeDays</code>, <code>strikeCountLast90Days</code>, <code>priorAppealCount</code>.</li>
+      <li><strong>One generic delegate serves all thirty concerns:</strong> <code>fetchFactsDelegate</code> reads <code>l2Concern</code> from the process variables, looks up the right provider, and copies the returned facts into process variables via <code>facts.forEach(ex::setVariable)</code>.</li>
+      <li>So the answer to "how does it know to check the strike table" is: <strong>a Spring bean registered under the concern code, resolved at runtime.</strong> Adding a concern means adding one class — not editing a diagram.</li>
+    </ul>
+
+    <h3 class="section">Step 4 — the conditions, as an actual DMN table</h3>
+    <div class="table-scroll">
+      <table>
+        <caption><code>strike-removal-genuine.dmn</code> — facts from step 3 become inputs; tier and action come out</caption>
+        <thead><tr><th>strikeExists</th><th>reasonCode</th><th>ageDays</th><th>count90d</th><th>priorAppeals</th><th>→ tier</th><th>→ action</th></tr></thead>
+        <tbody>
+          <tr><td>false</td><td>—</td><td>—</td><td>—</td><td>—</td><td><span class="dot t1"></span>T1</td><td><code>explain_no_strike</code></td></tr>
+          <tr><td>true</td><td><code>SYSTEM_ERROR</code></td><td>≤ 7</td><td>—</td><td>0</td><td><span class="dot t2"></span><strong>T2</strong></td><td><code>auto_remove</code></td></tr>
+          <tr><td>true</td><td>—</td><td>&gt; 30</td><td>—</td><td>—</td><td><span class="dot t1"></span>T1</td><td><code>explain_too_old</code></td></tr>
+          <tr><td>true</td><td><code>NO_SHOW</code></td><td>—</td><td>≥ 3</td><td>—</td><td><span class="dot t3"></span>T3</td><td><code>route_agent</code></td></tr>
+          <tr><td>true</td><td>—</td><td>—</td><td>—</td><td>≥ 1</td><td><span class="dot t3"></span>T3</td><td><code>route_agent</code></td></tr>
+          <tr><td>true</td><td>—</td><td>—</td><td>—</td><td>—</td><td><span class="dot t3"></span>T3</td><td><code>route_agent</code> <em>(catch-all)</em></td></tr>
+        </tbody>
+      </table>
+    </div>
+    <ul class="brief">
+      <li><strong>Tier is decided at runtime, not fixed per concern.</strong> The same "Remove strike" request lands on T1, T2 or T3 depending on the facts. <code>default_tier</code> in the catalogue is only a fallback for concerns that have no DMN table at all.</li>
+      <li><strong>Ops can edit these rows without touching Java.</strong> Changing <code>≤ 7</code> to <code>≤ 14</code> is a DMN file edit — the same mechanism as the <code>${confidence &gt;= 0.7}</code> expression above.</li>
+    </ul>
+
+    <h3 class="section">Where each piece of that chain is configured</h3>
+    <div class="table-scroll">
+      <table>
+        <caption>The complete configuration surface for one concern</caption>
+        <thead><tr><th>Question</th><th>Configured as</th><th>Lives in</th></tr></thead>
+        <tbody>
+          <tr><td>Which BPMN process?</td><td><code>concern_catalogue.process_key</code></td><td>DB row</td></tr>
+          <tr><td><strong>Which table to read?</strong></td><td><code>ConcernFactProvider</code> bean keyed by concern code</td><td><strong>Java class</strong></td></tr>
+          <tr><td>What conditions apply?</td><td>DMN table named by <code>dmn_key</code></td><td><code>.dmn</code> XML file</td></tr>
+          <tr><td>Is auto-action allowed right now?</td><td><code>concern_catalogue.togglz_flag</code></td><td>Togglz</td></tr>
+          <tr><td>Which action to run?</td><td>DMN <code>action</code> output → <code>ActionExecutor</code> lookup</td><td>Java + DMN</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <ul class="brief">
+      <li>Note the deliberate split: <strong>what data to fetch is code; what to conclude from it is configuration.</strong> Fetching needs type safety and repository access; deciding needs to be tunable by ops without a deploy.</li>
+    </ul>
+
+    <h3 class="section">Honest caveat — "Remove strike" today</h3>
+    <ul class="brief">
+      <li>Everything above describes the machinery. <strong>For "Remove strike" today, most of it does not run.</strong> Strike is Wave 4 — human-owned by design. Its catalogue row has <code>dmn_key = null</code> and <code>default_tier = T3</code>, so the process short-circuits: fetch nothing, evaluate nothing, build escalation context, route to an agent.</li>
+      <li>That's a useful demonstration of the design rather than a gap in it: <strong>the same skeleton handles "fully automated" and "always human" by configuration alone.</strong></li>
+      <li>When Wave 4 arrives, enabling automation for strike means writing <code>StrikeFactProvider</code>, authoring the DMN table, and setting <code>dmn_key</code> on the row — <strong>with no change to the BPMN process or any other layer.</strong></li>
+    </ul>
+
+    <h3 class="section">The interaction contract — inbound to Flowable</h3>
+    <ul class="brief">
+      <li><strong>Layer 1 → Flowable</strong> is the only entry point. It calls <code>runtimeService.startProcessInstanceByKey(processKey, ticketId, vars)</code> with variables: <code>ticketId</code>, <code>spId</code>, <code>l1Concern</code>, <code>l2Concern</code>, <code>bookingId</code> (nullable), <code>freeText</code> (nullable), <code>medalBand</code>.</li>
+      <li><strong>The <code>processKey</code> comes from the catalogue</strong> (<code>concern.getProcessKey()</code>), never a hardcoded string — that's the link between the table above and the engine.</li>
+      <li><strong>The <code>businessKey</code> is the <code>ticketId</code>.</strong> That single choice is what later lets Layer 8 find the parked process without storing a Flowable ID anywhere in our own schema.</li>
+      <li><strong>A design decision buried in the return path:</strong> you might expect Layer 1 to read process variables for the answer. That breaks — when a process completes, Flowable deletes its runtime row and the variables go with it. So the rule is: <strong>Flowable's last Service Task writes the <code>nextStep</code> descriptor onto the <code>HelpSession</code> before ending</strong>, and Layer 1 re-reads the HelpSession. That works identically whether the process finished (T1/T2) or parked (T3) — Layer 1 never needs to know which.</li>
+      <li><strong>Layer 8 → Flowable</strong> is the resume path: <code>taskService.createTaskQuery().processInstanceBusinessKey(ticketId).singleResult()</code>, then <code>taskService.complete(taskId, {agentOutcome, agentId})</code>. That's the entire inbound surface — two calls.</li>
+    </ul>
+
+    <h3 class="section">The interaction contract — outbound, node by node</h3>
+    <div class="table-scroll">
+      <table>
+        <caption>Every node in the leave-fine flow: its bean, its inputs, what it calls, what it produces</caption>
+        <thead><tr><th>BPMN node</th><th>Bean</th><th>Reads variables</th><th>Calls</th><th>Writes variables</th></tr></thead>
+        <tbody>
+          <tr><td>Classify</td><td><code>classifyDelegate</code></td><td><code>freeText</code>, <code>l2Concern</code></td><td><code>ClassifierClient</code> → Python</td><td><code>category</code>, <code>confidence</code>, <code>extractedReason</code></td></tr>
+          <tr><td>Fetch claim history</td><td><code>claimHistoryDelegate</code></td><td><code>spId</code></td><td><code>TicketService.claimHistory()</code></td><td><code>claimFreq</code></td></tr>
+          <tr><td>Evaluate genuine case</td><td><em>none — Business Rule Task</em></td><td><code>category</code>, <code>confidence</code>, <code>claimFreq</code>, <code>medalBand</code></td><td>DMN engine</td><td><code>tier</code>, <code>action</code></td></tr>
+          <tr><td>Kill-switch gate</td><td><em>none — Gateway expression</em></td><td>—</td><td>Togglz</td><td>—</td></tr>
+          <tr><td>Waive fine</td><td><code>waiveFineDelegate</code></td><td><code>spId</code>, <code>fineId</code>, <code>ticketId</code></td><td><code>FineActionService</code></td><td><code>actionStatus</code></td></tr>
+          <tr><td>Build escalation context</td><td><code>escalationContextDelegate</code></td><td><code>ticketId</code>, <code>category</code>, <code>confidence</code></td><td><code>EscalationContextBuilder</code></td><td>—</td></tr>
+          <tr><td>Call telephony <em>(async)</em></td><td><code>telephonyDelegate</code></td><td><code>ticketId</code>, <code>spPhone</code></td><td><code>TelephonyClient</code> → Exotel</td><td><code>callSid</code></td></tr>
+          <tr><td>Finalize</td><td><code>finalizeDelegate</code></td><td><code>tier</code>, <code>actionStatus</code></td><td><code>TicketService</code> + <code>HelpSessionService</code></td><td>—</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <ul class="brief">
+      <li>Note the two rows with no bean: <strong>gateways and Business Rule Tasks are handled by Flowable itself.</strong> You write Java only for Service Tasks.</li>
+    </ul>
+
+    <h3 class="section">Summary — what this layer is</h3>
+    <ul class="brief">
+      <li><strong>A library, not a service.</strong> <code>flowable-spring-boot-starter</code> as a Maven dependency inside the BOTIn backend JVM. Nothing new to deploy, no license cost.</li>
+      <li>Its real job: <strong>turn each L2 concern into a persisted state machine</strong>. The BPMN diagram isn't documentation that describes the flow — it <em>is</em> the executable.</li>
+      <li><strong>State lives in the database, not in memory.</strong> A process instance waiting at a T3 User Task is a row in <code>ACT_RU_EXECUTION</code>, not a parked thread. That's the actual reason to use an engine instead of hand-rolling: a ticket can wait two days for an agent, across three app restarts, and resume correctly.</li>
+      <li>It supplies three things you'd otherwise have to build: <strong>human task queues</strong>, <strong>timers</strong>, and <strong>retry-with-dead-letter</strong> on failed steps.</li>
+      <li>It is the <strong>hub</strong> of the whole system — nearly every other layer is called <em>by</em> Layer 3 rather than calling it.</li>
+    </ul>
+
+    <h3 class="section">Where it lives</h3>
+    <div class="table-scroll">
+      <table>
+        <caption>All inside the BOTIn backend — no separate deployable</caption>
+        <thead><tr><th>Artifact</th><th>Location</th><th>Notes</th></tr></thead>
+        <tbody>
+          <tr><td>The engine</td><td><code>flowable-spring-boot-starter</code> (Maven)</td><td>Auto-configures on startup; persists into the same DataSource as Layer 2</td></tr>
+          <tr><td>Process definitions</td><td><code>src/main/resources/processes/*.bpmn20.xml</code></td><td>Auto-deployed and versioned on app startup</td></tr>
+          <tr><td>Step implementations</td><td><code>delegate/</code> — Spring beans implementing <code>JavaDelegate</code></td><td>One per Service Task; these are what call Layers 2, 5, 6, 8</td></tr>
+          <tr><td>Engine tables</td><td><code>ACT_RU_*</code> runtime · <code>ACT_HI_*</code> history · <code>ACT_RE_*</code> definitions</td><td>Same schema as our five entities — see the history-level note in R&amp;D</td></tr>
+          <tr><td>Async job executor</td><td>Background thread pool, same JVM</td><td>Drives async service tasks and timers; claims jobs via DB locking if multi-pod</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <h3 class="section">Who touches this layer, and why</h3>
+    <figure class="diagram">
+      <div class="diagram-scroll">
+      <svg viewBox="0 0 920 400" role="img" aria-label="Layer 1 starts process instances and the Layer 8 ticket-closed callback completes user tasks; Flowable in turn calls Layer 2 for state writes, Layer 4 for DMN decisions, the classifier client for Layer 5, Layer 6 action executors, Layer 7 Togglz checks, and Layer 8 escalation and telephony.">
+        <defs>
+          <marker id="f1" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="fill-accent"/></marker>
+          <marker id="f2" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="fill-muted"/></marker>
+        </defs>
+
+        <text x="130" y="22" text-anchor="middle" class="lbl-edge">CALLS IN →</text>
+        <text x="770" y="22" text-anchor="middle" class="lbl-edge">→ FLOWABLE CALLS OUT</text>
+
+        <rect x="20" y="90" width="220" height="60" rx="4" class="rect-b"/>
+        <text x="130" y="115" text-anchor="middle" class="lbl-name">Layer 1 · Java API</text>
+        <text x="130" y="133" text-anchor="middle" class="lbl-sub">startProcessInstanceByKey</text>
+        <line x1="240" y1="120" x2="320" y2="150" class="edge" marker-end="url(#f1)"/>
+
+        <rect x="20" y="220" width="220" height="60" rx="4" class="rect-b"/>
+        <text x="130" y="245" text-anchor="middle" class="lbl-name">Layer 8 · callback</text>
+        <text x="130" y="263" text-anchor="middle" class="lbl-sub">completes the User Task</text>
+        <line x1="240" y1="250" x2="320" y2="225" class="edge" marker-end="url(#f1)"/>
+
+        <rect x="320" y="120" width="230" height="140" rx="6" class="rect-a"/>
+        <text x="435" y="152" text-anchor="middle" class="lbl-name">Flowable</text>
+        <text x="435" y="172" text-anchor="middle" class="lbl-sub">BPMN engine · in-JVM</text>
+        <line x1="342" y1="188" x2="528" y2="188" class="edge-dashed"/>
+        <text x="435" y="212" text-anchor="middle" class="lbl-sub">process state in ACT_RU_*</text>
+        <text x="435" y="232" text-anchor="middle" class="lbl-sub">+ async job executor</text>
+
+        <rect x="640" y="40" width="250" height="46" rx="4" class="rect-b"/>
+        <text x="765" y="60" text-anchor="middle" class="lbl-name">Layer 2 · state writes</text>
+        <text x="765" y="77" text-anchor="middle" class="lbl-sub">Ticket status, tier</text>
+        <line x1="550" y1="160" x2="640" y2="66" class="edge-dashed" marker-end="url(#f2)"/>
+
+        <rect x="640" y="100" width="250" height="46" rx="4" class="rect-b"/>
+        <text x="765" y="120" text-anchor="middle" class="lbl-name">Layer 4 · DMN</text>
+        <text x="765" y="137" text-anchor="middle" class="lbl-sub">Business Rule Task</text>
+        <line x1="550" y1="168" x2="640" y2="126" class="edge-dashed" marker-end="url(#f2)"/>
+
+        <rect x="640" y="160" width="250" height="46" rx="4" class="rect-b"/>
+        <text x="765" y="180" text-anchor="middle" class="lbl-name">Layer 5 · ClassifierClient</text>
+        <text x="765" y="197" text-anchor="middle" class="lbl-sub">→ Python, 3s timeout</text>
+        <line x1="550" y1="180" x2="640" y2="184" class="edge-dashed" marker-end="url(#f2)"/>
+
+        <rect x="640" y="220" width="250" height="46" rx="4" class="rect-b"/>
+        <text x="765" y="240" text-anchor="middle" class="lbl-name">Layer 6 · Action Executors</text>
+        <text x="765" y="257" text-anchor="middle" class="lbl-sub">the money path</text>
+        <line x1="550" y1="196" x2="640" y2="240" class="edge-dashed" marker-end="url(#f2)"/>
+
+        <rect x="640" y="280" width="250" height="46" rx="4" class="rect-b"/>
+        <text x="765" y="300" text-anchor="middle" class="lbl-name">Layer 7 · Togglz</text>
+        <text x="765" y="317" text-anchor="middle" class="lbl-sub">gateway kill-switch check</text>
+        <line x1="550" y1="210" x2="640" y2="296" class="edge-dashed" marker-end="url(#f2)"/>
+
+        <rect x="640" y="340" width="250" height="46" rx="4" class="rect-b"/>
+        <text x="765" y="360" text-anchor="middle" class="lbl-name">Layer 8 · escalation + telephony</text>
+        <text x="765" y="377" text-anchor="middle" class="lbl-sub">async service task</text>
+        <line x1="550" y1="224" x2="640" y2="352" class="edge-dashed" marker-end="url(#f2)"/>
+      </svg>
+      </div>
+      <figcaption>Only two things call <em>into</em> Flowable; Flowable calls <em>out</em> to six. That asymmetry is what makes this layer the hub — and why a change to its process definitions ripples further than a change anywhere else.</figcaption>
+    </figure>
+
+    <h3 class="section">API surface</h3>
+    <ul class="brief">
+      <li><strong>Exposes zero HTTP endpoints.</strong> Like Layer 2, it's reached only through in-process Java calls.</li>
+      <li>Inbound, from Layer 1: <code>runtimeService.startProcessInstanceByKey(key, variables)</code> — returns once the process completes or hits a wait state.</li>
+      <li>Inbound, from Layer 8's callback: <code>taskService.complete(taskId, variables)</code> — resumes a process parked at a User Task.</li>
+      <li>Outbound: <strong>nothing directly.</strong> Flowable never makes a network call itself — it invokes <code>JavaDelegate</code> beans, and <em>those</em> hold the HTTP clients. Keeps the engine ignorant of transport concerns.</li>
+      <li>Also used operationally: <code>historyService</code> for querying what a finished instance did — useful for debugging a specific ticket's path.</li>
+    </ul>
+
+    <h3 class="section">The decision that matters — what runs on the SP's HTTP thread</h3>
+    <ul class="brief">
+      <li>Layer 1's <code>POST /help/sessions/{id}/input</code> is synchronous — the SP is watching a spinner. Flowable by default runs a process on the <em>calling</em> thread until it completes or reaches a wait state. So the design question is where we deliberately break that.</li>
+      <li><strong>T1 and T2 stay fully synchronous.</strong> ~1.5s for "your fine has been waived" is normal app latency, and the SP genuinely wants the confirmation in that response rather than a "we'll get back to you."</li>
+      <li><strong>The T3 telephony call is marked <code>flowable:async="true"</code>.</strong> Otherwise the Exotel call sits on the SP's request thread, and a slow vendor holds the "connecting you to an agent" message hostage. Async hands it to the job executor and returns immediately.</li>
+    </ul>
+    <div class="table-scroll">
+      <table>
+        <caption>Latency budget per tier — what the SP actually waits for</caption>
+        <thead><tr><th>Tier</th><th>Work on the request thread</th><th>Typical</th><th>Worst case</th></tr></thead>
+        <tbody>
+          <tr><td><span class="dot t0"></span>T0</td><td>none — never enters Flowable at all</td><td>~10ms</td><td>—</td></tr>
+          <tr><td><span class="dot t1"></span>T1</td><td>DMN eval + reason lookup + template fill</td><td>~50ms</td><td>~200ms</td></tr>
+          <tr><td><span class="dot t2"></span>T2</td><td>DMN + <strong>Python classify</strong> + Togglz + <strong>ledger call</strong></td><td>~1.5s</td><td>~4s (3s classify timeout + ledger)</td></tr>
+          <tr><td><span class="dot t3"></span>T3</td><td>escalation context build, then hits a <strong>wait state</strong></td><td>~100ms</td><td>—</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <h3 class="section">Retry semantics — and why they're dangerous without Layer 2</h3>
+    <ul class="brief">
+      <li>If a <code>JavaDelegate</code> throws on an async job, Flowable retries (3 attempts by default), then parks it as a <strong>dead-letter job</strong> for manual inspection. Genuinely useful resilience, free.</li>
+      <li><strong>And a hazard on the money path:</strong> if the ledger call succeeded but its response was lost, a retry would credit twice.</li>
+      <li>Flowable's retry and Layer 2's <code>idempotencyKey</code> are a <strong>designed pair, not two independent features</strong>. The retry is safe only because the committed <code>TicketAction</code> row makes the second attempt a no-op. Neither mechanism is complete without the other.</li>
+    </ul>
+
+    <h3 class="section">BPMN node types, mapped to actual use</h3>
+    <div class="table-scroll">
+      <table>
+        <caption>Every node type this design uses, and what it reaches</caption>
+        <thead><tr><th>BPMN node</th><th>Our use</th><th>Calls</th></tr></thead>
+        <tbody>
+          <tr><td>Start Event</td><td>Process kicked off by Layer 1</td><td>—</td></tr>
+          <tr><td>Service Task</td><td>Reason lookup, classify, action execution, escalation build, telephony</td><td>Layers 2, 5, 6, 8</td></tr>
+          <tr><td>Business Rule Task</td><td>Tier + genuine-case decision</td><td>Layer 4 (DMN)</td></tr>
+          <tr><td>Exclusive Gateway</td><td>Tier branching, Togglz check, confidence threshold</td><td>Layer 7</td></tr>
+          <tr><td>User Task</td><td>T3 agent queue — <code>agent-2-priority</code> / <code>agent-2-standard</code></td><td>—</td></tr>
+          <tr><td>Boundary Timer Event</td><td><strong>Not yet used</strong> — see R&amp;D</td><td>—</td></tr>
+          <tr><td>End Event</td><td>Sets final <code>Ticket.status</code></td><td>Layer 2</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <h3 class="section">Open question — one process per concern, or one parameterized process?</h3>
+    <ul class="brief">
+      <li>The BRD has roughly <strong>30 L2 concerns</strong> across four waves. Two viable shapes, and this shouldn't be decided in passing.</li>
+      <li><strong>One BPMN diagram per concern:</strong> ~30 diagrams eventually. Keeps the "ops reads the diagram for this specific concern" benefit fully intact, but it's 30 files to maintain and most share the same shape.</li>
+      <li><strong>One parameterized process</strong> — <code>classify → decide → act → confirm</code>, concern as a process variable, a dispatching <code>ActionExecutorDelegate</code>. Far less to maintain, but the diagram becomes abstract and the "diagram is the spec" argument that justified picking Flowable gets noticeably weaker.</li>
+      <li><em>Current lean:</em> one parameterized skeleton with per-concern DMN tables carrying the variation — but flagged as a real trade-off, not a settled call.</li>
+    </ul>
+
+    <h3 class="section">Two operational facts nobody has specified yet</h3>
+    <ul class="brief">
+      <li><strong>Process versioning.</strong> Deploy a new BPMN file and Flowable versions it; instances already running continue on the <em>old</em> version. So a T3 ticket waiting two days is executing v1 while v2 is live. Correct behaviour, but it means a bug fix does not retroactively apply to in-flight tickets — worth knowing before the first production hotfix.</li>
+      <li><strong>History tables.</strong> Flowable writes <code>ACT_HI_*</code> rows on every transition, and the default history level is <code>FULL</code> — expensive and unbounded. Should almost certainly be <code>AUDIT</code>, with a cleanup job. Same conversation as Layer 2's retention story, and worth settling together.</li>
+    </ul>
+
+    <h3 class="section">Pros &amp; cons</h3>
+    <div class="procon">
+      <div class="col pros">
+        <h4>Pros</h4>
+        <ul>
+          <li>Process state survives restarts and deploys — the T3 wait is genuinely durable, not a parked thread.</li>
+          <li>Human task queues are a native primitive; "route to Agent 2 by medal band" is configuration, not code.</li>
+          <li>Retry + dead-letter on failed steps comes free, and composes correctly with Layer 2's idempotency.</li>
+          <li>Timers are available for free — abandoned sessions and agent SLAs need no scheduler.</li>
+          <li>No new infrastructure, no license cost, no separate service to operate.</li>
+        </ul>
+      </div>
+      <div class="col cons">
+        <h4>Cons</h4>
+        <ul>
+          <li>A DB write on every node transition — chatty compared with plain Java, and it shares the DataSource with everything else.</li>
+          <li><code>ACT_HI_*</code> grows unbounded at default settings; ignoring it is a slow-motion outage.</li>
+          <li>BPMN XML is verbose and unpleasant to hand-edit; realistically needs the modeler.</li>
+          <li>Debugging is harder than reading a stack trace — a failure is a dead-letter job plus a diagram, not a single call path.</li>
+          <li>Version-pinning of in-flight instances is correct but surprising, and will confuse whoever ships the first hotfix.</li>
+          <li>One more system whose failure modes the solo developer has to know deeply.</li>
+        </ul>
+      </div>
+    </div>
+
+    <h3 class="section">R&amp;D for scale / efficiency</h3>
+    <ul class="rnd">
+      <li><strong>Set the history level deliberately</strong> — benchmark <code>AUDIT</code> vs <code>FULL</code> on a realistic flow and pair it with a scheduled cleanup, before the tables make it urgent rather than optional.</li>
+      <li><strong>Configure the async job executor for multi-pod EKS</strong> — pool size, acquisition intervals, lock duration. Defaults assume a single node; two pods with default settings will contend for jobs.</li>
+      <li><strong>Settle one-process-per-concern vs parameterized</strong> before authoring the second Wave-1 diagram — retrofitting the choice across 30 concerns is much worse than deciding it at three.</li>
+      <li><strong>Add boundary timer events</strong>: close abandoned sessions parked mid-flow, and re-queue or escalate a T3 User Task no agent picks up within N minutes. Both are capabilities already paid for and currently unused.</li>
+      <li><strong>Load-test the job executor specifically</strong>, not just the HTTP layer — the failure mode under load is a growing job backlog, which is invisible from request-latency metrics alone.</li>
+      <li><strong>Decide the BPMN authoring workflow</strong> for a solo developer — web modeler with files committed to the repo is the usual answer, but it needs to be a deliberate choice so diagrams and code never drift.</li>
+      <li><strong>Dead-letter job monitoring</strong> — a parked job is silent by default. It needs a Layer 9 metric and an alert, or failures will sit unnoticed.</li>
+    </ul>
+  </div>
+  <div class="panel" id="p4" role="tabpanel">
+    <p class="layer-tag">Layer 4 · partial</p>
+    <h2 class="layer-title">Decision Logic — DMN</h2>
+
+    <h3 class="section">The thing to see first: they don't look alike</h3>
+    <ul class="brief">
+      <li><strong>BPMN</strong> (Business Process Model and Notation) renders as a <strong>flowchart</strong> — boxes and arrows, a path through time.</li>
+      <li><strong>DMN</strong> (Decision Model and Notation) renders as a <strong>table</strong> — a grid of conditions and outcomes, no sequence at all.</li>
+      <li>That difference is the whole reason both specifications exist. A process has an order; a decision doesn't.</li>
+    </ul>
+
+    <h3 class="section">BPMN — boxes and arrows</h3>
+    <figure class="diagram">
+      <div class="diagram-scroll">
+      <svg viewBox="0 0 880 250" role="img" aria-label="The leave fine BPMN process rendered as a flowchart: start, classify free text, a confidence gateway, evaluate DMN table, an approve gateway, waive fine, end; with both no-branches converging on build context and a wait-for-agent user task.">
+        <defs>
+          <marker id="m4" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="fill-accent"/></marker>
+        </defs>
+        <circle cx="40" cy="55" r="15" class="rect-a"/>
+        <rect x="90" y="32" width="112" height="46" rx="8" class="rect-a"/>
+        <text x="146" y="52" text-anchor="middle" class="lbl-sub">Classify</text>
+        <text x="146" y="68" text-anchor="middle" class="lbl-sub">free text</text>
+        <line x1="55" y1="55" x2="90" y2="55" class="edge" marker-end="url(#m4)"/>
+
+        <path d="M262,32 L292,55 L262,78 L232,55 Z" class="rect-a"/>
+        <text x="262" y="98" text-anchor="middle" class="lbl-sub">conf ≥ .7?</text>
+        <line x1="202" y1="55" x2="232" y2="55" class="edge" marker-end="url(#m4)"/>
+
+        <rect x="332" y="32" width="112" height="46" rx="8" class="rect-a"/>
+        <text x="388" y="52" text-anchor="middle" class="lbl-sub">Evaluate</text>
+        <text x="388" y="68" text-anchor="middle" class="lbl-sub">DMN table</text>
+        <line x1="292" y1="55" x2="332" y2="55" class="edge" marker-end="url(#m4)"/>
+        <text x="300" y="45" class="lbl-edge">yes</text>
+
+        <path d="M504,32 L534,55 L504,78 L474,55 Z" class="rect-a"/>
+        <text x="504" y="98" text-anchor="middle" class="lbl-sub">approve?</text>
+        <line x1="444" y1="55" x2="474" y2="55" class="edge" marker-end="url(#m4)"/>
+
+        <rect x="574" y="32" width="112" height="46" rx="8" class="rect-a"/>
+        <text x="630" y="60" text-anchor="middle" class="lbl-sub">Waive fine</text>
+        <line x1="534" y1="55" x2="574" y2="55" class="edge" marker-end="url(#m4)"/>
+        <text x="542" y="45" class="lbl-edge">yes</text>
+
+        <circle cx="730" cy="55" r="15" class="rect-a"/>
+        <line x1="686" y1="55" x2="715" y2="55" class="edge" marker-end="url(#m4)"/>
+
+        <path d="M262,78 L262,140 L180,140 L180,168" class="edge" marker-end="url(#m4)"/>
+        <text x="196" y="133" class="lbl-edge">no</text>
+        <path d="M504,78 L504,140 L264,140" class="edge"/>
+        <text x="380" y="133" class="lbl-edge">no</text>
+
+        <rect x="120" y="168" width="120" height="46" rx="8" class="rect-a"/>
+        <text x="180" y="188" text-anchor="middle" class="lbl-sub">Build</text>
+        <text x="180" y="204" text-anchor="middle" class="lbl-sub">context</text>
+
+        <rect x="290" y="163" width="150" height="56" rx="8" class="rect-b"/>
+        <text x="365" y="185" text-anchor="middle" class="lbl-name">Wait for agent</text>
+        <text x="365" y="203" text-anchor="middle" class="lbl-sub">User Task — pauses</text>
+        <line x1="240" y1="191" x2="290" y2="191" class="edge" marker-end="url(#m4)"/>
+
+        <circle cx="490" cy="191" r="15" class="rect-a"/>
+        <line x1="440" y1="191" x2="475" y2="191" class="edge" marker-end="url(#m4)"/>
+      </svg>
+      </div>
+      <figcaption>A path through time. Every shape is a step or a branch, and the arrows carry order.</figcaption>
+    </figure>
+    <ul class="brief">
+      <li>Its XML: <code>&lt;serviceTask id="classify" flowable:delegateExpression="${classifyDelegate}"/&gt;</code>, an <code>&lt;exclusiveGateway/&gt;</code>, and <code>&lt;sequenceFlow&gt;</code> elements carrying <code>&lt;conditionExpression&gt;${confidence &gt;= 0.7}&lt;/conditionExpression&gt;</code>.</li>
+    </ul>
+
+    <h3 class="section">DMN — a grid, not a flowchart</h3>
+    <ul class="brief">
+      <li>Same process, the <em>decision</em> step. This is exactly what the modeler shows — <code>⇥</code> marks input columns, <code>⇤</code> marks outputs.</li>
+    </ul>
+    <div class="table-scroll">
+      <table>
+        <caption><code>leave-fine-genuine.dmn</code> — hit policy: <strong>FIRST</strong></caption>
+        <thead><tr><th></th><th>⇥ category</th><th>⇥ confidence</th><th>⇥ claimFreq30d</th><th>⇥ medalBand</th><th>⇤ tier</th><th>⇤ action</th></tr></thead>
+        <tbody>
+          <tr><td><strong>1</strong></td><td>–</td><td><code>&lt; 0.7</code></td><td>–</td><td>–</td><td><span class="dot t3"></span><code>"T3"</code></td><td><code>"route_agent"</code></td></tr>
+          <tr><td><strong>2</strong></td><td><code>"health_issue"</code></td><td><code>&gt;= 0.7</code></td><td><code>&lt;= 2</code></td><td>–</td><td><span class="dot t2"></span><code>"T2"</code></td><td><code>"waive_fine"</code></td></tr>
+          <tr><td><strong>3</strong></td><td><code>"health_issue"</code></td><td><code>&gt;= 0.7</code></td><td><code>&gt; 2</code></td><td><code>"TITANIUM","QUEEN"</code></td><td><span class="dot t2"></span><code>"T2"</code></td><td><code>"waive_fine"</code></td></tr>
+          <tr><td><strong>4</strong></td><td><code>"health_issue"</code></td><td><code>&gt;= 0.7</code></td><td><code>&gt; 2</code></td><td>–</td><td><span class="dot t3"></span><code>"T3"</code></td><td><code>"route_agent"</code></td></tr>
+          <tr><td><strong>5</strong></td><td><code>"family_emergency"</code></td><td><code>&gt;= 0.7</code></td><td><code>&lt;= 1</code></td><td>–</td><td><span class="dot t2"></span><code>"T2"</code></td><td><code>"waive_fine"</code></td></tr>
+          <tr><td><strong>6</strong></td><td>–</td><td>–</td><td>–</td><td>–</td><td><span class="dot t3"></span><code>"T3"</code></td><td><code>"route_agent"</code> <em>(catch-all)</em></td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <h3 class="section">Four DMN concepts that don't exist in BPMN</h3>
+    <ul class="brief">
+      <li><strong>Input columns vs output columns.</strong> The <code>⇥</code> side is what you feed in, the <code>⇤</code> side is what comes out. Every modeler separates them visually.</li>
+      <li><strong>Rules are rows.</strong> Row 3 above encodes "a Titanium or Queen SP gets the benefit of the doubt even with a high claim rate" — one row, no code.</li>
+      <li><strong>Hit policy</strong> decides what happens when several rows match. <code>FIRST</code> takes the topmost, which means <strong>row order is semantically significant</strong> — specific rules go above catch-alls, and row 6 must stay last. Other policies exist (<code>UNIQUE</code>, <code>ANY</code>, <code>COLLECT</code>, <code>PRIORITY</code>); <code>FIRST</code> is right here.</li>
+      <li><strong>FEEL</strong> — Friendly Enough Expression Language, the syntax inside the cells: <code>&gt;= 0.7</code>, <code>&lt;= 2</code>, <code>"TITANIUM","QUEEN"</code> (an OR list), and <code>–</code> meaning <em>don't care</em>. Deliberately simple enough that an ops person can read a column without knowing Java.</li>
+    </ul>
+
+    <h3 class="section">The DMN XML — same "the file is the executable" property</h3>
+    <ul class="brief">
+      <li>Structure: <code>&lt;decision&gt;</code> wraps a <code>&lt;decisionTable hitPolicy="FIRST"&gt;</code>, which contains <code>&lt;input&gt;</code> and <code>&lt;output&gt;</code> declarations followed by one <code>&lt;rule&gt;</code> per row, each holding <code>&lt;inputEntry&gt;</code> and <code>&lt;outputEntry&gt;</code> cells in column order.</li>
+      <li><code>&lt;inputExpression&gt;&lt;text&gt;category&lt;/text&gt;&lt;/inputExpression&gt;</code> reads the <strong>process variable</strong> named <code>category</code> — that's the join between Layer 3 and Layer 4.</li>
+      <li>A cell is literally <code>&lt;inputEntry&gt;&lt;text&gt;&amp;gt;= 0.7&lt;/text&gt;&lt;/inputEntry&gt;</code>. <strong>Change it to <code>&gt;= 0.8</code>, redeploy the file, behaviour changes — no Java recompiled.</strong> Identical to the BPMN gateway expression.</li>
+    </ul>
+
+    <h3 class="section">One DMN feature we're not using — the DRD</h3>
+    <ul class="brief">
+      <li>DMN also has a <strong>DRD (Decision Requirements Diagram)</strong>, and <em>that</em> one is a boxes-and-arrows picture — it shows decisions feeding other decisions, e.g. <code>[Claim risk score]</code> and <code>[SP standing]</code> both feeding <code>[Genuine case?]</code>.</li>
+      <li>You'd need it if the claim-history scoring idea from the industry study ever becomes its own decision feeding the main table.</li>
+      <li>Right now there's one decision per concern, so a single table is all the DMN we need — worth knowing the DRD exists so the modeler's second tab isn't a mystery.</li>
+    </ul>
+
+    <h3 class="section">Still to cover in this layer</h3>
+    <ul class="brief">
+      <li>Not yet written up here: where <code>.dmn</code> files live and how they're deployed; how the Business Rule Task binds a table by <code>dmn_key</code>; who authors and reviews rule changes (ops vs engineering) and whether that needs a review gate given rows can move money; versioning of decision tables; testing strategy for rule tables; and the pros/cons and R&amp;D sections.</li>
+    </ul>
+  </div>
+  <div class="panel" id="p5" role="tabpanel" hidden>
+    <p class="layer-tag">Layer 5 · partial</p>
+    <h2 class="layer-title">The Python Service — Language Understanding Only</h2>
+
+    <h3 class="section">Start here — why it exists at all</h3>
+    <ul class="brief">
+      <li><strong>The menu path needs no AI.</strong> SP taps "Fines" → "Leaves fine" and we know exactly what they want. That's a string comparison.</li>
+      <li>The problem appears in exactly <strong>two</strong> places where input isn't a menu selection. <strong>(1) Free text explaining <em>why</em>:</strong> "I was sick yesterday" — the concern is already known, but the DMN table needs a <em>reason category</em> to decide. There's no menu for reasons because reasons are open-ended in phrasing while closed in category. <strong>(2) Free text as the <em>first</em> message:</strong> "mera aaj strike laga hai usko hatao" — no concern selected at all.</li>
+      <li>Both are the same underlying problem: <strong>turning unconstrained human language into one value from a fixed list.</strong> That is the entire job of this layer.</li>
+    </ul>
+
+    <h3 class="section">Why not just do it in Java</h3>
+    <div class="table-scroll">
+      <table>
+        <caption>Three ways to solve it, and why two of them fail here</caption>
+        <thead><tr><th>Approach</th><th>Why it fails / works</th></tr></thead>
+        <tbody>
+          <tr><td>Keyword matching</td><td>"sick", "bimar", "tabiyat kharab", "not well", "fever", "hospital" — endless variants, and the SOP already shows SPs mixing Hindi, English and Hinglish <em>in one sentence</em></td></tr>
+          <tr><td>Classical NLU (Rasa, Dialogflow)</td><td>Needs labelled training data you don't have, needs retraining as phrasing drifts, and handles code-switching poorly</td></tr>
+          <tr><td><strong>An LLM call</strong></td><td>Works with zero training data; handles Hindi/English mixing natively; you <em>describe</em> the categories in the prompt rather than training a model</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <h3 class="section">Why a separate service — honestly</h3>
+    <ul class="brief">
+      <li>You <em>could</em> call an LLM's HTTP API from Java, so the separate deployable needs a real justification.</li>
+      <li><strong>The safety boundary is physical, not conventional.</strong> Python has no database credentials and no action capability. It can misclassify; it structurally <em>cannot</em> move money.</li>
+      <li><strong>Independent deployment.</strong> Swap the model or tune a prompt without redeploying the service that waives fines.</li>
+      <li><strong>Library maturity.</strong> Pydantic guarantees the response shape; vendor SDKs are best-supported in Python.</li>
+      <li><strong>The honest counter-argument:</strong> a well-isolated Java package could achieve most of that. The separate service makes the boundary enforced by <em>architecture</em> rather than by <em>discipline</em>. Defensible — not a slam dunk.</li>
+    </ul>
+
+    <h3 class="section">When it's touched — by input shape, not by tier</h3>
+    <ul class="brief">
+      <li><strong>The framing that matters:</strong> Python isn't called based on tier. Tier is an <em>output</em> of the flow; the Python call happens near the start, driven by whether free text is present.</li>
+    </ul>
+    <div class="table-scroll">
+      <table>
+        <caption>Read down the columns, not across the rows</caption>
+        <thead><tr><th>Tier</th><th><code>/classify-intent</code> — entry routing</th><th><code>/classify</code> — reason extraction</th></tr></thead>
+        <tbody>
+          <tr><td><span class="dot t0"></span>T0</td><td>Only if the session started with free text</td><td>Never</td></tr>
+          <tr><td><span class="dot t1"></span>T1</td><td>Only if the session started with free text</td><td>Never</td></tr>
+          <tr><td><span class="dot t2"></span>T2</td><td>Only if the session started with free text</td><td><strong>Yes — the primary case</strong></td></tr>
+          <tr><td><span class="dot t3"></span>T3</td><td>Only if the session started with free text</td><td>Yes, when reached via Trigger C</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <ul class="brief">
+      <li><code>/classify-intent</code> fires <strong>at most once, at session start</strong>, and only when the SP typed instead of tapping. It's tier-independent — it runs <em>before</em> any tier is known.</li>
+      <li><code>/classify</code> fires only for concerns whose flow has a free-text reason step. That's overwhelmingly <strong>T2</strong>, because T2 is where a <em>reason</em> determines whether money moves.</li>
+      <li><strong>T0 and T1 never call <code>/classify</code></strong> — nothing about them needs a reason interpreted.</li>
+      <li>A fully menu-driven T2 session (a concern with a reason dropdown instead of a text box) would touch Python <strong>zero times</strong>.</li>
+    </ul>
+
+    <h3 class="section">Its exact job, and the two endpoints</h3>
+    <ul class="brief">
+      <li>Convert unconstrained text into <strong>one value from a fixed list, plus a confidence number.</strong> Two endpoints exist because there are two different fixed lists.</li>
+    </ul>
+    <div class="table-scroll">
+      <table>
+        <caption>Same shape of task, different target sets — which is why they're separate endpoints</caption>
+        <thead><tr><th></th><th><code>/classify-intent</code></th><th><code>/classify</code></th></tr></thead>
+        <tbody>
+          <tr><td>Called when</td><td>Free text, <strong>no</strong> concern known</td><td>Free text, concern <strong>already</strong> known</td></tr>
+          <tr><td>The fixed list</td><td>The whole L1/L2 taxonomy (~30)</td><td>Reason categories for <em>one</em> concern (~5–8)</td></tr>
+          <tr><td>Returns</td><td><code>{l1Concern, l2Concern, confidenceScore}</code></td><td><code>{category, confidenceScore, extractedReason}</code></td></tr>
+          <tr><td>Difficulty</td><td>Harder — large, ambiguous target set</td><td>Easier — small, well-bounded set</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <h3 class="section">What it explicitly does not do</h3>
+    <ul class="brief">
+      <li><strong>Doesn't decide anything.</strong> DMN decides. Python only says "this text means <code>health_issue</code>."</li>
+      <li><strong>Doesn't touch the database.</strong> No credentials.</li>
+      <li><strong>Doesn't take actions.</strong> Cannot waive a fine.</li>
+      <li><strong>Doesn't generate text for the SP.</strong> Responses come from templates.</li>
+      <li><strong>Doesn't summarize conversations for agents.</strong> <code>extractedReason</code> already serves that — see Layer 8.</li>
+    </ul>
+
+    <h3 class="section">The confidence score isn't decoration</h3>
+    <ul class="brief">
+      <li>It is the input to <strong>Trigger C</strong>. Below threshold → route to a human. That's how the system fails safe when language understanding is uncertain, rather than acting on a guess.</li>
+      <li><strong>When the service is down or slow:</strong> the Resilience4j circuit breaker trips and the flow routes to T3. <strong>Same pattern as the Togglz kill switch — degrade to a human, never break.</strong> A Python outage means slower SP resolution, not wrong money movement.</li>
+    </ul>
+
+    <h3 class="section">Should it write the reply to the SP? — No, deliberately</h3>
+    <ul class="brief">
+      <li><strong>1. Hallucinated numbers.</strong> "₹200 has been credited to your wallet." If the LLM writes that sentence it can write the wrong amount. A template with <code>{amount}</code> structurally cannot.</li>
+      <li><strong>2. Unauthorized commitments.</strong> An LLM might helpfully add "we'll review your other fines too." Nobody promised that and nothing will honour it. Templates can only say what someone approved.</li>
+      <li><strong>3. Non-determinism kills auditability.</strong> With generation, "what do we tell SPs when a leave fine is waived?" has no answer — it varies every time. With templates it's a string in a file you can show someone.</li>
+      <li><strong>4. The dispute problem.</strong> An SP says "the bot told me my fine was cancelled." <code>ConversationMessage</code> records the text either way, but a template is <em>reviewable in advance</em>; generated text is only reviewable after the fact.</li>
+      <li><strong>5. Latency and cost on every interaction.</strong> Today T0 and T1 make <strong>zero</strong> LLM calls. Generating responses would add one to every single resolution — a few hundred ms and a per-call cost on the highest-volume paths, for cosmetic benefit.</li>
+      <li><strong>6. Untestable.</strong> You can assert a template renders correctly. You cannot unit-test "the model said something reasonable."</li>
+    </ul>
+
+    <h3 class="section">What we do instead — templates keyed by the DMN action</h3>
+    <ul class="brief">
+      <li><code>action=waive_fine</code> → "Your ₹<code>{amount}</code> fine for <code>{date}</code> has been waived."</li>
+      <li><code>action=explain_no_strike</code> → "We couldn't find an active strike on your account."</li>
+      <li><code>action=explain_too_old</code> → "This strike is from <code>{date}</code> and is outside the <code>{days}</code>-day appeal window."</li>
+      <li><code>action=route_agent</code> → "Connecting you to an agent…"</li>
+      <li><strong>Scale check:</strong> ~30 concerns × ~3–4 outcomes ≈ 100 distinct messages. That's a <em>content</em> problem, not a generation problem — entirely tractable.</li>
+    </ul>
+    <div class="table-scroll">
+      <table>
+        <caption>Four options considered, and the verdict on each</caption>
+        <thead><tr><th>Option</th><th>What it means</th><th>Verdict</th></tr></thead>
+        <tbody>
+          <tr><td><strong>A. Templates only</strong></td><td>Fixed strings + variables, one set per language</td><td><strong>Recommended</strong></td></tr>
+          <tr><td>B. LLM localizes at runtime</td><td>Approved English template → LLM renders it in Hinglish live</td><td>Rejected — translation can still mangle a number, and it adds a call to every interaction</td></tr>
+          <tr><td>C. LLM generates freely</td><td>Model writes the whole message</td><td>Rejected — all six risks above</td></tr>
+          <tr><td><strong>D. LLM drafts at <em>design</em> time</strong></td><td>Use an LLM to draft the Hindi/Hinglish versions; a human reviews and commits them</td><td><strong>Recommended alongside A</strong></td></tr>
+        </tbody>
+      </table>
+    </div>
+    <ul class="brief">
+      <li><strong>Option D is the one worth calling out.</strong> You get the LLM's help writing ~100 messages across three languages with <em>zero</em> runtime risk — the model never touches a live conversation, and every string is human-approved before it ships.</li>
+    </ul>
+
+    <h3 class="section">The language question — solved by classification, not generation</h3>
+    <ul class="brief">
+      <li>The SOP shows SPs writing in Hindi, English and Hinglish. Should the reply match? Yes — and that's <strong>classification, not generation</strong>.</li>
+      <li>Add a <code>detectedLanguage</code> field to the <code>/classify</code> response. It picks one value from a fixed list (<code>hi</code> / <code>en</code> / <code>hinglish</code>) — exactly what this service already does. Java then selects the matching template.</li>
+      <li>That keeps the boundary intact: <strong>Python understands language, Java produces it.</strong></li>
+    </ul>
+
+    <h3 class="section">Where an LLM <em>would</em> write to the SP</h3>
+    <ul class="brief">
+      <li>Wave 4's open-ended "Other any issue" bucket — <strong>Layer 13</strong>. If an agent is ever built for arbitrary SP questions, generation is inherent to it, because there's no fixed outcome set to template against.</li>
+      <li>That's the same boundary that made RAG a Wave-4-only fit: <strong>fixed outcomes → templates; open-ended outcomes → generation.</strong></li>
+    </ul>
+
+    <h3 class="section">What we give up</h3>
+    <ul class="brief">
+      <li>Honestly: <strong>naturalness</strong>. Templates read as templates. An SP who wrote a long emotional message gets back a clean, slightly formal sentence. That's a real cost — just a smaller one than a wrong number in a financial message.</li>
+    </ul>
+
+    <h3 class="section">Still to cover in this layer</h3>
+    <ul class="brief">
+      <li>Not yet written up here: the FastAPI service internals, prompt structure and how categories are described to the model, Pydantic response validation, timeout and circuit-breaker configuration in detail, which LLM vendor (still open), cost per call, and the pros/cons and R&amp;D sections.</li>
+      <li>Also outstanding: <strong>where the response templates actually live</strong> (a `messages/` resource bundle keyed by action + language is the obvious answer, but it isn't designed yet) and who owns editing them.</li>
+    </ul>
+  </div>
+  <div class="panel placeholder" id="p5b" role="tabpanel" hidden>
+    <p class="layer-tag">Layer 5b</p><h2 class="layer-title">Entry-Point Intent Routing — /classify-intent</h2>
+    <p>Routes unconstrained free text typed at Help entry, before any menu selection, against the full L1/L2 taxonomy.</p>
+    <span class="note">Not detailed yet — say the word and we'll fill this tab in next.</span>
+  </div>
+  <div class="panel placeholder" id="p6" role="tabpanel" hidden>
+    <p class="layer-tag">Layer 6</p><h2 class="layer-title">Action Executors</h2>
+    <p>One Java interface per capability — wallet, leave, hub — calling whatever backend turns out to exist.</p>
+    <span class="note">Not detailed yet — say the word and we'll fill this tab in next.</span>
+  </div>
+  <div class="panel" id="p7" role="tabpanel" hidden>
+    <p class="layer-tag">Layer 7 · partial</p>
+    <h2 class="layer-title">Safety — Kill Switches (Togglz)</h2>
+
+    <h3 class="section">Start here — the problem</h3>
+    <ul class="brief">
+      <li>Wave 1 is live. Leave-fine auto-waive is running. At 2am you discover it's waiving fines it shouldn't — a bad DMN row, the fines API returning stale data, or an abuse pattern nobody predicted. <strong>Money is moving incorrectly right now.</strong></li>
+      <li><strong>Without a feature flag:</strong> revert the commit, rebuild, redeploy — fifteen to thirty minutes in most orgs, with money moving that whole time. Even a config table doesn't help if reading it needs a restart.</li>
+      <li><strong>With a feature flag:</strong> flip a switch, effect is immediate. Seconds.</li>
+      <li>That gap — between "we noticed" and "it stopped" — <strong>is the entire value proposition.</strong> For a system that moves money automatically without human review, it's the difference between an incident and a catastrophe.</li>
+    </ul>
+
+    <h3 class="section">What Togglz literally is</h3>
+    <ul class="brief">
+      <li>A Java library: <code>togglz-spring-boot-starter</code> in <code>pom.xml</code>. Same shape as Flowable — a JAR inside your app, <strong>no server to run</strong>.</li>
+      <li><strong>Piece 1 — a Feature enum.</strong> You declare flags in code: <code>public enum BotinFeature implements Feature { @Label("Leave fine — auto waive") LEAVE_FINE_AUTO_WAIVE, ... }</code></li>
+      <li><strong>Piece 2 — a StateRepository.</strong> Where on/off is stored. We'd use <code>JDBCStateRepository</code>: one small table in the same database. (Also available: in-memory, file, Redis.)</li>
+      <li><strong>Piece 3 — the admin console.</strong> Togglz ships a web UI at <code>/togglz-console</code> with a toggle per feature. This is what makes it operationally real: <strong>ops flips the switch, not a developer.</strong></li>
+    </ul>
+
+    <h3 class="section">Activation strategies — how this maps to the BRD's rollout plan</h3>
+    <ul class="brief">
+      <li>Togglz isn't only on/off — each flag has a <em>strategy</em> deciding who sees it.</li>
+    </ul>
+    <div class="table-scroll">
+      <table>
+        <caption>Built-in strategies, and which ones this project actually needs</caption>
+        <thead><tr><th>Strategy</th><th>What it does</th><th>Our use</th></tr></thead>
+        <tbody>
+          <tr><td>Always on / off</td><td>The obvious one</td><td>Kill switch</td></tr>
+          <tr><td><strong>Gradual rollout</strong></td><td>Active for N% of users, by a hash</td><td><strong>The BRD's "ramp by %, not 100% on day one"</strong></td></tr>
+          <tr><td>Username / role</td><td>Active only for named users</td><td>Internal testing before SP exposure</td></tr>
+          <tr><td>Server IP</td><td>Active only on some hosts</td><td>Canary a single pod</td></tr>
+          <tr><td><strong>Custom script</strong></td><td>You write the predicate</td><td><strong>Medal-band ramp</strong></td></tr>
+        </tbody>
+      </table>
+    </div>
+    <ul class="brief">
+      <li>The last row matters: the BRD says ramp "by % <em>or</em> by medal band." Percentage is built in; <strong>medal band needs a custom <code>ActivationStrategy</code> plus a <code>UserProvider</code></strong> exposing the current SP's medal band. Both are small classes — but they're work, not configuration.</li>
+    </ul>
+
+    <h3 class="section">Where the check sits in the flow</h3>
+    <figure class="diagram">
+      <div class="diagram-scroll">
+      <svg viewBox="0 0 820 200" role="img" aria-label="After DMN returns tier T2 and action waive fine, a Togglz gate decides: if the flag is off the request routes to a human agent at T3; if on, the fine is waived automatically.">
+        <defs>
+          <marker id="t7" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="fill-accent"/></marker>
+        </defs>
+        <rect x="20" y="55" width="180" height="56" rx="6" class="rect-a"/>
+        <text x="110" y="79" text-anchor="middle" class="lbl-sub">DMN returns</text>
+        <text x="110" y="96" text-anchor="middle" class="lbl-sub">{tier: T2, action: waive}</text>
+
+        <path d="M330,50 L385,83 L330,116 L275,83 Z" class="rect-a"/>
+        <text x="330" y="87" text-anchor="middle" class="lbl-sub">Togglz</text>
+        <line x1="200" y1="83" x2="275" y2="83" class="edge" marker-end="url(#t7)"/>
+
+        <rect x="470" y="20" width="230" height="52" rx="6" class="rect-b"/>
+        <text x="585" y="42" text-anchor="middle" class="lbl-sub">route to T3 — a human agent</text>
+        <text x="585" y="59" text-anchor="middle" class="lbl-sub">SP still gets helped</text>
+        <path d="M330,50 L330,46 L470,46" class="edge" marker-end="url(#t7)"/>
+        <text x="398" y="38" text-anchor="middle" class="lbl-edge">flag OFF</text>
+
+        <rect x="470" y="98" width="230" height="52" rx="6" class="rect-a"/>
+        <text x="585" y="128" text-anchor="middle" class="lbl-sub">Waive the fine automatically</text>
+        <path d="M330,116 L330,124 L470,124" class="edge" marker-end="url(#t7)"/>
+        <text x="398" y="140" text-anchor="middle" class="lbl-edge">flag ON</text>
+
+        <text x="410" y="185" text-anchor="middle" class="lbl-sub">flag OFF degrades the service — it does not break it</text>
+      </svg>
+      </div>
+      <figcaption><strong>Critical semantic: flag off does not mean "fail."</strong> It means "don't automate this — send it to a human." The SP still gets helped; they get an agent instead of instant resolution. That's why the kill switch is usable in anger.</figcaption>
+    </figure>
+
+    <h3 class="section">One real tension — enum constants vs catalogue strings</h3>
+    <ul class="brief">
+      <li>Togglz is <strong>enum-based</strong> — compile-time constants. But <code>concern_catalogue.togglz_flag</code> stores flag names as <strong>strings</strong>, resolved at runtime. Those don't fit together directly.</li>
+      <li><strong>The resolution</strong> is Togglz's <code>NamedFeature</code>: <code>featureManager.isActive(new NamedFeature(concern.getTogglzFlag()))</code>.</li>
+      <li><strong>The cost:</strong> that bypasses the enum's type safety — a typo in a catalogue row becomes a silent "feature not found" rather than a compile error. <strong>Mitigation:</strong> a startup validation that every <code>togglz_flag</code> value in the catalogue matches a declared enum constant, failing fast if not.</li>
+    </ul>
+
+    <h3 class="section">What Togglz is not</h3>
+    <ul class="brief">
+      <li><strong>Not a config system.</strong> It's boolean. "Set the confidence threshold to 0.8" is not a Togglz job — that's DMN or application config.</li>
+      <li><strong>Not permissions.</strong> It gates features, not users' rights.</li>
+      <li><strong>Not A/B testing.</strong> It can split traffic; it doesn't measure outcomes. That's Layer 9's job.</li>
+      <li>Alternatives — Unleash, Flagsmith, LaunchDarkly — are all separate services. Togglz was chosen for the same reason as Flowable: Java-native, free, no new infrastructure.</li>
+    </ul>
+
+    <h3 class="section">Pros &amp; cons</h3>
+    <div class="procon">
+      <div class="col pros">
+        <h4>Pros</h4>
+        <ul>
+          <li>Seconds, not deploys, between noticing a problem and stopping it — on the one path that moves money.</li>
+          <li>Ops can flip it without a developer, which is what makes it usable at 2am.</li>
+          <li>Gradual-rollout strategy gives the BRD's percentage ramp for free.</li>
+          <li>No new infrastructure — a JAR and one table.</li>
+          <li>Off degrades to human handling rather than an error, so flipping it is low-regret.</li>
+        </ul>
+      </div>
+      <div class="col cons">
+        <h4>Cons</h4>
+        <ul>
+          <li><strong>The console can disable money-moving features</strong> — it needs real authentication, which is currently Layer 11's undesigned territory.</li>
+          <li><code>NamedFeature</code> lookups lose compile-time safety; a catalogue typo fails silently without the startup check.</li>
+          <li>Flag debt: flags accumulate and nobody removes them, so the codebase slowly fills with dead branches.</li>
+          <li>Medal-band ramping isn't built in — it needs a custom strategy and a <code>UserProvider</code>.</li>
+          <li>Flag state is a database read; Togglz caches it, so a flip isn't literally instant — it's instant plus the cache TTL.</li>
+        </ul>
+      </div>
+    </div>
+
+    <h3 class="section">R&amp;D for scale / efficiency</h3>
+    <ul class="rnd">
+      <li><strong>Tune the cache TTL deliberately</strong> — it's the real latency between flipping the switch and the bleeding stopping. Too long defeats the purpose; too short means a DB read on every action.</li>
+      <li><strong>Secure the console before Wave 1</strong> — an unauthenticated <code>/togglz-console</code> is a way to disable fraud controls. Ties directly to Layer 11.</li>
+      <li><strong>Add flip auditing.</strong> <code>JDBCStateRepository</code> stores current state only, not history. For a money-moving flag you want <em>who</em> flipped it and <em>when</em> — that's a custom repository wrapper or a DB trigger, and it doesn't exist by default.</li>
+      <li><strong>Write the startup validation</strong> reconciling <code>concern_catalogue.togglz_flag</code> values against declared enum constants — cheap, and closes the <code>NamedFeature</code> safety hole.</li>
+      <li><strong>Build the medal-band <code>ActivationStrategy</code></strong> and its <code>UserProvider</code> before the ramp, not during it.</li>
+      <li><strong>Set a flag lifecycle policy</strong> — e.g. remove a flag once its feature has been stable for N weeks — or flag debt accumulates silently.</li>
+    </ul>
+
+    <h3 class="section">Still to cover in this layer</h3>
+    <ul class="brief">
+      <li>This tab currently covers <strong>kill switches only</strong>. Layer 7 also owns <strong>idempotency</strong> (the <code>TicketAction.idempotencyKey</code> unique constraint and its <code>REQUIRES_NEW</code> transaction, already described in Layer 2 and Layer 3) and the <strong>nightly reconciliation job</strong> — both still to be written up here properly.</li>
+    </ul>
+  </div>
+  <div class="panel placeholder" id="p8" role="tabpanel" hidden>
+    <p class="layer-tag">Layer 8</p><h2 class="layer-title">Agent-Connect (T3)</h2>
+    <p>Telephony hand-off plus the two-endpoint agent-context pattern (structured snapshot first, full transcript on demand).</p>
+    <span class="note">Not detailed yet — say the word and we'll fill this tab in next.</span>
+  </div>
+  <div class="panel placeholder" id="p9" role="tabpanel" hidden>
+    <p class="layer-tag">Layer 9</p><h2 class="layer-title">Observability</h2>
+    <p>Micrometer + OpenTelemetry into Prometheus/Grafana, tied to the BRD's own KPIs.</p>
+    <span class="note">Not detailed yet — say the word and we'll fill this tab in next.</span>
+  </div>
+  <div class="panel placeholder" id="p10" role="tabpanel" hidden>
+    <p class="layer-tag">Layer 10</p><h2 class="layer-title">Illustrative Flows, T0–T3</h2>
+    <p>Block-by-block walkthroughs, client request to client response — see also the standalone flow-map diagram.</p>
+    <span class="note">Not detailed yet — say the word and we'll fill this tab in next.</span>
+  </div>
+  <div class="panel placeholder" id="p11" role="tabpanel" hidden>
+    <p class="layer-tag">Layer 11 · Placeholder</p><h2 class="layer-title">Access Control / Permissions</h2>
+    <p>Who can call Layer 8's escalation-context/conversation endpoints, and an audit log of who viewed what — not designed yet.</p>
+    <span class="note">Not detailed yet — say the word and we'll fill this tab in next.</span>
+  </div>
+  <div class="panel placeholder" id="p12" role="tabpanel" hidden>
+    <p class="layer-tag">Layer 12 · Placeholder</p><h2 class="layer-title">LLM Guardrails</h2>
+    <p>Validating what Python's classifier returns before it reaches a decision that can move money — not designed yet.</p>
+    <span class="note">Not detailed yet — say the word and we'll fill this tab in next.</span>
+  </div>
+  <div class="panel placeholder" id="p13" role="tabpanel" hidden>
+    <p class="layer-tag">Layer 13 · Future</p><h2 class="layer-title">AI Agents for Wave 4</h2>
+    <p>An autonomous agent + RAG, scoped only to the open-ended long-tail bucket — deliberately out of scope for T0–T3.</p>
+    <span class="note">Not detailed yet — say the word and we'll fill this tab in next.</span>
+  </div>
+
+  <footer>Companion to <code>botin_mod_tech_design_v0.1.md</code> — this tab-by-tab view goes deeper on each layer as we work through it; the doc stays the concise reference.</footer>
+</div>
+
+<script>
+  (function(){
+    var tabs = document.querySelectorAll('.tab');
+    tabs.forEach(function(tab){
+      tab.addEventListener('click', function(){
+        tabs.forEach(function(t){ t.setAttribute('aria-selected','false'); });
+        document.querySelectorAll('.panel').forEach(function(p){ p.setAttribute('hidden',''); });
+        tab.setAttribute('aria-selected','true');
+        document.getElementById(tab.dataset.panel).removeAttribute('hidden');
+      });
+      tab.addEventListener('keydown', function(e){
+        var arr = Array.prototype.slice.call(tabs);
+        var i = arr.indexOf(tab);
+        if(e.key === 'ArrowRight'){ arr[(i+1)%arr.length].focus(); arr[(i+1)%arr.length].click(); }
+        if(e.key === 'ArrowLeft'){ arr[(i-1+arr.length)%arr.length].focus(); arr[(i-1+arr.length)%arr.length].click(); }
+      });
+    });
+  })();
+</script>

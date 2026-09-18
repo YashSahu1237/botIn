@@ -1,0 +1,343 @@
+<title>BOTIn Component Notes</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#F4F6F9; --surface:#FFFFFF; --panel:#EAEEF5; --line:#CDD5E1; --line-soft:#E0E6EF;
+    --ink:#161A21; --ink-2:#454E5D; --muted:#798393;
+    --accent:#2F4468; --accent-soft:#E6ECF7; --accent-line:#B7C4DC;
+    --ok:#1A7550; --warn:#9A560B; --stop:#A93A38;
+    --mono-bg:#EBEFF5; --code-ink:#2F4468;
+    --font-sans:'IBM Plex Sans',system-ui,-apple-system,'Segoe UI',sans-serif;
+    --font-mono:'IBM Plex Mono',ui-monospace,SFMono-Regular,Menlo,monospace;
+  }
+  @media (prefers-color-scheme: dark){ :root:not([data-theme="light"]){
+    --bg:#0F1218; --surface:#151921; --panel:#1C222D; --line:#2C3340; --line-soft:#222833;
+    --ink:#E5E9F1; --ink-2:#B2BAC7; --muted:#6A7383;
+    --accent:#9DB3DE; --accent-soft:#19212F; --accent-line:#31405A;
+    --ok:#3EBC92; --warn:#DFA13B; --stop:#E0736E;
+    --mono-bg:#1A202A; --code-ink:#B6C4E4; } }
+  :root[data-theme="dark"]{
+    --bg:#0F1218; --surface:#151921; --panel:#1C222D; --line:#2C3340; --line-soft:#222833;
+    --ink:#E5E9F1; --ink-2:#B2BAC7; --muted:#6A7383;
+    --accent:#9DB3DE; --accent-soft:#19212F; --accent-line:#31405A;
+    --ok:#3EBC92; --warn:#DFA13B; --stop:#E0736E;
+    --mono-bg:#1A202A; --code-ink:#B6C4E4; }
+
+  *{box-sizing:border-box;}
+  body{margin:0; background:var(--bg); color:var(--ink); font-family:var(--font-sans);
+       font-size:15px; line-height:1.6; -webkit-font-smoothing:antialiased;}
+  a{color:var(--accent);}
+  p{margin:0 0 13px; max-width:78ch;}
+  h2,h3{text-wrap:balance;}
+  .shell{max-width:1020px; margin:0 auto; padding:0 24px 110px;}
+
+  header.mast{padding:44px 0 22px; border-bottom:2px solid var(--ink); margin-bottom:26px;}
+  .kicker{font-family:var(--font-mono); font-size:11.5px; letter-spacing:.11em;
+          text-transform:uppercase; color:var(--muted); margin:0 0 12px;}
+  h1{font-size:clamp(30px,4.4vw,42px); font-weight:600; letter-spacing:-.02em; margin:0 0 10px; line-height:1.12;}
+  .sub{color:var(--ink-2); font-size:16.5px; margin:0; max-width:72ch;}
+
+  section{margin:0 0 34px; scroll-margin-top:20px;}
+  section > h2{font-size:20px; font-weight:600; margin:0 0 6px; letter-spacing:-.012em;
+               display:flex; gap:12px; align-items:baseline;}
+  section > h2 .num{font-family:var(--font-mono); font-size:13px; color:var(--muted); font-weight:500; flex:none;}
+  section > h2 + .rule{height:1px; background:var(--line); margin:0 0 16px;}
+
+  code{font-family:var(--font-mono); background:var(--mono-bg); color:var(--code-ink);
+       padding:1.5px 5px; border-radius:3px; font-size:12px;}
+  strong{font-weight:600;} em{font-style:italic; color:var(--ink-2);}
+  ul.plain{margin:0 0 13px; padding:0 0 0 20px; max-width:78ch;} ul.plain li{margin-bottom:5px;}
+
+  .card{border:1px solid var(--line); border-radius:3px; background:var(--surface);
+        margin:0 0 18px; overflow:hidden;}
+  .card-h{display:flex; gap:12px; align-items:baseline; flex-wrap:wrap;
+          padding:13px 18px; background:var(--panel); border-bottom:1px solid var(--line);}
+  .card-h .id{font-family:var(--font-mono); font-size:11.5px; font-weight:600;
+              color:var(--accent); letter-spacing:.04em;}
+  .card-h .ti{font-size:15.5px; font-weight:600; flex:1 1 240px; min-width:0;}
+  .card-b{padding:4px 18px 6px;}
+  .card dl{margin:0; display:grid; grid-template-columns:132px minmax(0,1fr); gap:0;}
+  .card dt{font-family:var(--font-mono); font-size:10.5px; letter-spacing:.07em;
+           text-transform:uppercase; color:var(--muted); padding:11px 0;
+           border-bottom:1px solid var(--line-soft);}
+  .card dd{margin:0; padding:11px 0; border-bottom:1px solid var(--line-soft);
+           font-size:13.8px; color:var(--ink-2);}
+  .card dd p{margin:0 0 9px; max-width:none;} .card dd p:last-child{margin:0;}
+  .card dl > dt:last-of-type, .card dl > dd:last-of-type{border-bottom:none;}
+  dt.surprise{color:var(--stop);} dd.surprise strong{color:var(--ink);}
+
+  .chip{display:inline-block; font-family:var(--font-mono); font-size:9.5px; font-weight:600;
+        letter-spacing:.05em; padding:2px 6px; border-radius:3px; border:1px solid currentColor;
+        white-space:nowrap; line-height:1.5;}
+  .c-ok{color:var(--ok);} .c-warn{color:var(--warn);} .c-stop{color:var(--stop);}
+
+  .note{border:1px solid var(--line); border-left:3px solid var(--accent); background:var(--panel);
+        border-radius:3px; padding:14px 18px; margin:0 0 18px; font-size:14px; color:var(--ink-2);}
+  .note strong{color:var(--ink);} .note.hazard{border-left-color:var(--stop);}
+  .note p:last-child{margin-bottom:0;} .note p{max-width:none;}
+
+  .tw{overflow-x:auto; margin:0 0 18px; border:1px solid var(--line); border-radius:3px; background:var(--surface);}
+  table{width:100%; border-collapse:collapse; font-size:13.5px; min-width:520px;}
+  th{text-align:left; padding:10px 14px; font-family:var(--font-mono); font-size:10.5px;
+     letter-spacing:.07em; text-transform:uppercase; color:var(--muted); font-weight:500;
+     border-bottom:1px solid var(--line); background:var(--panel);}
+  td{padding:10px 14px; border-bottom:1px solid var(--line-soft); vertical-align:top; color:var(--ink-2);}
+  td:first-child{color:var(--ink); font-weight:500;}
+  tbody tr:last-child td{border-bottom:none;}
+
+  footer{margin-top:26px; padding-top:20px; border-top:2px solid var(--ink);
+         font-family:var(--font-mono); font-size:11.5px; color:var(--muted); line-height:1.8;}
+  footer a{color:var(--accent);}
+  :focus-visible{outline:2px solid var(--accent); outline-offset:2px;}
+</style>
+
+<div class="shell">
+
+<header class="mast">
+  <p class="kicker">Yesmadam · Partner Experience · R&amp;D Ladder, Step 6</p>
+  <h1>Component Notes</h1>
+  <p class="sub">One page per library the design depends on — what it does, how it is wired, and what actually surprised us when we ran it. Written from spike evidence, not documentation.</p>
+</header>
+
+<div class="note">
+  <p><strong>This document is the deliverable of the entire R&amp;D ladder.</strong> The spike project was a way of asking questions; these pages are the answers. Once they are written the project gets deleted, and nothing is lost.</p>
+  <p>Two things make it worth the hour. <strong>Writing a page is how you find out you do not understand something</strong> — the gaps are invisible while the tests are green and obvious the moment you try to explain the mechanism. And these pages become the first draft of the production runbook and of whatever the next person reads before touching this system.</p>
+  <p><strong>Edit it.</strong> Everything below is drafted from what the spikes showed, but the understanding being recorded is yours. Where a sentence does not match what you actually learned, change it — a note you would not have written yourself is worth very little six months from now.</p>
+</div>
+
+<section id="s1">
+  <h2><span class="num">1</span>Flowable process engine</h2><div class="rule"></div>
+
+  <div class="card">
+    <div class="card-h"><span class="id">BPMN</span><span class="ti">Orchestration — the thing that remembers</span><span class="chip c-ok">Proven</span></div>
+    <div class="card-b">
+      <dl>
+        <dt>What it does</dt>
+        <dd>Runs a conversation described in an XML file. T0, T1 and T2 could all be plain Java — request in, response out. <strong>T3 cannot.</strong> It stops at "waiting for a human" and must resume hours later, across deploys and crashes, without losing its place. That single requirement is the reason the engine exists in this design.</dd>
+
+        <dt>How it is wired</dt>
+        <dd><p>One Maven dependency, <code>flowable-spring-boot-starter</code>. On boot it creates roughly 25 <code>ACT_*</code> tables and scans <code>src/main/resources/processes/*.bpmn20.xml</code>.</p>
+        <p>A <strong>delegate</strong> is a Spring bean with one method. The BPMN names it — <code>flowable:delegateExpression="${logDelegate}"</code> — and the engine looks it up by bean name. That string plus the <code>@Component</code> name is the entire wiring; there is no registration step.</p>
+        <p>A <strong>User Task</strong> writes a row to <code>ACT_RU_TASK</code> and returns. No thread is blocked and nothing is held in memory.</p></dd>
+
+        <dt>What we proved</dt>
+        <dd>Started a process, parked it on a User Task, tore the Spring context down entirely, and started a fresh one that had never seen the instance. <strong>The same task id came back</strong>, completed, and the process ran to its end event.</dd>
+
+        <dt class="surprise">What surprised us</dt>
+        <dd class="surprise"><p><code>ACT_RU_*</code> rows are <strong>deleted</strong> when a process completes — "RU" is runtime, "HI" is history. So anything the caller needs after completion cannot be read from process variables; they are gone.</p>
+        <p>That is not a detail, it is a design constraint: it is precisely why the final Service Task writes <code>nextStep</code> onto the <code>help_session</code> row instead, and why Layer 1 re-reads it from there.</p></dd>
+
+        <dt>Watch in production</dt>
+        <dd>Async job executor configuration for multiple pods · dead-letter job monitoring · in-flight instances stay pinned to the process version they started on across a deploy · <code>history-level</code> stays <code>audit</code>, never <code>full</code>.</dd>
+      </dl>
+    </div>
+  </div>
+</section>
+
+<section id="s2">
+  <h2><span class="num">2</span>Flowable DMN engine</h2><div class="rule"></div>
+
+  <div class="card">
+    <div class="card-h"><span class="id">DMN</span><span class="ti">Decisions — the thing that does not remember</span><span class="chip c-ok">Proven</span></div>
+    <div class="card-b">
+      <dl>
+        <dt>What it does</dt>
+        <dd>Evaluates a grid of conditions and outcomes. Facts in, <code>{tier, action}</code> out. Stateless, synchronous, sub-millisecond. The sharp contrast with the process engine: <strong>the process engine remembers, the decision engine does not.</strong></dd>
+
+        <dt>How it is wired</dt>
+        <dd><p>Ships in the <em>same</em> <code>flowable-spring-boot-starter</code> — we added no dependency for it. Files live in <code>src/main/resources/dmn/</code> and auto-deploy on boot.</p>
+        <p><code>&lt;inputExpression&gt;&lt;text&gt;category&lt;/text&gt;&lt;/inputExpression&gt;</code> reads a process variable named <code>category</code>. That one line is the entire join between the two engines.</p>
+        <p>Called from Java through <code>DmnDecisionService.createExecuteDecisionBuilder().decisionKey(...).variables(...).executeWithSingleResult()</code>, or from BPMN by a single Business Rule Task.</p></dd>
+
+        <dt>What we proved</dt>
+        <dd>Three near-identical tables. The correct one returned <code>auto_waive</code>; the one with the catch-all moved to the top returned <code>route_agent_catchall</code> from <em>identical rules and identical facts</em>. <strong>Row order is logic, not formatting.</strong></dd>
+
+        <dt class="surprise">What surprised us</dt>
+        <dd class="surprise"><p><strong>A table with no catch-all returns <code>null</code>.</strong> Not a default, not an exception — nothing. In a real process the gateway reading <code>${tier}</code> then has no branch to take.</p>
+        <p><strong>Thirteen of the 38 concerns in the mapping are currently written without a catch-all.</strong> Every table needs a terminal row added before it is deployed.</p></dd>
+
+        <dt>Watch in production</dt>
+        <dd>A terminal catch-all on <em>every</em> table · who may edit a table that moves money, and whether that needs a review gate (decision D-3) · decision-table versioning, and whether in-flight pinning applies as it does to BPMN.</dd>
+      </dl>
+    </div>
+  </div>
+</section>
+
+<section id="s3">
+  <h2><span class="num">3</span>Spring transaction propagation</h2><div class="rule"></div>
+
+  <div class="card">
+    <div class="card-h"><span class="id">REQUIRES_NEW</span><span class="ti">The most load-bearing line in the design</span><span class="chip c-ok">Proven</span></div>
+    <div class="card-b">
+      <dl>
+        <dt>The problem</dt>
+        <dd>A Flowable Service Task runs inside the engine's transaction. Record the attempt, call the payment system, and if any <em>later</em> node throws, the engine rolls back — taking our record with it. <strong>The payment system does not roll back.</strong> Money has left and the database says nothing happened.</dd>
+
+        <dt>How it is wired</dt>
+        <dd><code>@Transactional(propagation = Propagation.REQUIRES_NEW)</code> on <code>recordAttempt()</code>. Spring suspends the engine's transaction, opens a fresh one, writes the <code>ATTEMPTED</code> row, commits, and returns. Only then is the external call made.</dd>
+
+        <dt>What we proved</dt>
+        <dd>Recorded an attempt, threw from a later node, and the row survived the rollback. <strong>Then ran it again without the annotation and the row was lost.</strong></dd>
+
+        <dt class="surprise">What surprised us</dt>
+        <dd class="surprise"><p><strong>The failing test matters more than the passing one.</strong> A test that only proves the good case cannot tell you whether it would catch the annotation being deleted later. Both directions, always.</p>
+        <p>And the trap that will reintroduce this bug: <strong>self-invocation silently disables <code>@Transactional</code>.</strong> Spring applies it through a proxy, so a call from inside <code>AttemptRecorder</code> to another of its own methods ignores it entirely — no error, no warning. The delegate calling the service from outside is what makes it work.</p></dd>
+
+        <dt>Watch in production</dt>
+        <dd><strong>Re-test the moment the second datasource lands.</strong> The real service reads from a replica as well as its own schema, and a second datasource changes which transaction manager Spring selects. A wrongly wired one breaks this with no error at all.</dd>
+      </dl>
+    </div>
+  </div>
+</section>
+
+<section id="s4">
+  <h2><span class="num">4</span>Togglz</h2><div class="rule"></div>
+
+  <div class="card">
+    <div class="card-h"><span class="id">FEATURE FLAGS</span><span class="ti">The kill switch — and the hole in it</span><span class="chip c-warn">Proven, with a caveat</span></div>
+    <div class="card-b">
+      <dl>
+        <dt>What it does</dt>
+        <dd>Closes the gap between noticing money is moving wrongly and stopping it. Via revert-rebuild-redeploy that gap is fifteen to thirty minutes of continued wrong payments. With a flag it is seconds.</dd>
+
+        <dt>How it is wired</dt>
+        <dd><p>A library, no server. Three pieces: a <code>Feature</code> enum, a <code>JDBCStateRepository</code> holding state in the application database, and a console at <code>/togglz-console</code>. The console is what lets ops flip a switch rather than a developer.</p>
+        <p>Checked <em>after</em> the decision table returns auto-approve and <em>before</em> the action executor runs.</p>
+        <p><strong>Critical semantic: flag off does not mean fail.</strong> It means do not automate, send to a human. The partner is still served.</p></dd>
+
+        <dt>What we proved</dt>
+        <dd>A flag flipped at runtime changed behaviour on the very next call with no restart. Resolving by <code>NamedFeature</code> string — which is what <code>concern_catalogue.togglz_flag</code> will hand us — agreed with resolving by enum constant.</dd>
+
+        <dt class="surprise">What surprised us</dt>
+        <dd class="surprise"><p><strong>A misspelt flag name does not throw. It reads as "off".</strong></p>
+        <p>Combined with fail-to-human semantics, one typo in <code>concern_catalogue</code> would silently route an entire concern to human agents. No exception, nothing in the logs, and the only symptom is an agent-connect rate drifting upward for reasons nobody can trace.</p>
+        <p><strong>Startup validation asserting every <code>togglz_flag</code> maps to a declared feature is therefore mandatory, not advisory.</strong> This is now evidence rather than caution.</p></dd>
+
+        <dt>Watch in production</dt>
+        <dd><code>JDBCStateRepository</code> stores current state and nothing else — <strong>not who flipped a flag, nor when.</strong> Flip auditing has to be added. The console must be authenticated before Wave 1 (D-7). Cache TTL and a flag lifecycle policy both still need deciding.</dd>
+      </dl>
+    </div>
+  </div>
+</section>
+
+<section id="s5">
+  <h2><span class="num">5</span>Resilience4j</h2><div class="rule"></div>
+
+  <div class="card">
+    <div class="card-h"><span class="id">CIRCUIT BREAKER</span><span class="ti">Degrade to a human, never break</span><span class="chip c-ok">Proven</span></div>
+    <div class="card-b">
+      <dl>
+        <dt>What it does</dt>
+        <dd>Stops a failing dependency from becoming a failing product. When the Python classifier is down, the partner should get a human — not an error, and not a long wait.</dd>
+
+        <dt>How it is wired</dt>
+        <dd><code>@CircuitBreaker(name = "classifier", fallbackMethod = "degradeToAgent")</code>, configured in <code>application.yml</code>. The fallback takes the same arguments plus a <code>Throwable</code>, must be public, and must not throw. Needs <code>spring-boot-starter-aop</code> on the classpath — the annotation does nothing without it.</dd>
+
+        <dt>What we proved</dt>
+        <dd>Four failing calls filled the window and the circuit opened. Every call returned <code>T3</code>; the caller never saw an exception.</dd>
+
+        <dt class="surprise">What surprised us</dt>
+        <dd class="surprise"><p><strong>Once the circuit is OPEN, the method body stops executing at all.</strong> The failure count stops rising, because there are no more attempts to fail.</p>
+        <p>That is what makes degradation cheap rather than merely graceful: a struggling dependency stops costing a three-second timeout on every single request. Without it, "degrades to a human" would still mean every partner waits three seconds first.</p></dd>
+
+        <dt>Watch in production</dt>
+        <dd>Tune the window and threshold against real classifier latency, not guesses · when the circuit opens the agent-connect rate rises, so it needs an alert · half-open behaviour on recovery.</dd>
+      </dl>
+    </div>
+  </div>
+</section>
+
+<section id="s6">
+  <h2><span class="num">6</span>Flyway, alongside Flowable</h2><div class="rule"></div>
+
+  <div class="card">
+    <div class="card-h"><span class="id">MIGRATIONS</span><span class="ti">Two tools, one database</span><span class="chip c-ok">Proven</span></div>
+    <div class="card-b">
+      <dl>
+        <dt>The question</dt>
+        <dd>Flyway wants to own the schema. Flowable creates its own ~25 tables through its own mechanism. If they fight, the service cannot use both — and every other spike result stops mattering.</dd>
+
+        <dt>How it is wired</dt>
+        <dd>Flyway owns our tables from <code>db/migration/V*.sql</code>. Flowable manages only <code>ACT_*</code>, through <code>flowable.database-schema-update</code>, and knows nothing about Flyway. They never look at each other's tables.</dd>
+
+        <dt>What we proved</dt>
+        <dd>With <code>ddl-auto: none</code> — so Hibernate could not have created anything — our tables existed, the entity mapped to them cleanly, and Flowable's tables sat alongside untouched. <strong>They coexist.</strong></dd>
+
+        <dt class="surprise">What surprised us</dt>
+        <dd class="surprise"><p>The only failure in the whole ladder, and it was our test rather than the tools. On H2, Flyway creates its history table with <strong>quoted lowercase identifiers</strong> — <code>"flyway_schema_history"</code> — while H2 folds an unquoted reference to upper case. So the obvious query looks for <code>FLYWAY_SCHEMA_HISTORY</code> and finds nothing.</p>
+        <p>Worth remembering generally: a <code>BadSqlGrammar</code> on a table you are certain exists is usually a quoting or case question, not a missing table.</p></dd>
+
+        <dt>Watch in production</dt>
+        <dd>Moving into <code>empapi</code> means baselining against a schema that already exists · migration ordering relative to Flowable's own startup DDL · never let <code>ddl-auto</code> creep back above <code>validate</code>.</dd>
+      </dl>
+    </div>
+  </div>
+</section>
+
+<section id="s7">
+  <h2><span class="num">7</span>FastAPI and Pydantic</h2><div class="rule"></div>
+
+  <div class="card">
+    <div class="card-h"><span class="id">CLASSIFIER</span><span class="ti">The boundary that makes misclassification survivable</span><span class="chip c-ok">Proven</span></div>
+    <div class="card-b">
+      <dl>
+        <dt>What it does</dt>
+        <dd>Turns free text into one value from a fixed list. Nothing else. No database credentials, no ability to take an action — which is what makes a wrong answer a routing error rather than a money error.</dd>
+
+        <dt>How it is wired</dt>
+        <dd><p>Two endpoints. Pydantic models with closed enums and <code>Field(ge=0.0, le=1.0)</code> on confidence. A validation failure becomes <strong>502</strong>, not 500 — the fault is upstream — and Java's <code>ClassifierClient</code> treats any non-2xx identically: set <code>tier = T3</code> and carry on.</p>
+        <p>The error body is <em>structurally unlike</em> a result: no <code>category</code>, no <code>confidence_score</code>. Nothing downstream can mistake one for the other.</p></dd>
+
+        <dt>What we proved</dt>
+        <dd>A hallucinated category, a confidence of <code>1.7</code>, a missing field, an unknown language and prose instead of JSON were all rejected at the boundary. A confident <em>"I don't know"</em> was correctly <strong>accepted</strong> — low confidence is a valid answer, and Java's threshold decides what to do with it.</dd>
+
+        <dt class="surprise">What surprised us</dt>
+        <dd class="surprise"><p><strong>"Be liberal in what you accept" is only half right here, and the half that is wrong costs money.</strong></p>
+        <p>A model returning <code>" r9_no_product "</code> with stray spaces and wrong case is sloppiness — normalise it. A model returning <code>refund_immediately</code> is a different thing entirely. <strong>Liberal about formatting, strict about membership.</strong> That distinction is one validator, and getting it backwards in either direction causes real problems: too strict and you reject good answers over whitespace, too loose and a hallucination reaches a decision table.</p>
+        <p>Also worth internalising: <code>1.7</code> would have passed <em>every</em> <code>&gt;= 0.7</code> rule in every table we will ever write.</p></dd>
+
+        <dt>Watch in production</dt>
+        <dd>Swapping the stub for a vendor touches one file — keep the bad-response fixtures, they are how you find out a <em>new</em> vendor breaks the contract differently · partner free text may contain personal data, so the PII position must be settled before any of it leaves the network · timeout tuning against real vendor latency.</dd>
+      </dl>
+    </div>
+  </div>
+</section>
+
+<section id="s8">
+  <h2><span class="num">8</span>What the ladder settled</h2><div class="rule"></div>
+
+  <div class="tw">
+    <table>
+      <thead><tr><th>Claim in the design</th><th>Status</th></tr></thead>
+      <tbody>
+        <tr><td>ADR-001 — an embedded engine survives restarts and resumes</td><td><span class="chip c-ok">Confirmed</span></td></tr>
+        <tr><td>ADR-002 — DMN costs no new library, and rules are file-editable</td><td><span class="chip c-ok">Confirmed</span></td></tr>
+        <tr><td>ADR-005 — <code>REQUIRES_NEW</code> protects the action record</td><td><span class="chip c-ok">Confirmed, both directions</span></td></tr>
+        <tr><td>ADR-007 — kill switch flips without a restart</td><td><span class="chip c-ok">Confirmed</span></td></tr>
+        <tr><td>ADR-007 — startup validation of flag names</td><td><span class="chip c-stop">Now mandatory, not advisory</span></td></tr>
+        <tr><td>ADR-003 — the classifier cannot return a value outside the set</td><td><span class="chip c-ok">Confirmed</span></td></tr>
+        <tr><td>Degradation — a dead dependency routes to a human</td><td><span class="chip c-ok">Confirmed</span></td></tr>
+        <tr><td>Flyway and Flowable share a database</td><td><span class="chip c-ok">Confirmed</span></td></tr>
+        <tr><td>U-2 — classifier accuracy on real Hinglish</td><td><span class="chip c-stop">Not assessed — no key, no real text</span></td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="note hazard">
+    <p><strong>Three caveats apply to everything above.</strong> All of it ran on <strong>H2, not Postgres</strong> — re-run before treating any of it as final. The restart test tore down a Spring context rather than killing the OS process, so the <code>kill -9</code> version is still worth doing in front of someone. And <code>REQUIRES_NEW</code> <strong>has not been tested with two datasources</strong>, which is the configuration the real service will have.</p>
+  </div>
+
+  <h3>Then delete the spike project</h3>
+  <p>It has served its purpose. It has an H2 file database, mock everything, and a controller whose only reason to exist was letting you <code>kill -9</code> it. Keeping it around invites someone to copy from it.</p>
+  <p>Phase 1 starts on a clean repository, and these pages come with you.</p>
+</section>
+
+<footer>
+  BOTIn Component Notes · R&amp;D ladder step 6 · drafted from spike evidence, to be edited<br>
+  Companion documents — <a href="https://claude.ai/code/artifact/e3cda58e-f2de-4975-809f-be00515e8b9c">POC Build Plan</a> · <a href="https://claude.ai/code/artifact/9b27bd5f-3e8e-407d-b9de-6bb5b0ca2c4f">Engineering Design</a> · <a href="https://claude.ai/code/artifact/d4a03024-3700-4a37-b9ec-bb042060ff91">Decision Engine</a><br>
+  Contains internal business rules and repository detail. Private until deliberately shared.
+</footer>
+
+</div>

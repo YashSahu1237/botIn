@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<definitions xmlns="https://www.omg.org/spec/DMN/20191111/MODEL/" id="defs-forget-mpin-decision" name="forget-mpin-decision" namespace="http://yesmadam.in/botin">
+
+  <!-- FORGET_MPIN — one rule. 738/month, 100% deflectable.
+
+       The single row IS the catch-all: every case ends the same way, so there is no
+       ordering question and nothing can fall through.
+
+       NAMESPACE: https://www.omg.org/spec/DMN/20191111/MODEL/ — DMN 1.3.
+       A modeller that exports DMN 1.5 (namespace 20230324) produces a file Flowable
+       7.0.1 cannot parse, and the failure is NOT local to this file: the DMN engine
+       refuses to start, so EVERY decision in the service stops working. DmnNamespaceTest
+       guards this. If you edit in a modeller, export as DMN 1.3.
+  -->
+
+  <decision id="forget-mpin-decision" name="forget-mpin-decision">
+    <decisionTable id="dt-forget-mpin-decision" hitPolicy="FIRST">
+      <input id="i1" label="l2Concern">
+        <inputExpression id="ie1" typeRef="string">
+          <text>l2Concern</text>
+        </inputExpression>
+      </input>
+      <output id="o1" label="tier" name="tier" typeRef="string" />
+      <output id="o2" label="action" name="action" typeRef="string" />
+      <output id="o3" label="outcomeType" name="outcomeType" typeRef="string" />
+      <rule id="r1">
+        <inputEntry id="r1i1">
+          <text></text>
+        </inputEntry>
+        <outputEntry id="r1o1">
+          <text>&quot;T0&quot;</text>
+        </outputEntry>
+        <outputEntry id="r1o2">
+          <text>&quot;SHOW_RESET_DEEPLINK&quot;</text>
+        </outputEntry>
+        <outputEntry id="r1o3">
+          <text>&quot;SELF-SERVE&quot;</text>
+        </outputEntry>
+      </rule>
+    </decisionTable>
+  </decision>
+</definitions>

@@ -1,0 +1,364 @@
+<title>BOTIn Mod Decision Brief</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#F4F6F9; --surface:#FFFFFF; --panel:#EAEEF5; --panel-2:#E1E7F0;
+    --line:#CDD5E1; --line-soft:#E0E6EF;
+    --ink:#161A21; --ink-2:#454E5D; --muted:#798393;
+    --accent:#2F4468; --accent-soft:#E6ECF7; --accent-line:#B7C4DC;
+    --t0:#0F7A69; --t1:#2B5FC4; --t2:#8F5409; --t3:#8B3365;
+    --ok:#1A7550; --warn:#9A560B; --stop:#A93A38;
+    --mono-bg:#EBEFF5; --code-ink:#2F4468;
+    --font-sans:'IBM Plex Sans',system-ui,-apple-system,'Segoe UI',sans-serif;
+    --font-mono:'IBM Plex Mono',ui-monospace,SFMono-Regular,Menlo,monospace;
+  }
+  @media (prefers-color-scheme: dark){
+    :root:not([data-theme="light"]){
+      --bg:#0F1218; --surface:#151921; --panel:#1C222D; --panel-2:#232A37;
+      --line:#2C3340; --line-soft:#222833;
+      --ink:#E5E9F1; --ink-2:#B2BAC7; --muted:#6A7383;
+      --accent:#9DB3DE; --accent-soft:#19212F; --accent-line:#31405A;
+      --t0:#33BFA2; --t1:#6B95EE; --t2:#DFA13B; --t3:#D172A7;
+      --ok:#3EBC92; --warn:#DFA13B; --stop:#E0736E;
+      --mono-bg:#1A202A; --code-ink:#B6C4E4;
+    }
+  }
+  :root[data-theme="dark"]{
+    --bg:#0F1218; --surface:#151921; --panel:#1C222D; --panel-2:#232A37;
+    --line:#2C3340; --line-soft:#222833;
+    --ink:#E5E9F1; --ink-2:#B2BAC7; --muted:#6A7383;
+    --accent:#9DB3DE; --accent-soft:#19212F; --accent-line:#31405A;
+    --t0:#33BFA2; --t1:#6B95EE; --t2:#DFA13B; --t3:#D172A7;
+    --ok:#3EBC92; --warn:#DFA13B; --stop:#E0736E;
+    --mono-bg:#1A202A; --code-ink:#B6C4E4;
+  }
+
+  *{box-sizing:border-box;}
+  body{margin:0; background:var(--bg); color:var(--ink); font-family:var(--font-sans);
+       font-size:15px; line-height:1.6; -webkit-font-smoothing:antialiased;}
+  a{color:var(--accent);}
+  p{margin:0 0 14px; max-width:74ch;}
+  h2,h3,h4{text-wrap:balance;}
+
+  .shell{max-width:1180px; margin:0 auto; padding:0 24px 110px;
+         display:grid; grid-template-columns:232px minmax(0,1fr); gap:44px; align-items:start;}
+  @media (max-width:960px){ .shell{grid-template-columns:1fr; gap:0;} nav.toc{display:none;} }
+
+  /* ---------- masthead ---------- */
+  header.mast{grid-column:1/-1; padding:44px 0 22px; border-bottom:2px solid var(--ink);}
+  .kicker{font-family:var(--font-mono); font-size:11.5px; letter-spacing:.11em;
+          text-transform:uppercase; color:var(--muted); margin:0 0 12px;}
+  h1{font-size:clamp(30px,4.4vw,42px); font-weight:600; letter-spacing:-.02em;
+     margin:0 0 10px; line-height:1.12;}
+  .sub{color:var(--ink-2); font-size:16.5px; margin:0; max-width:70ch;}
+
+  /* ---------- toc ---------- */
+  nav.toc{position:sticky; top:22px; padding:30px 0 0; font-size:13px;}
+  nav.toc p{font-family:var(--font-mono); font-size:10.5px; letter-spacing:.09em;
+            text-transform:uppercase; color:var(--muted); margin:0 0 11px;}
+  nav.toc ol{list-style:none; margin:0 0 20px; padding:0; display:flex;
+             flex-direction:column; gap:1px;}
+  nav.toc a{display:block; padding:4px 10px 4px 11px; text-decoration:none;
+            color:var(--ink-2); border-left:2px solid var(--line-soft); line-height:1.4;}
+  nav.toc a:hover{color:var(--ink); border-left-color:var(--accent); background:var(--panel);}
+  nav.toc .grp{font-family:var(--font-mono); font-size:10.5px; letter-spacing:.09em;
+               text-transform:uppercase; color:var(--accent); padding:14px 0 6px 11px;
+               border:none; font-weight:600;}
+  nav.toc .n{font-family:var(--font-mono); font-size:11px; color:var(--muted);
+             display:inline-block; min-width:26px;}
+
+  main{padding-top:30px; min-width:0;}
+
+  /* ---------- part banners ---------- */
+  .part{margin:0 0 30px; padding:20px 24px; background:var(--accent-soft);
+        border:1px solid var(--accent-line); border-left:4px solid var(--accent);
+        border-radius:3px;}
+  .part .tag{font-family:var(--font-mono); font-size:10.5px; letter-spacing:.1em;
+             text-transform:uppercase; color:var(--accent); font-weight:600;}
+  .part h2{font-size:23px; font-weight:600; margin:6px 0 7px; letter-spacing:-.012em;}
+  .part p{margin:0; font-size:14.5px; color:var(--ink-2);}
+
+  section{margin:0 0 40px; scroll-margin-top:20px;}
+  section > h2{font-size:20px; font-weight:600; margin:0 0 6px; letter-spacing:-.012em;
+               display:flex; gap:12px; align-items:baseline;}
+  section > h2 .num{font-family:var(--font-mono); font-size:13px; color:var(--muted);
+                    font-weight:500; flex:none;}
+  section > h2 + .rule{height:1px; background:var(--line); margin:0 0 16px;}
+  h3{font-size:15.5px; font-weight:600; margin:24px 0 8px; letter-spacing:-.005em;}
+  h4{font-size:13.5px; font-weight:600; margin:18px 0 6px;
+     font-family:var(--font-mono); letter-spacing:.02em; color:var(--ink-2);}
+
+  code{font-family:var(--font-mono); background:var(--mono-bg); color:var(--code-ink);
+       padding:1.5px 5px; border-radius:3px; font-size:12.5px;}
+  strong{font-weight:600;}
+  em{font-style:italic; color:var(--ink-2);}
+
+  ul.plain{margin:0 0 14px; padding:0 0 0 20px; max-width:74ch;}
+  ul.plain li{margin-bottom:6px;}
+
+  /* ---------- tables ---------- */
+  .tw{overflow-x:auto; margin:0 0 18px; border:1px solid var(--line); border-radius:3px;
+      background:var(--surface);}
+  table{width:100%; border-collapse:collapse; font-size:13.5px; min-width:520px;}
+  caption{caption-side:top; text-align:left; font-family:var(--font-mono); font-size:11px;
+          letter-spacing:.04em; color:var(--muted); padding:11px 14px 0;}
+  th{text-align:left; padding:10px 14px; font-family:var(--font-mono); font-size:10.5px;
+     letter-spacing:.07em; text-transform:uppercase; color:var(--muted); font-weight:500;
+     border-bottom:1px solid var(--line); background:var(--panel); vertical-align:bottom;}
+  td{padding:10px 14px; border-bottom:1px solid var(--line-soft); vertical-align:top;
+     color:var(--ink-2);}
+  td:first-child{color:var(--ink); font-weight:500;}
+  tbody tr:last-child td{border-bottom:none;}
+  .num-col{font-variant-numeric:tabular-nums; white-space:nowrap;}
+
+  /* DMN table notation */
+  table.dmn th.in{color:var(--t1);} table.dmn th.out{color:var(--t2);}
+  table.dmn td{font-family:var(--font-mono); font-size:12px;}
+  table.dmn td:first-child{font-weight:600; color:var(--muted);}
+
+  /* ---------- chips ---------- */
+  .chip{display:inline-block; font-family:var(--font-mono); font-size:10px; font-weight:600;
+        letter-spacing:.06em; text-transform:uppercase; padding:2px 7px; border-radius:3px;
+        border:1px solid currentColor; white-space:nowrap; line-height:1.5;}
+  .c-dec{color:var(--ok);} .c-open{color:var(--stop);} .c-def{color:var(--warn);}
+  .c-t0{color:var(--t0);} .c-t1{color:var(--t1);} .c-t2{color:var(--t2);} .c-t3{color:var(--t3);}
+
+  /* ---------- ADR blocks ---------- */
+  .adr{border:1px solid var(--line); border-radius:3px; background:var(--surface);
+       margin:0 0 16px; overflow:hidden;}
+  .adr-h{display:flex; gap:12px; align-items:baseline; flex-wrap:wrap;
+         padding:13px 18px; background:var(--panel); border-bottom:1px solid var(--line);}
+  .adr-h .id{font-family:var(--font-mono); font-size:11.5px; font-weight:600;
+             color:var(--accent); letter-spacing:.04em;}
+  .adr-h .ti{font-size:15px; font-weight:600; flex:1 1 260px; min-width:0;}
+  .adr-b{padding:15px 18px 4px;}
+  .adr-b p{max-width:none;}
+  .adr dl{margin:0; display:grid; grid-template-columns:104px minmax(0,1fr); gap:0;}
+  .adr dt{font-family:var(--font-mono); font-size:10.5px; letter-spacing:.07em;
+          text-transform:uppercase; color:var(--muted); padding:9px 0; }
+  .adr dd{margin:0; padding:9px 0; border-bottom:1px solid var(--line-soft); font-size:13.5px;
+          color:var(--ink-2);}
+  .adr dt{border-bottom:1px solid var(--line-soft);}
+  .adr dl > dt:last-of-type, .adr dl > dd:last-of-type{border-bottom:none;}
+
+  /* ---------- callouts ---------- */
+  .note{border:1px solid var(--line); border-left:3px solid var(--accent);
+        background:var(--panel); border-radius:3px; padding:14px 18px; margin:0 0 18px;
+        font-size:14px; color:var(--ink-2);}
+  .note strong{color:var(--ink);}
+  .note.hazard{border-left-color:var(--stop);}
+  .note p:last-child{margin-bottom:0;}
+
+  /* ---------- figures ---------- */
+  figure{margin:0 0 22px; border:1px solid var(--line); border-radius:3px;
+         background:var(--surface); padding:18px 18px 12px; overflow-x:auto;}
+  figure svg{display:block; width:100%; min-width:640px; height:auto;}
+  figcaption{font-family:var(--font-mono); font-size:11px; color:var(--muted);
+             padding-top:12px; letter-spacing:.02em; line-height:1.5;}
+
+  .rect-a{fill:var(--panel); stroke:var(--line); stroke-width:1;}
+  .rect-b{fill:var(--accent-soft); stroke:var(--accent-line); stroke-width:1;}
+  .rect-o{fill:none; stroke:var(--accent); stroke-width:1.5; stroke-dasharray:6 4;}
+  .lbl-name{fill:var(--ink); font-family:var(--font-sans); font-size:12px; font-weight:600;}
+  .lbl-sub{fill:var(--muted); font-family:var(--font-mono); font-size:9.5px;}
+  .lbl-edge{fill:var(--muted); font-family:var(--font-mono); font-size:9px;}
+  .lbl-box{fill:var(--accent); font-family:var(--font-mono); font-size:10px; font-weight:600;
+           letter-spacing:.06em;}
+  .edge{stroke:var(--ink-2); stroke-width:1.2; fill:none;}
+  .edge-net{stroke:var(--ink-2); stroke-width:1.2; fill:none; stroke-dasharray:5 4;}
+  .arrow-fill{fill:var(--ink-2);}
+
+  /* ---------- steps ---------- */
+  ol.trace{list-style:none; counter-reset:tr; margin:0 0 18px; padding:0;
+           display:flex; flex-direction:column; gap:0;}
+  ol.trace li{counter-increment:tr; display:grid; grid-template-columns:30px minmax(0,1fr);
+              gap:14px; padding:11px 0; border-bottom:1px solid var(--line-soft);}
+  ol.trace li:last-child{border-bottom:none;}
+  ol.trace li::before{content:counter(tr,decimal-leading-zero); font-family:var(--font-mono);
+                      font-size:11.5px; color:var(--muted); padding-top:3px;}
+  ol.trace b{font-weight:600; display:block; margin-bottom:2px;}
+  ol.trace span{font-size:13.5px; color:var(--ink-2);}
+
+  footer{grid-column:1/-1; margin-top:20px; padding-top:20px; border-top:2px solid var(--ink);
+         font-family:var(--font-mono); font-size:11.5px; color:var(--muted); line-height:1.7;}
+  footer a{color:var(--accent);}
+
+  :focus-visible{outline:2px solid var(--accent); outline-offset:2px;}
+  @media (prefers-reduced-motion:reduce){*{transition:none!important; animation:none!important;}}
+</style>
+
+<div class="shell">
+
+<header class="mast">
+  <p class="kicker">Yesmadam · Partner Experience · Decision Brief</p>
+  <h1>BOTIn Mod</h1>
+  <p class="sub">A bot-first, tiered outbound support system for Service Partners. What it is for, what it will and will not do, what it risks, and the decisions it needs.</p>
+</header>
+
+<nav class="toc">
+  <p>Contents</p>
+  <div class="grp">Decision Brief</div>
+  <ol>
+    <li><a href="#a1"><span class="n">A.1</span>The problem</a></li>
+    <li><a href="#a2"><span class="n">A.2</span>What we propose</a></li>
+    <li><a href="#a3"><span class="n">A.3</span>Goals and non-goals</a></li>
+    <li><a href="#a4"><span class="n">A.4</span>Decisions required</a></li>
+    <li><a href="#a5"><span class="n">A.5</span>Delivery phases</a></li>
+    <li><a href="#a6"><span class="n">A.6</span>Principal risks</a></li>
+    <li><a href="#a7"><span class="n">A.7</span>Success measures</a></li>
+  </ol>
+  <div class="grp">Companion</div>
+  <ol>
+    <li><a href="https://claude.ai/code/artifact/9b27bd5f-3e8e-407d-b9de-6bb5b0ca2c4f"><span class="n">§</span>Engineering Design</a></li>
+  </ol>
+</nav>
+
+<main>
+
+<div class="part">
+  <span class="tag">Read this first</span>
+  <h2>The decision this asks for</h2>
+  <p>This brief is written to stand alone. A reader who finishes it should be able to approve, reject, or send back the proposal without opening the <a href="https://claude.ai/code/artifact/9b27bd5f-3e8e-407d-b9de-6bb5b0ca2c4f">Engineering Design</a> — which carries the architecture, the decision records and the module detail behind every claim made here.</p>
+</div>
+
+<section id="a1">
+  <h2><span class="num">A.1</span>The problem</h2><div class="rule"></div>
+  <p>Every Partner Support query today is answered by a human agent. Most of them do not need a human.</p>
+  <p>In the May sample, <strong>6,245 tickets — 12.46% of all volume</strong> — were one question: <em>why was I fined for taking leave?</em> The three largest concerns together account for <strong>54.4%</strong> of volume. These are not conversations requiring judgement. Each is a lookup against data we already hold, followed by a decision that follows a written SOP, followed by a credit to a wallet.</p>
+  <div class="tw">
+    <table>
+      <caption>Concern volume, May sample. Source: Ticket Flow Automation — Partner Support (SOP workbook).</caption>
+      <thead><tr><th>Concern</th><th class="num-col">Share of volume</th><th>Wave</th><th>Disposition</th></tr></thead>
+      <tbody>
+        <tr><td>Rule-break fine</td><td class="num-col">30.2%</td><td>1</td><td>Automate</td></tr>
+        <tr><td>Leaves fine</td><td class="num-col">12.5%</td><td>1</td><td>Automate — POC subject</td></tr>
+        <tr><td>Transport amount</td><td class="num-col">12.0%</td><td>1</td><td>Automate</td></tr>
+        <tr><td>Remaining ~27 L2 concerns</td><td class="num-col">45.6%</td><td>2–4</td><td>Waves 2–3 automate; Wave 4 stays human</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <p>Agent time spent on the first three rows is the cost this project removes. Strike appeals — deliberately placed in Wave 4 — stay with humans, because they are genuine judgement calls and automating them would be the wrong kind of efficiency.</p>
+</section>
+
+<section id="a2">
+  <h2><span class="num">A.2</span>What we propose</h2><div class="rule"></div>
+  <p>BOTIn Mod puts a bot in front of every Partner Support query and hands to a human only when a defined trigger fires. Four tiers, decided per request at runtime:</p>
+  <div class="tw">
+    <table>
+      <thead><tr><th>Tier</th><th>Behaviour</th><th>Ticket created</th><th>Example</th></tr></thead>
+      <tbody>
+        <tr><td><span class="chip c-t0">T0</span> Deflect</td><td>Answer from static content; conversation ends</td><td>No</td><td>"Where do I see my payout date?"</td></tr>
+        <tr><td><span class="chip c-t1">T1</span> Auto-resolve</td><td>Read our own data, state the answer</td><td>Yes</td><td>"There is no fine on that date."</td></tr>
+        <tr><td><span class="chip c-t2">T2</span> Auto-action</td><td>Read data, apply a rule, <strong>move money</strong></td><td>Yes</td><td>Refund a leave fine</td></tr>
+        <tr><td><span class="chip c-t3">T3</span> Agent connect</td><td>Assemble context, call the partner, hand to an agent</td><td>Yes</td><td>Low confidence, or a judgement concern</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <p>The bot is not a chatbot in the conversational sense. It is a <strong>server-driven flow</strong> in which every step is a menu, a database read, a rule evaluation, or an action. A language model is used in exactly one place — turning free-typed Hinglish into one value from a fixed list. <strong>It never decides anything, never writes a message the partner reads, and structurally cannot move money</strong> (Engineering Design, ADR-003 and ADR-004).</p>
+</section>
+
+<section id="a3">
+  <h2><span class="num">A.3</span>Goals and non-goals</h2><div class="rule"></div>
+  <h4>Goals</h4>
+  <ul class="plain">
+    <li>Resolve the Wave 1 concerns without an agent, at the BRD's target of <strong>86% bot-handled / 10–20% agent-connect</strong>.</li>
+    <li>Make every automated money movement auditable, idempotent, and individually reversible by a switch an ops user can flip in seconds.</li>
+    <li>Keep the business rules editable by the people who own them, without a code deploy.</li>
+    <li>Hand escalated partners to an agent who already has the context, rather than one who starts by asking what happened.</li>
+  </ul>
+  <h4>Non-goals</h4>
+  <ul class="plain">
+    <li><strong>A general-purpose assistant.</strong> The taxonomy is closed: ~30 L2 concerns from the SOP. Anything outside it goes to a human.</li>
+    <li><strong>LLM-authored partner-facing text.</strong> Responses are reviewed templates. See ADR-004 for why, and what that costs us.</li>
+    <li><strong>Replacing agents on judgement concerns.</strong> Strike appeals stay human by design, not by omission.</li>
+    <li><strong>New paid infrastructure.</strong> The workflow engine is a library inside our own service, not a platform to operate.</li>
+    <li><strong>Changing fine or leave policy.</strong> This system automates the SOP as written. If the SOP is wrong, that is a separate conversation.</li>
+  </ul>
+</section>
+
+<section id="a4">
+  <h2><span class="num">A.4</span>Decisions required from this review</h2><div class="rule"></div>
+  <p>These are the items I cannot settle alone. Everything else is a decision already taken and defended in the companion <a href="https://claude.ai/code/artifact/9b27bd5f-3e8e-407d-b9de-6bb5b0ca2c4f">Engineering Design</a>, as records ADR-001 to ADR-008.</p>
+  <div class="tw">
+    <table>
+      <thead><tr><th>#</th><th>Decision</th><th>Owner</th><th>Gates</th><th>If unresolved</th></tr></thead>
+      <tbody>
+        <tr><td>D-1</td><td><strong>Hosting.</strong> New standalone Spring Boot service, or a module inside <code>empapi</code>?</td><td>Engineering</td><td>Layer 6 implementation</td><td>POC proceeds standalone; the interface boundary in the Engineering Design (§3) makes this reversible</td></tr>
+        <tr><td>D-2</td><td><strong>LLM vendor and API key.</strong> Which provider, and how it is procured.</td><td>Engineering + Procurement</td><td><strong>Layers 5 and 5b entirely</strong></td><td>The Python classifier cannot be built or measured at all. POC Phase 9 has nothing to run</td></tr>
+        <tr><td>D-3</td><td><strong>Who edits DMN rules</strong>, and is there a review gate? Rows in these tables move money.</td><td>Engineering + PX ops</td><td>Wave 1 go-live</td><td>Default to engineering-only edits, which forfeits most of the benefit of ADR-002</td></tr>
+        <tr><td>D-4</td><td><strong>Who owns response template wording</strong>, including Hindi and Hinglish variants?</td><td>PX ops</td><td>Wave 1 go-live</td><td>Engineering writes them, which is the wrong owner for partner-facing copy</td></tr>
+        <tr><td>D-5</td><td><strong>Agent screen destination.</strong> Embed in the existing tool, or build a view in <code>admin</code>?</td><td>PX ops + Engineering</td><td>Wave 1 agent connect (L8)</td><td>T3 works but the agent gets no context pop; the two context endpoints (Engineering Design §6) are unaffected either way</td></tr>
+        <tr><td>D-6</td><td><strong>Strike coupling.</strong> The SOP marks <code>Strike Concern = Yes</code> on all four leave-fine sub-scenarios. Does a fine refund also reverse a strike?</td><td>PX ops</td><td>The leave-fine DMN table</td><td>The DMN table has a hole in it; POC scope is not closed</td></tr>
+        <tr><td>D-7</td><td><strong>Access control and audit scope</strong> (Layer 11). Who may flip a kill switch, edit a rule, read a transcript?</td><td>Engineering + Security</td><td>Wave 1 go-live</td><td>Ship a money-moving system with an unauthenticated admin console. Not acceptable</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <div class="note">
+    <p><strong>D-2 is the only item on this list that gates work outright.</strong> Every other decision can be taken while building around it. Without an API key the Python classifier module cannot be exercised at all, so POC Phase 9 has nothing to run.</p>
+  </div>
+</section>
+
+<section id="a5">
+  <h2><span class="num">A.5</span>Delivery phases</h2><div class="rule"></div>
+  <div class="tw">
+    <table>
+      <thead><tr><th>Phase</th><th>Modules in scope</th><th>What it buys</th></tr></thead>
+      <tbody>
+        <tr><td><strong>1 — Proof of concept</strong></td><td>Leaves fine only, T1/T2/T3 end to end. Layers 1–7 in minimum form. <strong>Excluded:</strong> telephony, agent screen, mobile app, observability, access control, guardrails.</td><td>Answers the five unknowns set out in the Engineering Design (§13). Produces a measured classifier accuracy number and two pass/fail safety tests</td></tr>
+        <tr><td><strong>2 — Wave 1</strong></td><td>Adds rule-break fine and transport amount. Brings in Layer 8 (agent connect and telephony), Layer 9 (observability), Layer 11 (access control) and Layer 12 (guardrails).</td><td>54.4% of ticket volume addressable</td></tr>
+        <tr><td><strong>3 — Waves 2–3</strong></td><td>The remaining automatable concerns. New DMN tables, fact providers and catalogue rows — no new architecture.</td><td>Approaches the 86% target</td></tr>
+        <tr><td><strong>4 — Wave 4 long tail</strong></td><td>Strike appeals and "other". <strong>Deliberately not automated.</strong> Routed to humans with good context. Layer 13 is the placeholder for anything beyond that.</td><td>Nothing. That is the point</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <p>Phase 1 is deliberately shaped to fail fast. Two of its tests (Engineering Design §13) are designed so that if either fails, the correct response is to stop and redesign rather than continue building on a foundation that does not hold.</p>
+</section>
+
+<section id="a6">
+  <h2><span class="num">A.6</span>Principal risks</h2><div class="rule"></div>
+  <div class="tw">
+    <table>
+      <thead><tr><th>Risk</th><th>Assessment</th><th>Mitigation</th></tr></thead>
+      <tbody>
+        <tr><td><strong>The classifier is not accurate enough on real Hinglish</strong></td><td>Genuine unknown. Partners mix Hindi, English and transliteration in one sentence. Everything else in this design is conventional Spring Boot work; this is the part that could fail.</td><td>Measured in POC Phase 10 against 150–200 hand-labelled real tickets, with exit thresholds agreed <em>before</em> the number is known (§12)</td></tr>
+        <tr><td><strong>The fine-refund capability may not exist as an API</strong></td><td>The SOP documents the refund as an admin UI click path — <em>Admin → Escalation → View SP Escalation → select date range → refund fine</em> — not a service call. That is evidence, not proof, that Layer 6 is a build rather than an integration.</td><td>An audit of <code>empapi</code> in POC Phase 0 settles it by inspection. Layer 6's interface boundary means the answer changes only that module's implementation, and it does not block POC Phases 1–8</td></tr>
+        <tr><td><strong>Automated money movement</strong></td><td>T2 credits partner wallets with no human in the loop. A bug here is a financial incident, not a bad user experience.</td><td>Four independent controls, described in the Engineering Design (§9): idempotency key, <code>REQUIRES_NEW</code> transaction boundary, per-concern kill switch, daily reconciliation. The POC tests the second one deliberately</td></tr>
+        <tr><td><strong>Rules that move money are editable without a deploy</strong></td><td>ADR-002 makes this possible on purpose. It is also the sharpest governance hazard in the design: a one-cell edit to a DMN table changes who gets paid, with no code review.</td><td><strong>Unmitigated today.</strong> This is decision D-3. It needs a review gate and an audit trail before Wave 1, not before the POC</td></tr>
+        <tr><td><strong>Two unfamiliar notations enter the codebase</strong></td><td>BPMN and DMN are new to this stack. Process and decision logic move out of Java and into files that a Java reviewer cannot fully check by reading the code.</td><td>Partially structural: BPMN and DMN are readable artifacts, so the logic is inspectable by anyone rather than locked inside Java. It still means the review skill has to exist somewhere, and today it does not</td></tr>
+        <tr><td><strong>Layer 11 and Layer 12 are placeholders</strong></td><td>Access control and LLM guardrails are named in the architecture but not designed. A money-moving system with an unauthenticated kill-switch console is not shippable.</td><td>Both are scoped out of the POC deliberately and in scope for Wave 1 — see the Engineering Design (§12). Tracked as decision D-7</td></tr>
+        <tr><td><strong>Four of the five agent-connect triggers are not built</strong></td><td>Only the low-confidence threshold exists, and only in part. The rule that suppresses the agent option on satisfied cases — the single strongest control on the agent-connect rate — has no implementation at all.</td><td>Specified in the Engineering Design (§8) as a two-stage decision with a pre-flight gate and a post-resolution gate. Until it is built, the 10–20% target is an aspiration rather than an enforced ceiling</td></tr>
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<section id="a7">
+  <h2><span class="num">A.7</span>Success measures</h2><div class="rule"></div>
+  <div class="tw">
+    <table>
+      <thead><tr><th>Measure</th><th>Target</th><th>Alert when</th><th>Source</th></tr></thead>
+      <tbody>
+        <tr><td>Automation rate</td><td class="num-col">86% bot-handled</td><td class="num-col">&lt; 75%</td><td>BRD</td></tr>
+        <tr><td>Agent-connect rate</td><td class="num-col">10–20%</td><td class="num-col">&gt; 20%</td><td>BRD</td></tr>
+        <tr><td>Reconciliation mismatch</td><td class="num-col">0</td><td class="num-col">&gt; 0</td><td>Engineering Design §9</td></tr>
+        <tr><td>Classifier accuracy</td><td class="num-col">≥ 90%</td><td class="num-col">&lt; 90% sustained</td><td>POC — classifier measurement</td></tr>
+        <tr><td>CSAT on bot-resolved tickets</td><td>Not below agent-resolved baseline</td><td>Any sustained gap</td><td>BRD</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <p>These are alert thresholds, not dashboard decoration. A number nobody is paged about is a number nobody watches.</p>
+</section>
+
+</main>
+
+<footer>
+  BOTIn Mod · Decision Brief · one of two — the companion is the Engineering Design<br>
+  Source documents — PX Outbound Model BOT Intervention BRD (v2) · Ticket Flow Automation, Partner Support (SOP workbook)<br>
+  External reference — <a href="https://www.databricks.com/blog/redefining-customer-support-swiggys-enterprise-scale-ai-agent-built-databricks">Swiggy's enterprise-scale support agent</a><br>
+  Companion documents — <a href="https://claude.ai/code/artifact/59ebff15-5103-46e6-9bb0-78e92cd366b2">Layer Reference</a> · <a href="https://claude.ai/code/artifact/9c1c15c9-5c33-4d8b-9d8a-3191e158e92c">Flow Map</a> · <a href="https://claude.ai/code/artifact/fadeaced-ed53-4812-9455-db3f625ada34">POC Scope Lock</a> · <a href="https://claude.ai/code/artifact/f3ae08c5-d343-4790-bbbc-0693cb54c82d">POC Checklist</a><br>
+  Contains internal business rules and repository names. Private until deliberately shared.
+</footer>
+
+</div>

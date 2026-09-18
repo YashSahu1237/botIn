@@ -1,0 +1,316 @@
+BOTIn UAT read probe
+run at 2026-09-15T21:40:10
+host   uatw.yesmadam.com:3306
+user   yash-chatbot
+==============================================================================
+
+---- SELECT '===== 0. WHO AM I, AND WHAT MAY I DO =====' AS section
+  +--------------------------------------------+
+  | section                                    |
+  +--------------------------------------------+
+  | ===== 0. WHO AM I, AND WHAT MAY I DO ===== |
+  +--------------------------------------------+
+    1 row(s)
+
+---- SELECT CURRENT_USER() AS effective_user, USER() AS connected_as, @@hostname AS server, VERSION() AS version
+  +----------------+---------------------------+---------------+---------+
+  | effective_user | connected_as              | server        | version |
+  +----------------+---------------------------+---------------+---------+
+  | yash-chatbot@% | yash-chatbot@172.31.19.79 | ip-172-30-0-5 | 8.0.39  |
+  +----------------+---------------------------+---------------+---------+
+    1 row(s)
+
+---- SHOW GRANTS
+  +-----------------------------------------------------------+
+  | Grants for yash-chatbot@%                                 |
+  +-----------------------------------------------------------+
+  | GRANT USAGE ON *.* TO `yash-chatbot`@`%`                  |
+  | GRANT SELECT ON `ysmdm_admin`.* TO `yash-chatbot`@`%`     |
+  | GRANT SELECT ON `ysmdm_employees`.* TO `yash-chatbot`@`%` |
+  | GRANT SELECT ON `ysmdm_users`.* TO `yash-chatbot`@`%`     |
+  +-----------------------------------------------------------+
+    4 row(s)
+
+---- SELECT '===== 1. WHICH CATALOGS ARE VISIBLE =====' AS section
+  +-------------------------------------------+
+  | section                                   |
+  +-------------------------------------------+
+  | ===== 1. WHICH CATALOGS ARE VISIBLE ===== |
+  +-------------------------------------------+
+    1 row(s)
+
+---- SELECT schema_name
+  +-----------------+
+  | SCHEMA_NAME     |
+  +-----------------+
+  | ysmdm_admin     |
+  | ysmdm_employees |
+  | ysmdm_users     |
+  +-----------------+
+    3 row(s)
+
+---- SELECT '===== 2. EVERY COLUMN BOTIn ASSUMES — does it exist? =====' AS section
+  +------------------------------------------------------------+
+  | section                                                    |
+  +------------------------------------------------------------+
+  | ===== 2. EVERY COLUMN BOTIn ASSUMES — does it exist? ===== |
+  +------------------------------------------------------------+
+    1 row(s)
+
+---- SELECT t.sch, t.tbl, t.col,
+  +-------------+-------------------------------+----------------------+---------+
+  | sch         | tbl                           | col                  | exists_ |
+  +-------------+-------------------------------+----------------------+---------+
+  | ysmdm_users | tbl_order                     | order_id             | 1       |
+  | ysmdm_users | tbl_order                     | transport_charges    | 1       |
+  | ysmdm_users | tbl_order                     | order_status_code    | 1       |
+  | ysmdm_users | tbl_order                     | unassign_status_code | 1       |
+  | ysmdm_users | tbl_order                     | cashback             | 1       |
+  | ysmdm_users | tbl_order                     | hub_id               | 1       |
+  | ysmdm_users | tbl_order                     | arrived_at300_m      | 0       |
+  | ysmdm_users | tbl_order                     | order_type           | 0       |
+  | ysmdm_admin | tbl_sp_tranactions            | action               | 1       |
+  | ysmdm_admin | tbl_sp_tranactions            | subaction            | 1       |
+  | ysmdm_admin | tbl_sp_tranactions            | orderid              | 1       |
+  | ysmdm_admin | tbl_sp_tranactions            | amount               | 1       |
+  | ysmdm_admin | tbl_hub                       | lat                  | 1       |
+  | ysmdm_admin | tbl_hub                       | lng                  | 1       |
+  | ysmdm_admin | tbl_servicehub_transportation | end                  | 1       |
+  +-------------+-------------------------------+----------------------+---------+
+    15 row(s)
+
+---- SELECT '===== 3. N2 — WHICH unassign_status_code IS NR, WHICH IS CR? =====' AS section
+  +--------------------------------------------------------------------+
+  | section                                                            |
+  +--------------------------------------------------------------------+
+  | ===== 3. N2 — WHICH unassign_status_code IS NR, WHICH IS CR? ===== |
+  +--------------------------------------------------------------------+
+    1 row(s)
+
+---- SELECT column_name, data_type, column_comment
+  +---------------------------------+-----------+----------------+
+  | COLUMN_NAME                     | DATA_TYPE | COLUMN_COMMENT |
+  +---------------------------------+-----------+----------------+
+  | cancel_at                       | datetime  |                |
+  | cancellationFeeDiscount         | int       |                |
+  | created_at                      | timestamp |                |
+  | created_by                      | bigint    |                |
+  | crTicketCount                   | int       |                |
+  | customerSubscriptionId          | int       |                |
+  | nrTicketCount                   | int       |                |
+  | prevCancellationFee             | int       |                |
+  | refferalCoinRedeem              | int       |                |
+  | subscriptionId                  | varchar   |                |
+  | subscriptionTypeCode            | int       |                |
+  | unassign_status_code            | int       |                |
+  | unassignWithRemoveReassigning   | tinyint   |                |
+  | unassignWithRemoveReassigningAt | timestamp |                |
+  +---------------------------------+-----------+----------------+
+    14 row(s)
+
+---- SELECT unassign_status_code, COUNT(*) AS orders
+  +----------------------+--------+
+  | unassign_status_code | orders |
+  +----------------------+--------+
+  | 4                    | 63808  |
+  | 2                    | 55514  |
+  | 3                    | 27065  |
+  | 1                    | 10300  |
+  +----------------------+--------+
+    4 row(s)
+
+---- SELECT table_schema, table_name
+  +--------------+-----------------------------------------------+
+  | TABLE_SCHEMA | TABLE_NAME                                    |
+  +--------------+-----------------------------------------------+
+  | ysmdm_admin  | sp_cancellation_cashback                      |
+  | ysmdm_admin  | tbl_booking_cancel_count                      |
+  | ysmdm_admin  | tbl_cancellation_fee_config                   |
+  | ysmdm_admin  | tbl_cancellation_policy_hub                   |
+  | ysmdm_admin  | tbl_nps_reason                                |
+  | ysmdm_admin  | tbl_nps_subreason                             |
+  | ysmdm_admin  | tbl_product_inventory_updated_by_order_cancel |
+  | ysmdm_admin  | tbl_reason                                    |
+  | ysmdm_admin  | tbl_wallet_main_reason                        |
+  | ysmdm_admin  | tbl_wallet_sub_reason                         |
+  | ysmdm_users  | tbl_cancel_ops                                |
+  | ysmdm_users  | tbl_order_cancel_due_to_transpotation         |
+  | ysmdm_users  | tbl_order_cancellation_charge                 |
+  | ysmdm_users  | tbl_order_previous_cancellation               |
+  +--------------+-----------------------------------------------+
+    14 row(s)
+
+---- SELECT '===== 4. N3 — WHAT LINKS A WALLET CREDIT TO A PayU TRANSACTION? =====' AS section
+  +-----------------------------------------------------------------------+
+  | section                                                               |
+  +-----------------------------------------------------------------------+
+  | ===== 4. N3 — WHAT LINKS A WALLET CREDIT TO A PayU TRANSACTION? ===== |
+  +-----------------------------------------------------------------------+
+    1 row(s)
+
+---- SELECT column_name, data_type, column_comment
+  +-----------------------+-----------+----------------+
+  | COLUMN_NAME           | DATA_TYPE | COLUMN_COMMENT |
+  +-----------------------+-----------+----------------+
+  | id                    | int       |                |
+  | action                | varchar   |                |
+  | actionCode            | int       |                |
+  | amount                | int       |                |
+  | aname                 | varchar   |                |
+  | aorat                 | datetime  |                |
+  | aorby                 | bigint    |                |
+  | aorname               | varchar   |                |
+  | comment               | text      |                |
+  | rat                   | datetime  |                |
+  | rby                   | bigint    |                |
+  | rname                 | varchar   |                |
+  | spid                  | int       |                |
+  | spname                | varchar   |                |
+  | status                | varchar   |                |
+  | statusCode            | int       |                |
+  | subaction             | varchar   |                |
+  | subactionCode         | int       |                |
+  | approvedAmount        | int       |                |
+  | filePath              | varchar   |                |
+  | httpPath              | varchar   |                |
+  | orderid               | bigint    |                |
+  | editComment           | varchar   |                |
+  | editat                | datetime  |                |
+  | editby                | bigint    |                |
+  | ename                 | varchar   |                |
+  | previousAmount        | int       |                |
+  | isPending             | tinyint   |                |
+  | paytmoid              | varchar   |                |
+  | paytmstatusid         | bigint    |                |
+  | paytmtrnxdate         | varchar   |                |
+  | paytmtrnxid           | varchar   |                |
+  | upistatusid           | bigint    |                |
+  | upitxnRef             | varchar   |                |
+  | upitxnid              | varchar   |                |
+  | filePathForTransProof | varchar   |                |
+  | httpPathForTransProof | varchar   |                |
+  | cashreeTransaction    | tinyint   |                |
+  | bulk_upload_file_url  | varchar   |                |
+  +-----------------------+-----------+----------------+
+    39 row(s)
+
+---- SELECT column_name, data_type, column_comment
+  +--------------------+-----------+----------------+
+  | COLUMN_NAME        | DATA_TYPE | COLUMN_COMMENT |
+  +--------------------+-----------+----------------+
+  | id                 | bigint    |                |
+  | orderId            | varchar   |                |
+  | txnData            | text      |                |
+  | createdAt          | timestamp |                |
+  | updatedAt          | timestamp |                |
+  | USER_ID            | bigint    |                |
+  | status             | varchar   |                |
+  | addedon            | varchar   |                |
+  | mihpayid           | varchar   |                |
+  | transaction_amount | varchar   |                |
+  | mode               | varchar   |                |
+  | refund_request_id  | varchar   |                |
+  | refundStatus       | varchar   |                |
+  | refundCreatedAt    | timestamp |                |
+  | refundUniqueId     | varchar   |                |
+  | refundUpdatedAt    | timestamp |                |
+  | refund_amount      | varchar   |                |
+  | flagForError       | tinyint   |                |
+  | spId               | bigint    |                |
+  +--------------------+-----------+----------------+
+    19 row(s)
+
+---- SELECT action, subaction, COUNT(*) AS rows_
+  +---------+----------------------------------+---------+
+  | action  | subaction                        | rows_   |
+  +---------+----------------------------------+---------+
+  | CREDIT  | BOOKING ONLINE TRANSACTION       | 1027452 |
+  | CREDIT  | WALLET RECHARGE                  | 980568  |
+  | DEBIT   | PRODUCT PURCHASE BY WALLET       | 284153  |
+  | DEBIT   | SP SELF WITHDRAWAL               | 201775  |
+  | CREDIT  | PRODUCT_WALLET_CASHBACK          | 183917  |
+  | DEBIT   | OTHERS DEBIT                     | 137828  |
+  | DEBIT   | FINE                             | 112057  |
+  | CREDIT  | OTHERS CREDIT                    | 104598  |
+  | CREDIT  | FINE                             | 93877   |
+  | CREDIT  | TRANSPORT                        | 80874   |
+  | CREDIT  | WALLET_RECHARGE_BY_BANK          | 16230   |
+  | CREDIT  | AMOUNT ADDED TO MAIN WALLET      | 8821    |
+  | CREDIT  | WALLET_RECHARGE_BY_CASH          | 4160    |
+  | DEBIT   | REWORK BY BEAUTICIAN             | 780     |
+  | CREDIT  | REWORK BY COMPANY                | 496     |
+  | CREDIT  | COMMISSION                       | 352     |
+  | DEBIT   | COMMISSION                       | 339     |
+  | CREDIT  | CREDIT                           | 159     |
+  | CREDIT  | EXCLUSIVE BOOKING CASHBACK       | 109     |
+  | CREDIT  | CREDIT FROM PRODUCT WALLET       | 106     |
+  | CREDIT  | WALLET REDEEM                    | 72      |
+  | DEBIT   | PENDING CANCELLATION FEE         | 63      |
+  | CREDIT  | INVALID                          | 63      |
+  | DEBIT   | TRANSFER BACK TO PRODUCT WALLET  | 40      |
+  | CREDIT  | COUPON CODE                      | 40      |
+  | CREDIT  | TAX CREDIT                       | 30      |
+  | CREDIT  | AGAINST REFERRAL                 | 28      |
+  | DEBIT   | AGAINST PRODUCT ADVANCE          | 27      |
+  | DEBIT   | DEBIT_AGAINST_KIT                | 26      |
+  | CREDIT  | LAST MIN. CANCELLATION CASHBACK  | 23      |
+  | CREDIT  | FREE HYGIENE KIT                 | 23      |
+  | CREDIT  | AGAINST PRODUCT ADVANCE          | 22      |
+  | CREDIT  | CREDIT_AGAINST_KIT               | 22      |
+  | CREDIT  | AGAINST PRODUCT LOAN             | 15      |
+  | CREDIT  | On Time Arrival                  | 15      |
+  | DEBIT   | ONBOARDING_FEE                   | 13      |
+  | CREDIT  | CANCELLATION CASHBACK            | 12      |
+  | CREDIT  | AGAINST RETAIL PRODUCT LOAN      | 12      |
+  | CREDIT  | OTHERS DEBIT                     | 11      |
+  | CREDIT  | 5 Star Rating                    | 10      |
+  | CREDIT  | 2nd Booking In 45 Days           | 9       |
+  | CREDIT  | 2nd Exclusive Booking In 45 Days | 9       |
+  | DEBIT   | CAR ADVANCE                      | 9       |
+  | DEBIT   | PERSONAL ADVANCE                 | 9       |
+  | CREDIT  | PERSONAL ADVANCE                 | 7       |
+  | CREDIT  | DEBIT_AGAINST_KIT                | 7       |
+  | DEBIT   | ACCIDENTAL ADVANCE               | 6       |
+  | INVALID | INVALID                          | 6       |
+  | CREDIT  | EXTRA JOB INCENTIVE              | 6       |
+  | CREDIT  | LAST MIN. RESCHEDULE CASHBACK    | 6       |
+  | CREDIT  | ACCIDENTAL ADVANCE               | 5       |
+  | CREDIT  | PRODUCT WALLET ADJUSTMENT CREDIT | 5       |
+  | DEBIT   | PRODUCT WALLET ADJUSTMENT DEBIT  | 5       |
+  | CREDIT  | CAR ADVANCE                      | 4       |
+  | CREDIT  | I2I ADVANCE                      | 4       |
+  | DEBIT   | EDUCATION ADVANCE                | 4       |
+  | DEBIT   | TAX DEBIT                        | 4       |
+  | CREDIT  | HUB INCENTIVE                    | 3       |
+  | DEBIT   | TRANSPORT                        | 3       |
+  | CREDIT  | ADDON CASHBACK CREDIT            | 3       |
+  +---------+----------------------------------+---------+
+    60 row(s)
+
+---- SELECT '===== 5. REAL ORDER IDS TO DEMO WITH (no names, no phone numbers) =====' AS section
+  +-------------------------------------------------------------------------+
+  | section                                                                 |
+  +-------------------------------------------------------------------------+
+  | ===== 5. REAL ORDER IDS TO DEMO WITH (no names, no phone numbers) ===== |
+  +-------------------------------------------------------------------------+
+    1 row(s)
+
+---- SELECT order_id, transport_charges, unassign_status_code, cashback, hub_id,
+    !! REFUSED OR FAILED: (1054, "Unknown column 'arrived_at300_m' in 'field list'")
+
+---- SELECT order_id, transport_charges
+    (0 rows)
+
+---- SELECT order_id, unassign_status_code, cashback,
+    !! REFUSED OR FAILED: (1054, "Unknown column 'arrived_at300_m' in 'field list'")
+
+---- SELECT '===== PROBE COMPLETE =====' AS section
+  +----------------------------+
+  | section                    |
+  +----------------------------+
+  | ===== PROBE COMPLETE ===== |
+  +----------------------------+
+    1 row(s)
+
+==============================================================================
+18 statement(s) ran, 2 refused or failed.

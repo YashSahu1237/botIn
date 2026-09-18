@@ -1,0 +1,447 @@
+<title>BOTIn Mod Flow Map</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#F6F7FA; --surface:#FFFFFF; --panel:#EAEDF2; --panel-border:#D2D8E1;
+    --ink:#1B2029; --ink-soft:#4A5262; --muted:#8891A0; --line:#C6CCD6;
+    --accent:#33415C;
+    --t0:#167C6B; --t1:#2F63C9; --t2:#9C5D0B; --t3:#93356B;
+    --mono-bg:#EDEFF3; --code-ink:#33415C;
+    --font-sans:'IBM Plex Sans',system-ui,-apple-system,sans-serif;
+    --font-mono:'IBM Plex Mono',ui-monospace,SFMono-Regular,Menlo,monospace;
+  }
+  @media (prefers-color-scheme: dark){
+    :root:not([data-theme="light"]){
+      --bg:#12151B; --surface:#171B22; --panel:#1E2430; --panel-border:#2B3240;
+      --ink:#E7EAF0; --ink-soft:#B7BEC9; --muted:#6B7484; --line:#313846;
+      --accent:#9FB2DE;
+      --t0:#35C0A4; --t1:#6C97F0; --t2:#E0A23C; --t3:#D273A8;
+      --mono-bg:#1B212B; --code-ink:#B9C6E6;
+    }
+  }
+  :root[data-theme="dark"]{
+    --bg:#12151B; --surface:#171B22; --panel:#1E2430; --panel-border:#2B3240;
+    --ink:#E7EAF0; --ink-soft:#B7BEC9; --muted:#6B7484; --line:#313846;
+    --accent:#9FB2DE;
+    --t0:#35C0A4; --t1:#6C97F0; --t2:#E0A23C; --t3:#D273A8;
+    --mono-bg:#1B212B; --code-ink:#B9C6E6;
+  }
+
+  *{box-sizing:border-box;}
+  body{
+    margin:0; background:var(--bg); color:var(--ink);
+    font-family:var(--font-sans); line-height:1.55;
+    -webkit-font-smoothing:antialiased;
+  }
+  .wrap{max-width:1180px; margin:0 auto; padding:56px 28px 80px;}
+  .prose{max-width:68ch;}
+
+  header.page{margin-bottom:44px;}
+  .eyebrow{
+    font-family:var(--font-mono); font-size:12px; letter-spacing:.08em;
+    text-transform:uppercase; color:var(--muted); margin:0 0 10px;
+  }
+  h1{
+    font-size:clamp(28px,4vw,38px); font-weight:600; margin:0 0 12px;
+    text-wrap:balance; letter-spacing:-.01em;
+  }
+  .dek{color:var(--ink-soft); font-size:16px; margin:0;}
+
+  section{margin-top:64px;}
+  .section-head{
+    display:flex; align-items:baseline; gap:14px; flex-wrap:wrap;
+    border-bottom:1px solid var(--line); padding-bottom:14px; margin-bottom:26px;
+  }
+  .section-head h2{font-size:20px; font-weight:600; margin:0;}
+  .section-head .tag{
+    font-family:var(--font-mono); font-size:11.5px; color:var(--muted);
+  }
+
+  figure{margin:0;}
+  figure.diagram{
+    background:var(--surface); border:1px solid var(--line); border-radius:6px;
+    padding:18px 18px 4px;
+  }
+  .diagram-scroll{overflow-x:auto;}
+  figure.diagram svg{display:block; width:100%; height:auto; min-width:640px;}
+  figcaption{
+    font-size:14px; color:var(--ink-soft); padding:14px 4px 16px;
+    border-top:1px solid var(--line); margin-top:14px;
+  }
+  figcaption strong{color:var(--ink); font-weight:600;}
+
+  .legend{
+    display:flex; gap:22px; flex-wrap:wrap; align-items:center;
+    font-family:var(--font-mono); font-size:12px; color:var(--ink-soft);
+    margin-bottom:18px;
+  }
+  .legend .item{display:flex; align-items:center; gap:8px;}
+  .legend svg{display:block;}
+
+  .routes{display:flex; flex-direction:column; gap:26px;}
+  .route-tag{
+    display:inline-flex; align-items:center; gap:8px;
+    font-family:var(--font-mono); font-size:12px; font-weight:600;
+    letter-spacing:.03em; margin-bottom:10px;
+  }
+  .dot{width:9px; height:9px; border-radius:50%; display:inline-block;}
+  .dot.t0{background:var(--t0);} .dot.t1{background:var(--t1);}
+  .dot.t2{background:var(--t2);} .dot.t3{background:var(--t3);}
+
+  table{width:100%; border-collapse:collapse; font-size:14.5px;}
+  caption{text-align:left; font-size:13px; color:var(--muted); padding-bottom:10px; font-family:var(--font-mono);}
+  th,td{text-align:left; padding:10px 14px; border-bottom:1px solid var(--line); vertical-align:top;}
+  th{font-family:var(--font-mono); font-size:11.5px; text-transform:uppercase; letter-spacing:.05em; color:var(--muted); font-weight:500;}
+  td code, .prose code{
+    font-family:var(--font-mono); background:var(--mono-bg); color:var(--code-ink);
+    padding:2px 6px; border-radius:4px; font-size:12.5px;
+  }
+  tr:last-child td{border-bottom:none;}
+
+  footer{
+    margin-top:64px; padding-top:20px; border-top:1px solid var(--line);
+    font-size:13px; color:var(--muted); font-family:var(--font-mono);
+  }
+
+  /* --- SVG element classes (no <style> inside svg per spec; styled from here) --- */
+  .rect-inproc{ fill:var(--panel); stroke:var(--panel-border); stroke-width:1.5; }
+  .rect-ext{ fill:var(--surface); stroke:var(--line); stroke-width:1.5; }
+  .rect-boundary{ fill:none; stroke:var(--panel-border); stroke-width:2; stroke-dasharray:9 7; }
+  .lbl-name{ font-family:var(--font-sans); font-weight:600; fill:var(--ink); font-size:14px; }
+  .lbl-sub{ font-family:var(--font-mono); fill:var(--ink-soft); font-size:11px; }
+  .lbl-boundary{ font-family:var(--font-mono); fill:var(--muted); font-size:12px; letter-spacing:.05em; }
+  .lbl-edge{ font-family:var(--font-mono); fill:var(--ink-soft); font-size:11px; }
+  .lbl-note{ font-family:var(--font-mono); fill:var(--muted); font-size:11px; }
+  .edge-inproc{ stroke:var(--accent); stroke-width:2; fill:none; }
+  .edge-ext{ stroke:var(--muted); stroke-width:2; fill:none; stroke-dasharray:7 6; }
+  .edge-open{ stroke:var(--muted); stroke-width:2; fill:none; stroke-dasharray:2 5; }
+  .edge-return{ stroke:var(--muted); stroke-width:1.5; fill:none; stroke-dasharray:5 5; opacity:.75; }
+  .fill-muted{ fill:var(--muted); }
+  .fill-accent{ fill:var(--accent); }
+  .step-badge circle{ fill:var(--surface); stroke:var(--ink-soft); stroke-width:1.5; }
+  .step-badge text{ font-family:var(--font-mono); font-size:11px; fill:var(--ink-soft); font-weight:600; }
+
+  .edge-t0{ stroke:var(--t0); stroke-width:3; fill:none; }
+  .edge-t1{ stroke:var(--t1); stroke-width:3; fill:none; }
+  .edge-t2{ stroke:var(--t2); stroke-width:3; fill:none; }
+  .edge-t3{ stroke:var(--t3); stroke-width:3; fill:none; }
+  .rect-t0{ fill:var(--surface); stroke:var(--t0); stroke-width:2; }
+  .rect-t1{ fill:var(--surface); stroke:var(--t1); stroke-width:2; }
+  .rect-t2{ fill:var(--surface); stroke:var(--t2); stroke-width:2; }
+  .rect-t3{ fill:var(--surface); stroke:var(--t3); stroke-width:2; }
+  .fill-t0{ fill:var(--t0); } .fill-t1{ fill:var(--t1); } .fill-t2{ fill:var(--t2); } .fill-t3{ fill:var(--t3); }
+
+  @media (prefers-reduced-motion: no-preference){
+    figure.diagram{ transition:border-color .15s ease; }
+  }
+</style>
+
+<div class="wrap">
+
+  <header class="page">
+    <p class="eyebrow">BOTIn Mod — Tech Design, Layer 10 companion</p>
+    <h1>Request Flow Map</h1>
+    <p class="dek prose">Every block a Help request can pass through, and the four different routes T0–T3 take across the same set of blocks. Solid lines stay inside one JVM; dashed lines cross into a separate process.</p>
+  </header>
+
+  <section id="mechanism">
+    <div class="section-head">
+      <h2>The full mechanism</h2>
+      <span class="tag">all blocks, all possible hops</span>
+    </div>
+
+    <div class="legend">
+      <span class="item">
+        <svg width="46" height="12" viewBox="0 0 46 12"><line x1="2" y1="6" x2="44" y2="6" class="edge-inproc"/></svg>
+        same JVM (no network hop)
+      </span>
+      <span class="item">
+        <svg width="46" height="12" viewBox="0 0 46 12"><line x1="2" y1="6" x2="44" y2="6" class="edge-ext"/></svg>
+        separate process / network call
+      </span>
+      <span class="item">
+        <svg width="46" height="12" viewBox="0 0 46 12"><line x1="2" y1="6" x2="44" y2="6" class="edge-open"/></svg>
+        integration point not yet confirmed
+      </span>
+    </div>
+
+    <figure class="diagram">
+      <div class="diagram-scroll">
+      <svg viewBox="0 0 1200 700" role="img" aria-label="Diagram showing the SP App, Java API layer, Flowable engine with its DMN table, Togglz, and Action Executor grouped inside one Spring Boot JVM boundary, connected by network calls to the Python classification service, a downstream wallet/leave ledger of unconfirmed ownership, Exotel or Ozonetel for telephony, and the agent's existing admin screen, which calls back into the Java API layer for escalation context.">
+        <defs>
+          <marker id="arrM" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+            <path d="M0,0 L10,5 L0,10 z" class="fill-muted"/>
+          </marker>
+          <marker id="arrA" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+            <path d="M0,0 L10,5 L0,10 z" class="fill-accent"/>
+          </marker>
+        </defs>
+
+        <!-- boundary -->
+        <rect x="190" y="70" width="590" height="470" rx="10" class="rect-boundary"/>
+        <text x="212" y="98" class="lbl-boundary">JAVA APPLICATION — SPRING BOOT, ONE JVM (EMBEDS FLOWABLE)</text>
+
+        <!-- SP App -->
+        <rect x="30" y="280" width="130" height="70" rx="4" class="rect-ext"/>
+        <text x="95" y="310" text-anchor="middle" class="lbl-name">SP App</text>
+        <text x="95" y="328" text-anchor="middle" class="lbl-sub">client, thin renderer</text>
+
+        <!-- Java API layer -->
+        <rect x="250" y="280" width="150" height="70" rx="4" class="rect-inproc"/>
+        <text x="325" y="310" text-anchor="middle" class="lbl-name">Java API Layer</text>
+        <text x="325" y="328" text-anchor="middle" class="lbl-sub">Spring Boot controllers</text>
+
+        <!-- Flowable (hub) -->
+        <rect x="460" y="200" width="210" height="190" rx="4" class="rect-inproc"/>
+        <text x="565" y="290" text-anchor="middle" class="lbl-name">Flowable</text>
+        <text x="565" y="308" text-anchor="middle" class="lbl-sub">BPMN process engine</text>
+
+        <!-- DMN -->
+        <rect x="560" y="90" width="150" height="70" rx="4" class="rect-inproc"/>
+        <text x="635" y="120" text-anchor="middle" class="lbl-name">DMN Table</text>
+        <text x="635" y="138" text-anchor="middle" class="lbl-sub">decision table</text>
+        <line x1="610" y1="200" x2="635" y2="160" class="edge-inproc"/>
+
+        <!-- Togglz -->
+        <rect x="460" y="430" width="140" height="70" rx="4" class="rect-inproc"/>
+        <text x="530" y="460" text-anchor="middle" class="lbl-name">Togglz</text>
+        <text x="530" y="478" text-anchor="middle" class="lbl-sub">kill switch</text>
+        <line x1="520" y1="390" x2="530" y2="430" class="edge-inproc" marker-end="url(#arrA)"/>
+        <line x1="530" y1="430" x2="520" y2="390" class="edge-inproc" marker-end="url(#arrA)"/>
+
+        <!-- Action Executor -->
+        <rect x="630" y="430" width="170" height="70" rx="4" class="rect-inproc"/>
+        <text x="715" y="458" text-anchor="middle" class="lbl-name">Action Executor</text>
+        <text x="715" y="476" text-anchor="middle" class="lbl-sub">writes TicketAction (own DB)</text>
+        <line x1="605" y1="390" x2="700" y2="430" class="edge-inproc" marker-end="url(#arrA)"/>
+
+        <!-- Python -->
+        <rect x="880" y="90" width="180" height="80" rx="4" class="rect-ext"/>
+        <text x="970" y="120" text-anchor="middle" class="lbl-name">Python Service</text>
+        <text x="970" y="138" text-anchor="middle" class="lbl-sub">/classify</text>
+        <text x="970" y="153" text-anchor="middle" class="lbl-sub">/classify-intent</text>
+        <line x1="660" y1="210" x2="880" y2="150" class="edge-ext" marker-end="url(#arrM)"/>
+        <text x="740" y="170" class="lbl-edge">classify(freeText) →</text>
+        <text x="740" y="184" class="lbl-edge">← category, confidence</text>
+
+        <!-- Telephony -->
+        <rect x="880" y="260" width="180" height="70" rx="4" class="rect-ext"/>
+        <text x="970" y="290" text-anchor="middle" class="lbl-name">Exotel / Ozonetel</text>
+        <text x="970" y="308" text-anchor="middle" class="lbl-sub">outbound-call API</text>
+        <line x1="670" y1="300" x2="880" y2="295" class="edge-ext" marker-end="url(#arrM)"/>
+        <text x="700" y="290" class="lbl-edge">call(ticketId)</text>
+
+        <!-- Agent screen -->
+        <rect x="1090" y="260" width="100" height="70" rx="4" class="rect-ext"/>
+        <text x="1140" y="290" text-anchor="middle" class="lbl-name">Agent</text>
+        <text x="1140" y="304" text-anchor="middle" class="lbl-name">Screen</text>
+        <line x1="1060" y1="295" x2="1090" y2="295" class="edge-ext" marker-end="url(#arrM)"/>
+
+        <!-- Ledger -->
+        <rect x="880" y="430" width="200" height="80" rx="4" class="rect-ext" style="stroke-dasharray:2 5;"/>
+        <text x="980" y="458" text-anchor="middle" class="lbl-name">Downstream Ledger</text>
+        <text x="980" y="476" text-anchor="middle" class="lbl-sub">wallet / leave / fines</text>
+        <text x="980" y="490" text-anchor="middle" class="lbl-note">via empapi? open — Layer 6</text>
+        <line x1="800" y1="465" x2="880" y2="465" class="edge-open" marker-end="url(#arrM)"/>
+
+        <!-- SP App <-> Java -->
+        <line x1="160" y1="305" x2="250" y2="305" class="edge-inproc" marker-end="url(#arrA)"/>
+        <line x1="250" y1="325" x2="160" y2="325" class="edge-inproc" marker-end="url(#arrA)"/>
+        <text x="163" y="298" class="lbl-edge">input</text>
+        <text x="163" y="340" class="lbl-edge">response</text>
+
+        <!-- Java <-> Flowable -->
+        <line x1="400" y1="310" x2="460" y2="290" class="edge-inproc" marker-end="url(#arrA)"/>
+        <text x="405" y="275" class="lbl-edge">startProcessInstanceByKey</text>
+
+        <!-- Agent screen return to Java -->
+        <path d="M1140,330 C1140,610 325,610 325,350" class="edge-return" marker-end="url(#arrM)"/>
+        <text x="620" y="628" text-anchor="middle" class="lbl-note">GET /tickets/{id}/escalation-context — agent screen reads what Java wrote</text>
+      </svg>
+      </div>
+      <figcaption>
+        <strong>Reading this diagram:</strong> Java API Layer, Flowable, its DMN table, Togglz, and the Action Executor all live inside one Spring Boot process — nothing between them is a network call. Python, the downstream ledger, telephony, and the agent's screen sit outside it; every line crossing the dashed boundary is a real hop that can time out, fail, or need a circuit breaker. The dotted line to the ledger is drawn differently on purpose — whether that integration exists as an API or only an admin-UI handler is still open (Layer 6).
+      </figcaption>
+    </figure>
+  </section>
+
+  <section id="routes">
+    <div class="section-head">
+      <h2>Four routes through the same blocks</h2>
+      <span class="tag">T0 → T3, same canvas width, drawn to scale</span>
+    </div>
+
+    <div class="routes">
+
+      <!-- T0 -->
+      <div>
+        <span class="route-tag"><span class="dot t0"></span>T0 — deflect</span>
+        <figure class="diagram">
+          <div class="diagram-scroll">
+          <svg viewBox="0 0 1300 150" role="img" aria-label="T0 route: SP App to Java API layer only, a two-block path with no Flowable process and no ticket created.">
+            <defs>
+              <marker id="arrT0" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="fill-t0"/></marker>
+            </defs>
+            <rect x="20" y="45" width="130" height="60" rx="4" class="rect-t0"/>
+            <text x="85" y="72" text-anchor="middle" class="lbl-name">SP App</text>
+            <text x="85" y="88" text-anchor="middle" class="lbl-sub">menu tap</text>
+            <rect x="208" y="45" width="130" height="60" rx="4" class="rect-t0"/>
+            <text x="273" y="70" text-anchor="middle" class="lbl-name">Java</text>
+            <text x="273" y="86" text-anchor="middle" class="lbl-sub">static lookup</text>
+            <text x="273" y="100" text-anchor="middle" class="lbl-sub">canned answer</text>
+            <line x1="150" y1="75" x2="208" y2="75" class="edge-t0" marker-end="url(#arrT0)"/>
+          </svg>
+          </div>
+          <figcaption>T0 never leaves the Java layer — a static lookup, no Flowable process, no <code>Ticket</code> row.</figcaption>
+        </figure>
+      </div>
+
+      <!-- T1 -->
+      <div>
+        <span class="route-tag"><span class="dot t1"></span>T1 — bot answers, nothing changes</span>
+        <figure class="diagram">
+          <div class="diagram-scroll">
+          <svg viewBox="0 0 1300 150" role="img" aria-label="T1 route: SP App, Java, Flowable, DMN table, then Java again — five blocks, a Ticket is created but no TicketAction is written.">
+            <defs>
+              <marker id="arrT1" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="fill-t1"/></marker>
+            </defs>
+            <rect x="20" y="45" width="130" height="60" rx="4" class="rect-t1"/>
+            <text x="85" y="78" text-anchor="middle" class="lbl-name">SP App</text>
+            <rect x="208" y="45" width="130" height="60" rx="4" class="rect-t1"/>
+            <text x="273" y="78" text-anchor="middle" class="lbl-name">Java</text>
+            <rect x="396" y="45" width="130" height="60" rx="4" class="rect-t1"/>
+            <text x="461" y="78" text-anchor="middle" class="lbl-name">Flowable</text>
+            <rect x="584" y="45" width="130" height="60" rx="4" class="rect-t1"/>
+            <text x="649" y="70" text-anchor="middle" class="lbl-name">DMN</text>
+            <text x="649" y="86" text-anchor="middle" class="lbl-sub">tier = T1</text>
+            <rect x="772" y="45" width="130" height="60" rx="4" class="rect-t1"/>
+            <text x="837" y="70" text-anchor="middle" class="lbl-name">Java</text>
+            <text x="837" y="86" text-anchor="middle" class="lbl-sub">fill template</text>
+            <line x1="150" y1="75" x2="208" y2="75" class="edge-t1" marker-end="url(#arrT1)"/>
+            <line x1="338" y1="75" x2="396" y2="75" class="edge-t1" marker-end="url(#arrT1)"/>
+            <line x1="526" y1="75" x2="584" y2="75" class="edge-t1" marker-end="url(#arrT1)"/>
+            <line x1="714" y1="75" x2="772" y2="75" class="edge-t1" marker-end="url(#arrT1)"/>
+            <text x="160" y="65" class="lbl-edge">l2Concern</text>
+            <text x="345" y="65" class="lbl-edge">startProcessInstanceByKey</text>
+            <text x="533" y="65" class="lbl-edge">evaluate</text>
+            <text x="721" y="65" class="lbl-edge">explain-reason</text>
+          </svg>
+          </div>
+          <figcaption>T1 asks the DMN table for a decision, then answers from data it already has — no Python call, no <code>TicketAction</code> written.</figcaption>
+        </figure>
+      </div>
+
+      <!-- T2 -->
+      <div>
+        <span class="route-tag"><span class="dot t2"></span>T2 — bot takes a real action</span>
+        <figure class="diagram">
+          <div class="diagram-scroll">
+          <svg viewBox="0 0 1300 150" role="img" aria-label="T2 route: SP App, Java, Flowable, Python service, DMN, Togglz, Action Executor — seven blocks, the longest bot-only path, ending in a written TicketAction and a call to the downstream ledger.">
+            <defs>
+              <marker id="arrT2" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="fill-t2"/></marker>
+            </defs>
+            <rect x="20" y="45" width="130" height="60" rx="4" class="rect-t2"/>
+            <text x="85" y="78" text-anchor="middle" class="lbl-name">SP App</text>
+            <rect x="208" y="45" width="130" height="60" rx="4" class="rect-t2"/>
+            <text x="273" y="78" text-anchor="middle" class="lbl-name">Java</text>
+            <rect x="396" y="45" width="130" height="60" rx="4" class="rect-t2"/>
+            <text x="461" y="78" text-anchor="middle" class="lbl-name">Flowable</text>
+            <rect x="584" y="45" width="130" height="60" rx="4" class="rect-t2"/>
+            <text x="649" y="70" text-anchor="middle" class="lbl-name">Python</text>
+            <text x="649" y="86" text-anchor="middle" class="lbl-sub">classify</text>
+            <rect x="772" y="45" width="130" height="60" rx="4" class="rect-t2"/>
+            <text x="837" y="70" text-anchor="middle" class="lbl-name">DMN</text>
+            <text x="837" y="86" text-anchor="middle" class="lbl-sub">waive_fine</text>
+            <rect x="960" y="45" width="130" height="60" rx="4" class="rect-t2"/>
+            <text x="1025" y="70" text-anchor="middle" class="lbl-name">Togglz</text>
+            <text x="1025" y="86" text-anchor="middle" class="lbl-sub">flag on</text>
+            <rect x="1148" y="45" width="130" height="60" rx="4" class="rect-t2"/>
+            <text x="1213" y="65" text-anchor="middle" class="lbl-name">Action</text>
+            <text x="1213" y="80" text-anchor="middle" class="lbl-name">Executor</text>
+            <text x="1213" y="96" text-anchor="middle" class="lbl-sub">write + call</text>
+            <line x1="150" y1="75" x2="208" y2="75" class="edge-t2" marker-end="url(#arrT2)"/>
+            <line x1="338" y1="75" x2="396" y2="75" class="edge-t2" marker-end="url(#arrT2)"/>
+            <line x1="526" y1="75" x2="584" y2="75" class="edge-t2" marker-end="url(#arrT2)"/>
+            <line x1="714" y1="75" x2="772" y2="75" class="edge-t2" marker-end="url(#arrT2)"/>
+            <line x1="902" y1="75" x2="960" y2="75" class="edge-t2" marker-end="url(#arrT2)"/>
+            <line x1="1090" y1="75" x2="1148" y2="75" class="edge-t2" marker-end="url(#arrT2)"/>
+            <text x="720" y="28" text-anchor="middle" class="lbl-edge">confidence 0.91</text>
+          </svg>
+          </div>
+          <figcaption>T2's path: <strong>Java → Flowable → Python → DMN → Togglz → Action Executor</strong>, strictly in that order, before anything is written to the ledger.</figcaption>
+        </figure>
+      </div>
+
+      <!-- T3 -->
+      <div>
+        <span class="route-tag"><span class="dot t3"></span>T3 — agent connect</span>
+        <figure class="diagram">
+          <div class="diagram-scroll">
+          <svg viewBox="0 0 1300 150" role="img" aria-label="T3 route: SP App, Java, Flowable, an escalation context write, telephony, then the agent screen — six blocks, reached from three different starting triggers.">
+            <defs>
+              <marker id="arrT3" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" class="fill-t3"/></marker>
+            </defs>
+            <rect x="20" y="45" width="130" height="60" rx="4" class="rect-t3"/>
+            <text x="85" y="70" text-anchor="middle" class="lbl-name">SP App</text>
+            <text x="85" y="86" text-anchor="middle" class="lbl-sub">3 entry paths</text>
+            <rect x="208" y="45" width="130" height="60" rx="4" class="rect-t3"/>
+            <text x="273" y="78" text-anchor="middle" class="lbl-name">Java</text>
+            <rect x="396" y="45" width="130" height="60" rx="4" class="rect-t3"/>
+            <text x="461" y="78" text-anchor="middle" class="lbl-name">Flowable</text>
+            <rect x="584" y="45" width="130" height="60" rx="4" class="rect-t3"/>
+            <text x="649" y="65" text-anchor="middle" class="lbl-name">Escalation</text>
+            <text x="649" y="80" text-anchor="middle" class="lbl-name">Context</text>
+            <text x="649" y="96" text-anchor="middle" class="lbl-sub">write</text>
+            <rect x="772" y="45" width="130" height="60" rx="4" class="rect-t3"/>
+            <text x="837" y="70" text-anchor="middle" class="lbl-name">Telephony</text>
+            <text x="837" y="86" text-anchor="middle" class="lbl-sub">Exotel/Ozonetel</text>
+            <rect x="960" y="45" width="130" height="60" rx="4" class="rect-t3"/>
+            <text x="1025" y="70" text-anchor="middle" class="lbl-name">Agent</text>
+            <text x="1025" y="86" text-anchor="middle" class="lbl-name">Screen</text>
+            <line x1="150" y1="75" x2="208" y2="75" class="edge-t3" marker-end="url(#arrT3)"/>
+            <line x1="338" y1="75" x2="396" y2="75" class="edge-t3" marker-end="url(#arrT3)"/>
+            <line x1="526" y1="75" x2="584" y2="75" class="edge-t3" marker-end="url(#arrT3)"/>
+            <line x1="714" y1="75" x2="772" y2="75" class="edge-t3" marker-end="url(#arrT3)"/>
+            <line x1="902" y1="75" x2="960" y2="75" class="edge-t3" marker-end="url(#arrT3)"/>
+            <text x="20" y="28" class="lbl-edge">low confidence · dissatisfaction · unclassified free text</text>
+          </svg>
+          </div>
+          <figcaption>Three different starting triggers — low confidence, an explicit human request, or unclassified free text — all land on this same shared path.</figcaption>
+        </figure>
+      </div>
+
+    </div>
+  </section>
+
+  <section id="reference">
+    <div class="section-head">
+      <h2>Block reference</h2>
+      <span class="tag">what each box actually is</span>
+    </div>
+    <table>
+      <caption>Ten blocks, in the order they first appear above</caption>
+      <thead>
+        <tr><th>Block</th><th>Technology</th><th>Role in the flow</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>SP App</td><td>client (frontend, TBD)</td><td>Thin renderer — never decides what to show next, only renders the backend's <code>nextStep</code>.</td></tr>
+        <tr><td>Java API Layer</td><td>Spring Boot controllers</td><td>Owns the session contract, starts Flowable processes, is the only block the client ever talks to.</td></tr>
+        <tr><td>Flowable</td><td>embedded BPMN engine (Maven dependency)</td><td>Runs each L2 concern as a diagram; the orchestrator that calls every satellite below and waits for the reply.</td></tr>
+        <tr><td>DMN Table</td><td>Flowable's built-in DMN engine</td><td>The actual "genuine case" business rule — tier and action, evaluated in-process.</td></tr>
+        <tr><td>Togglz</td><td>Java-native feature flags</td><td>Kill switch checked right before any auto-action executes.</td></tr>
+        <tr><td>Action Executor</td><td>plain Java service classes</td><td>Writes <code>TicketAction</code> (idempotency + audit) before and after calling the real downstream system.</td></tr>
+        <tr><td>Python Service</td><td>FastAPI, own container</td><td>Two endpoints — <code>/classify</code> (reason within a known concern) and <code>/classify-intent</code> (category from raw free text). Never touches a database.</td></tr>
+        <tr><td>Downstream Ledger</td><td>wallet / leave / fines system — ownership open</td><td>Where the money or state actually changes. Whether this is a callable API or admin-UI-only is Layer 6's open question.</td></tr>
+        <tr><td>Exotel / Ozonetel</td><td>telephony / CTI API</td><td>Places or routes the outbound call and screen-pops the ticket ID to the agent.</td></tr>
+        <tr><td>Agent Screen</td><td>existing admin panel</td><td>Reads the <code>EscalationContext</code> snapshot back from Java — computed facts, not a raw transcript.</td></tr>
+      </tbody>
+    </table>
+  </section>
+
+  <footer>
+    Companion diagram to Layer 10, <code>botin_mod_tech_design_v0.1.md</code> — the doc has the full step-by-step receives/does/sends walkthrough this map summarizes.
+  </footer>
+
+</div>

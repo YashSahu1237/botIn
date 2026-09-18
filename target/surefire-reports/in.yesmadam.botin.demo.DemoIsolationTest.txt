@@ -1,0 +1,4 @@
+-------------------------------------------------------------------------------
+Test set: in.yesmadam.botin.demo.DemoIsolationTest
+-------------------------------------------------------------------------------
+Tests run: 3, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 6.117 s -- in in.yesmadam.botin.demo.DemoIsolationTest

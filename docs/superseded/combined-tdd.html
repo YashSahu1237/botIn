@@ -1,0 +1,950 @@
+<title>BOTIn Mod Technical Design</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#F4F6F9; --surface:#FFFFFF; --panel:#EAEEF5; --panel-2:#E1E7F0;
+    --line:#CDD5E1; --line-soft:#E0E6EF;
+    --ink:#161A21; --ink-2:#454E5D; --muted:#798393;
+    --accent:#2F4468; --accent-soft:#E6ECF7; --accent-line:#B7C4DC;
+    --t0:#0F7A69; --t1:#2B5FC4; --t2:#8F5409; --t3:#8B3365;
+    --ok:#1A7550; --warn:#9A560B; --stop:#A93A38;
+    --mono-bg:#EBEFF5; --code-ink:#2F4468;
+    --font-sans:'IBM Plex Sans',system-ui,-apple-system,'Segoe UI',sans-serif;
+    --font-mono:'IBM Plex Mono',ui-monospace,SFMono-Regular,Menlo,monospace;
+  }
+  @media (prefers-color-scheme: dark){
+    :root:not([data-theme="light"]){
+      --bg:#0F1218; --surface:#151921; --panel:#1C222D; --panel-2:#232A37;
+      --line:#2C3340; --line-soft:#222833;
+      --ink:#E5E9F1; --ink-2:#B2BAC7; --muted:#6A7383;
+      --accent:#9DB3DE; --accent-soft:#19212F; --accent-line:#31405A;
+      --t0:#33BFA2; --t1:#6B95EE; --t2:#DFA13B; --t3:#D172A7;
+      --ok:#3EBC92; --warn:#DFA13B; --stop:#E0736E;
+      --mono-bg:#1A202A; --code-ink:#B6C4E4;
+    }
+  }
+  :root[data-theme="dark"]{
+    --bg:#0F1218; --surface:#151921; --panel:#1C222D; --panel-2:#232A37;
+    --line:#2C3340; --line-soft:#222833;
+    --ink:#E5E9F1; --ink-2:#B2BAC7; --muted:#6A7383;
+    --accent:#9DB3DE; --accent-soft:#19212F; --accent-line:#31405A;
+    --t0:#33BFA2; --t1:#6B95EE; --t2:#DFA13B; --t3:#D172A7;
+    --ok:#3EBC92; --warn:#DFA13B; --stop:#E0736E;
+    --mono-bg:#1A202A; --code-ink:#B6C4E4;
+  }
+
+  *{box-sizing:border-box;}
+  body{margin:0; background:var(--bg); color:var(--ink); font-family:var(--font-sans);
+       font-size:15px; line-height:1.6; -webkit-font-smoothing:antialiased;}
+  a{color:var(--accent);}
+  p{margin:0 0 14px; max-width:74ch;}
+  h2,h3,h4{text-wrap:balance;}
+
+  .shell{max-width:1180px; margin:0 auto; padding:0 24px 110px;
+         display:grid; grid-template-columns:232px minmax(0,1fr); gap:44px; align-items:start;}
+  @media (max-width:960px){ .shell{grid-template-columns:1fr; gap:0;} nav.toc{display:none;} }
+
+  /* ---------- masthead ---------- */
+  header.mast{grid-column:1/-1; padding:44px 0 22px; border-bottom:2px solid var(--ink);}
+  .kicker{font-family:var(--font-mono); font-size:11.5px; letter-spacing:.11em;
+          text-transform:uppercase; color:var(--muted); margin:0 0 12px;}
+  h1{font-size:clamp(30px,4.4vw,42px); font-weight:600; letter-spacing:-.02em;
+     margin:0 0 10px; line-height:1.12;}
+  .sub{color:var(--ink-2); font-size:16.5px; margin:0; max-width:70ch;}
+
+  /* ---------- toc ---------- */
+  nav.toc{position:sticky; top:22px; padding:30px 0 0; font-size:13px;}
+  nav.toc p{font-family:var(--font-mono); font-size:10.5px; letter-spacing:.09em;
+            text-transform:uppercase; color:var(--muted); margin:0 0 11px;}
+  nav.toc ol{list-style:none; margin:0 0 20px; padding:0; display:flex;
+             flex-direction:column; gap:1px;}
+  nav.toc a{display:block; padding:4px 10px 4px 11px; text-decoration:none;
+            color:var(--ink-2); border-left:2px solid var(--line-soft); line-height:1.4;}
+  nav.toc a:hover{color:var(--ink); border-left-color:var(--accent); background:var(--panel);}
+  nav.toc .grp{font-family:var(--font-mono); font-size:10.5px; letter-spacing:.09em;
+               text-transform:uppercase; color:var(--accent); padding:14px 0 6px 11px;
+               border:none; font-weight:600;}
+  nav.toc .n{font-family:var(--font-mono); font-size:11px; color:var(--muted);
+             display:inline-block; min-width:26px;}
+
+  main{padding-top:30px; min-width:0;}
+
+  /* ---------- part banners ---------- */
+  .part{margin:0 0 30px; padding:20px 24px; background:var(--accent-soft);
+        border:1px solid var(--accent-line); border-left:4px solid var(--accent);
+        border-radius:3px;}
+  .part .tag{font-family:var(--font-mono); font-size:10.5px; letter-spacing:.1em;
+             text-transform:uppercase; color:var(--accent); font-weight:600;}
+  .part h2{font-size:23px; font-weight:600; margin:6px 0 7px; letter-spacing:-.012em;}
+  .part p{margin:0; font-size:14.5px; color:var(--ink-2);}
+
+  section{margin:0 0 40px; scroll-margin-top:20px;}
+  section > h2{font-size:20px; font-weight:600; margin:0 0 6px; letter-spacing:-.012em;
+               display:flex; gap:12px; align-items:baseline;}
+  section > h2 .num{font-family:var(--font-mono); font-size:13px; color:var(--muted);
+                    font-weight:500; flex:none;}
+  section > h2 + .rule{height:1px; background:var(--line); margin:0 0 16px;}
+  h3{font-size:15.5px; font-weight:600; margin:24px 0 8px; letter-spacing:-.005em;}
+  h4{font-size:13.5px; font-weight:600; margin:18px 0 6px;
+     font-family:var(--font-mono); letter-spacing:.02em; color:var(--ink-2);}
+
+  code{font-family:var(--font-mono); background:var(--mono-bg); color:var(--code-ink);
+       padding:1.5px 5px; border-radius:3px; font-size:12.5px;}
+  strong{font-weight:600;}
+  em{font-style:italic; color:var(--ink-2);}
+
+  ul.plain{margin:0 0 14px; padding:0 0 0 20px; max-width:74ch;}
+  ul.plain li{margin-bottom:6px;}
+
+  /* ---------- tables ---------- */
+  .tw{overflow-x:auto; margin:0 0 18px; border:1px solid var(--line); border-radius:3px;
+      background:var(--surface);}
+  table{width:100%; border-collapse:collapse; font-size:13.5px; min-width:520px;}
+  caption{caption-side:top; text-align:left; font-family:var(--font-mono); font-size:11px;
+          letter-spacing:.04em; color:var(--muted); padding:11px 14px 0;}
+  th{text-align:left; padding:10px 14px; font-family:var(--font-mono); font-size:10.5px;
+     letter-spacing:.07em; text-transform:uppercase; color:var(--muted); font-weight:500;
+     border-bottom:1px solid var(--line); background:var(--panel); vertical-align:bottom;}
+  td{padding:10px 14px; border-bottom:1px solid var(--line-soft); vertical-align:top;
+     color:var(--ink-2);}
+  td:first-child{color:var(--ink); font-weight:500;}
+  tbody tr:last-child td{border-bottom:none;}
+  .num-col{font-variant-numeric:tabular-nums; white-space:nowrap;}
+
+  /* DMN table notation */
+  table.dmn th.in{color:var(--t1);} table.dmn th.out{color:var(--t2);}
+  table.dmn td{font-family:var(--font-mono); font-size:12px;}
+  table.dmn td:first-child{font-weight:600; color:var(--muted);}
+
+  /* ---------- chips ---------- */
+  .chip{display:inline-block; font-family:var(--font-mono); font-size:10px; font-weight:600;
+        letter-spacing:.06em; text-transform:uppercase; padding:2px 7px; border-radius:3px;
+        border:1px solid currentColor; white-space:nowrap; line-height:1.5;}
+  .c-dec{color:var(--ok);} .c-open{color:var(--stop);} .c-def{color:var(--warn);}
+  .c-t0{color:var(--t0);} .c-t1{color:var(--t1);} .c-t2{color:var(--t2);} .c-t3{color:var(--t3);}
+
+  /* ---------- ADR blocks ---------- */
+  .adr{border:1px solid var(--line); border-radius:3px; background:var(--surface);
+       margin:0 0 16px; overflow:hidden;}
+  .adr-h{display:flex; gap:12px; align-items:baseline; flex-wrap:wrap;
+         padding:13px 18px; background:var(--panel); border-bottom:1px solid var(--line);}
+  .adr-h .id{font-family:var(--font-mono); font-size:11.5px; font-weight:600;
+             color:var(--accent); letter-spacing:.04em;}
+  .adr-h .ti{font-size:15px; font-weight:600; flex:1 1 260px; min-width:0;}
+  .adr-b{padding:15px 18px 4px;}
+  .adr-b p{max-width:none;}
+  .adr dl{margin:0; display:grid; grid-template-columns:104px minmax(0,1fr); gap:0;}
+  .adr dt{font-family:var(--font-mono); font-size:10.5px; letter-spacing:.07em;
+          text-transform:uppercase; color:var(--muted); padding:9px 0; }
+  .adr dd{margin:0; padding:9px 0; border-bottom:1px solid var(--line-soft); font-size:13.5px;
+          color:var(--ink-2);}
+  .adr dt{border-bottom:1px solid var(--line-soft);}
+  .adr dl > dt:last-of-type, .adr dl > dd:last-of-type{border-bottom:none;}
+
+  /* ---------- callouts ---------- */
+  .note{border:1px solid var(--line); border-left:3px solid var(--accent);
+        background:var(--panel); border-radius:3px; padding:14px 18px; margin:0 0 18px;
+        font-size:14px; color:var(--ink-2);}
+  .note strong{color:var(--ink);}
+  .note.hazard{border-left-color:var(--stop);}
+  .note p:last-child{margin-bottom:0;}
+
+  /* ---------- figures ---------- */
+  figure{margin:0 0 22px; border:1px solid var(--line); border-radius:3px;
+         background:var(--surface); padding:18px 18px 12px; overflow-x:auto;}
+  figure svg{display:block; width:100%; min-width:640px; height:auto;}
+  figcaption{font-family:var(--font-mono); font-size:11px; color:var(--muted);
+             padding-top:12px; letter-spacing:.02em; line-height:1.5;}
+
+  .rect-a{fill:var(--panel); stroke:var(--line); stroke-width:1;}
+  .rect-b{fill:var(--accent-soft); stroke:var(--accent-line); stroke-width:1;}
+  .rect-o{fill:none; stroke:var(--accent); stroke-width:1.5; stroke-dasharray:6 4;}
+  .lbl-name{fill:var(--ink); font-family:var(--font-sans); font-size:12px; font-weight:600;}
+  .lbl-sub{fill:var(--muted); font-family:var(--font-mono); font-size:9.5px;}
+  .lbl-edge{fill:var(--muted); font-family:var(--font-mono); font-size:9px;}
+  .lbl-box{fill:var(--accent); font-family:var(--font-mono); font-size:10px; font-weight:600;
+           letter-spacing:.06em;}
+  .edge{stroke:var(--ink-2); stroke-width:1.2; fill:none;}
+  .edge-net{stroke:var(--ink-2); stroke-width:1.2; fill:none; stroke-dasharray:5 4;}
+  .arrow-fill{fill:var(--ink-2);}
+
+  /* ---------- steps ---------- */
+  ol.trace{list-style:none; counter-reset:tr; margin:0 0 18px; padding:0;
+           display:flex; flex-direction:column; gap:0;}
+  ol.trace li{counter-increment:tr; display:grid; grid-template-columns:30px minmax(0,1fr);
+              gap:14px; padding:11px 0; border-bottom:1px solid var(--line-soft);}
+  ol.trace li:last-child{border-bottom:none;}
+  ol.trace li::before{content:counter(tr,decimal-leading-zero); font-family:var(--font-mono);
+                      font-size:11.5px; color:var(--muted); padding-top:3px;}
+  ol.trace b{font-weight:600; display:block; margin-bottom:2px;}
+  ol.trace span{font-size:13.5px; color:var(--ink-2);}
+
+  footer{grid-column:1/-1; margin-top:20px; padding-top:20px; border-top:2px solid var(--ink);
+         font-family:var(--font-mono); font-size:11.5px; color:var(--muted); line-height:1.7;}
+  footer a{color:var(--accent);}
+
+  :focus-visible{outline:2px solid var(--accent); outline-offset:2px;}
+  @media (prefers-reduced-motion:reduce){*{transition:none!important; animation:none!important;}}
+</style>
+
+<div class="shell">
+
+<header class="mast">
+  <p class="kicker">Yesmadam · Partner Experience · Technical Design Document</p>
+  <h1>BOTIn Mod</h1>
+  <p class="sub">A bot-first, tiered outbound support system for Service Partners. Target architecture, the decisions behind it, and the modules that make it up.</p>
+</header>
+
+<nav class="toc">
+  <p>Contents</p>
+  <div class="grp">Part A — Summary</div>
+  <ol>
+    <li><a href="#a1"><span class="n">A.1</span>The problem</a></li>
+    <li><a href="#a2"><span class="n">A.2</span>What we propose</a></li>
+    <li><a href="#a3"><span class="n">A.3</span>Goals and non-goals</a></li>
+    <li><a href="#a4"><span class="n">A.4</span>Decisions required</a></li>
+    <li><a href="#a5"><span class="n">A.5</span>Delivery phases</a></li>
+    <li><a href="#a6"><span class="n">A.6</span>Principal risks</a></li>
+    <li><a href="#a7"><span class="n">A.7</span>Success measures</a></li>
+  </ol>
+  <div class="grp">Part B — Design</div>
+  <ol>
+    <li><a href="#s1"><span class="n">1</span>Context</a></li>
+    <li><a href="#s2"><span class="n">2</span>Solution overview</a></li>
+    <li><a href="#s3"><span class="n">3</span>Architecture</a></li>
+    <li><a href="#s4"><span class="n">4</span>Decision records</a></li>
+    <li><a href="#s5"><span class="n">5</span>Data model</a></li>
+    <li><a href="#s6"><span class="n">6</span>Interfaces</a></li>
+    <li><a href="#s7"><span class="n">7</span>Runtime trace</a></li>
+    <li><a href="#s8"><span class="n">8</span>Money safety</a></li>
+    <li><a href="#s9"><span class="n">9</span>Failure modes</a></li>
+    <li><a href="#s10"><span class="n">10</span>Code vs config</a></li>
+    <li><a href="#s11"><span class="n">11</span>Non-functional</a></li>
+    <li><a href="#s12"><span class="n">12</span>Delivery plan</a></li>
+    <li><a href="#s13"><span class="n">13</span>Open questions</a></li>
+    <li><a href="#s14"><span class="n">14</span>Terminology</a></li>
+  </ol>
+</nav>
+
+<main>
+
+<!-- ============ PART A ============ -->
+<div class="part">
+  <span class="tag">Part A</span>
+  <h2>Executive summary</h2>
+  <p>Written to stand alone. A reader who stops at the end of Part A should be able to approve, reject, or send back this proposal without reading further.</p>
+</div>
+
+<section id="a1">
+  <h2><span class="num">A.1</span>The problem</h2><div class="rule"></div>
+  <p>Every Partner Support query today is answered by a human agent. Most of them do not need a human.</p>
+  <p>In the May sample, <strong>6,245 tickets — 12.46% of all volume</strong> — were one question: <em>why was I fined for taking leave?</em> The three largest concerns together account for <strong>54.4%</strong> of volume. These are not conversations requiring judgement. Each is a lookup against data we already hold, followed by a decision that follows a written SOP, followed by a credit to a wallet.</p>
+  <div class="tw">
+    <table>
+      <caption>Concern volume, May sample. Source: Ticket Flow Automation — Partner Support (SOP workbook).</caption>
+      <thead><tr><th>Concern</th><th class="num-col">Share of volume</th><th>Wave</th><th>Disposition</th></tr></thead>
+      <tbody>
+        <tr><td>Rule-break fine</td><td class="num-col">30.2%</td><td>1</td><td>Automate</td></tr>
+        <tr><td>Leaves fine</td><td class="num-col">12.5%</td><td>1</td><td>Automate — POC subject</td></tr>
+        <tr><td>Transport amount</td><td class="num-col">12.0%</td><td>1</td><td>Automate</td></tr>
+        <tr><td>Remaining ~27 L2 concerns</td><td class="num-col">45.6%</td><td>2–4</td><td>Waves 2–3 automate; Wave 4 stays human</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <p>Agent time spent on the first three rows is the cost this project removes. Strike appeals — deliberately placed in Wave 4 — stay with humans, because they are genuine judgement calls and automating them would be the wrong kind of efficiency.</p>
+</section>
+
+<section id="a2">
+  <h2><span class="num">A.2</span>What we propose</h2><div class="rule"></div>
+  <p>BOTIn Mod puts a bot in front of every Partner Support query and hands to a human only when a defined trigger fires. Four tiers, decided per request at runtime:</p>
+  <div class="tw">
+    <table>
+      <thead><tr><th>Tier</th><th>Behaviour</th><th>Ticket created</th><th>Example</th></tr></thead>
+      <tbody>
+        <tr><td><span class="chip c-t0">T0</span> Deflect</td><td>Answer from static content; conversation ends</td><td>No</td><td>"Where do I see my payout date?"</td></tr>
+        <tr><td><span class="chip c-t1">T1</span> Auto-resolve</td><td>Read our own data, state the answer</td><td>Yes</td><td>"There is no fine on that date."</td></tr>
+        <tr><td><span class="chip c-t2">T2</span> Auto-action</td><td>Read data, apply a rule, <strong>move money</strong></td><td>Yes</td><td>Refund a leave fine</td></tr>
+        <tr><td><span class="chip c-t3">T3</span> Agent connect</td><td>Assemble context, call the partner, hand to an agent</td><td>Yes</td><td>Low confidence, or a judgement concern</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <p>The bot is not a chatbot in the conversational sense. It is a <strong>server-driven flow</strong> in which every step is a menu, a database read, a rule evaluation, or an action. A language model is used in exactly one place — turning free-typed Hinglish into one value from a fixed list. <strong>It never decides anything, never writes a message the partner reads, and structurally cannot move money</strong> (§4, ADR-003 and ADR-004).</p>
+</section>
+
+<section id="a3">
+  <h2><span class="num">A.3</span>Goals and non-goals</h2><div class="rule"></div>
+  <h4>Goals</h4>
+  <ul class="plain">
+    <li>Resolve the Wave 1 concerns without an agent, at the BRD's target of <strong>86% bot-handled / 10–20% agent-connect</strong>.</li>
+    <li>Make every automated money movement auditable, idempotent, and individually reversible by a switch an ops user can flip in seconds.</li>
+    <li>Keep the business rules editable by the people who own them, without a code deploy.</li>
+    <li>Hand escalated partners to an agent who already has the context, rather than one who starts by asking what happened.</li>
+  </ul>
+  <h4>Non-goals</h4>
+  <ul class="plain">
+    <li><strong>A general-purpose assistant.</strong> The taxonomy is closed: ~30 L2 concerns from the SOP. Anything outside it goes to a human.</li>
+    <li><strong>LLM-authored partner-facing text.</strong> Responses are reviewed templates. See ADR-004 for why, and what that costs us.</li>
+    <li><strong>Replacing agents on judgement concerns.</strong> Strike appeals stay human by design, not by omission.</li>
+    <li><strong>New paid infrastructure.</strong> The workflow engine is a library inside our own service, not a platform to operate.</li>
+    <li><strong>Changing fine or leave policy.</strong> This system automates the SOP as written. If the SOP is wrong, that is a separate conversation.</li>
+  </ul>
+</section>
+
+<section id="a4">
+  <h2><span class="num">A.4</span>Decisions required from this review</h2><div class="rule"></div>
+  <p>These are the items I cannot settle alone. Everything else in this document is a decision I have taken and am accountable for; those are recorded in §4.</p>
+  <div class="tw">
+    <table>
+      <thead><tr><th>#</th><th>Decision</th><th>Owner</th><th>Gates</th><th>If unresolved</th></tr></thead>
+      <tbody>
+        <tr><td>D-1</td><td><strong>Hosting.</strong> New standalone Spring Boot service, or a module inside <code>empapi</code>?</td><td>Engineering</td><td>Layer 6 implementation</td><td>POC proceeds standalone; the interface boundary in §3 makes this reversible</td></tr>
+        <tr><td>D-2</td><td><strong>LLM vendor and API key.</strong> Which provider, and how it is procured.</td><td>Engineering + Procurement</td><td><strong>Layers 5 and 5b entirely</strong></td><td>The Python classifier cannot be built or measured at all. POC Phase 9 has nothing to run</td></tr>
+        <tr><td>D-3</td><td><strong>Who edits DMN rules</strong>, and is there a review gate? Rows in these tables move money.</td><td>Engineering + PX ops</td><td>Wave 1 go-live</td><td>Default to engineering-only edits, which forfeits most of the benefit of ADR-002</td></tr>
+        <tr><td>D-4</td><td><strong>Who owns response template wording</strong>, including Hindi and Hinglish variants?</td><td>PX ops</td><td>Wave 1 go-live</td><td>Engineering writes them, which is the wrong owner for partner-facing copy</td></tr>
+        <tr><td>D-5</td><td><strong>Agent screen destination.</strong> Embed in the existing tool, or build a view in <code>admin</code>?</td><td>PX ops + Engineering</td><td>Wave 1 agent connect (L8)</td><td>T3 works but the agent gets no context pop; the two endpoints in §6 are unaffected either way</td></tr>
+        <tr><td>D-6</td><td><strong>Strike coupling.</strong> The SOP marks <code>Strike Concern = Yes</code> on all four leave-fine sub-scenarios. Does a fine refund also reverse a strike?</td><td>PX ops</td><td>The leave-fine DMN table</td><td>The DMN table has a hole in it; POC scope is not closed</td></tr>
+        <tr><td>D-7</td><td><strong>Access control and audit scope</strong> (Layer 11 — see §11). Who may flip a kill switch, edit a rule, read a transcript?</td><td>Engineering + Security</td><td>Wave 1 go-live</td><td>Ship a money-moving system with an unauthenticated admin console. Not acceptable</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <div class="note">
+    <p><strong>D-2 is the only item on this list that gates work outright.</strong> Every other decision can be taken while building around it. Without an API key the Python classifier module cannot be exercised at all, so POC Phase 9 has nothing to run.</p>
+  </div>
+</section>
+
+<section id="a5">
+  <h2><span class="num">A.5</span>Delivery phases</h2><div class="rule"></div>
+  <div class="tw">
+    <table>
+      <thead><tr><th>Phase</th><th>Modules in scope</th><th>What it buys</th></tr></thead>
+      <tbody>
+        <tr><td><strong>1 — Proof of concept</strong></td><td>Leaves fine only, T1/T2/T3 end to end. Layers 1–7 in minimum form. <strong>Excluded:</strong> telephony, agent screen, mobile app, observability, access control, guardrails.</td><td>Answers the five unknowns in §12. Produces a measured classifier accuracy number and two pass/fail safety tests</td></tr>
+        <tr><td><strong>2 — Wave 1</strong></td><td>Adds rule-break fine and transport amount. Brings in Layer 8 (agent connect and telephony), Layer 9 (observability), Layer 11 (access control) and Layer 12 (guardrails).</td><td>54.4% of ticket volume addressable</td></tr>
+        <tr><td><strong>3 — Waves 2–3</strong></td><td>The remaining automatable concerns. New DMN tables, fact providers and catalogue rows — no new architecture.</td><td>Approaches the 86% target</td></tr>
+        <tr><td><strong>4 — Wave 4 long tail</strong></td><td>Strike appeals and "other". <strong>Deliberately not automated.</strong> Routed to humans with good context. Layer 13 is the placeholder for anything beyond that.</td><td>Nothing. That is the point</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <p>Phase 1 is deliberately shaped to fail fast. Two of its tests (§12) are designed so that if either fails, the correct response is to stop and redesign rather than continue building on a foundation that does not hold.</p>
+</section>
+
+<section id="a6">
+  <h2><span class="num">A.6</span>Principal risks</h2><div class="rule"></div>
+  <div class="tw">
+    <table>
+      <thead><tr><th>Risk</th><th>Assessment</th><th>Mitigation</th></tr></thead>
+      <tbody>
+        <tr><td><strong>The classifier is not accurate enough on real Hinglish</strong></td><td>Genuine unknown. Partners mix Hindi, English and transliteration in one sentence. Everything else in this design is conventional Spring Boot work; this is the part that could fail.</td><td>Measured in POC Phase 10 against 150–200 hand-labelled real tickets, with exit thresholds agreed <em>before</em> the number is known (§12)</td></tr>
+        <tr><td><strong>The fine-refund capability may not exist as an API</strong></td><td>The SOP documents the refund as an admin UI click path — <em>Admin → Escalation → View SP Escalation → select date range → refund fine</em> — not a service call. That is evidence, not proof, that Layer 6 is a build rather than an integration.</td><td>An audit of <code>empapi</code> in POC Phase 0 settles it by inspection. Layer 6's interface boundary means the answer changes only that module's implementation, and it does not block POC Phases 1–8</td></tr>
+        <tr><td><strong>Automated money movement</strong></td><td>T2 credits partner wallets with no human in the loop. A bug here is a financial incident, not a bad user experience.</td><td>Four independent controls, described in §8: idempotency key, <code>REQUIRES_NEW</code> transaction boundary, per-concern kill switch, daily reconciliation. The POC tests the second one deliberately</td></tr>
+        <tr><td><strong>Rules that move money are editable without a deploy</strong></td><td>ADR-002 makes this possible on purpose. It is also the sharpest governance hazard in the design: a one-cell edit to a DMN table changes who gets paid, with no code review.</td><td><strong>Unmitigated today.</strong> This is decision D-3. It needs a review gate and an audit trail before Wave 1, not before the POC</td></tr>
+        <tr><td><strong>Two unfamiliar notations enter the codebase</strong></td><td>BPMN and DMN are new to this stack. Process and decision logic move out of Java and into files that a Java reviewer cannot fully check by reading the code.</td><td>Partially structural: BPMN and DMN are readable artifacts, so the logic is inspectable by anyone rather than locked inside Java. It still means the review skill has to exist somewhere, and today it does not</td></tr>
+        <tr><td><strong>Layer 11 and Layer 12 are placeholders</strong></td><td>Access control and LLM guardrails are named in the architecture but not designed. A money-moving system with an unauthenticated kill-switch console is not shippable.</td><td>Both are scoped out of the POC deliberately and in scope for Wave 1 (§11). Tracked as decision D-7</td></tr>
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<section id="a7">
+  <h2><span class="num">A.7</span>Success measures</h2><div class="rule"></div>
+  <div class="tw">
+    <table>
+      <thead><tr><th>Measure</th><th>Target</th><th>Alert when</th><th>Source</th></tr></thead>
+      <tbody>
+        <tr><td>Automation rate</td><td class="num-col">86% bot-handled</td><td class="num-col">&lt; 75%</td><td>BRD</td></tr>
+        <tr><td>Agent-connect rate</td><td class="num-col">10–20%</td><td class="num-col">&gt; 20%</td><td>BRD</td></tr>
+        <tr><td>Reconciliation mismatch</td><td class="num-col">0</td><td class="num-col">&gt; 0</td><td>This design (§8)</td></tr>
+        <tr><td>Classifier accuracy</td><td class="num-col">≥ 90%</td><td class="num-col">&lt; 90% sustained</td><td>POC Phase 10</td></tr>
+        <tr><td>CSAT on bot-resolved tickets</td><td>Not below agent-resolved baseline</td><td>Any sustained gap</td><td>BRD</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <p>These are alert thresholds, not dashboard decoration. A number nobody is paged about is a number nobody watches.</p>
+</section>
+
+<!-- ============ PART B ============ -->
+<div class="part">
+  <span class="tag">Part B</span>
+  <h2>Engineering design</h2>
+  <p>The architecture, the decisions behind it with the alternatives that were rejected, and the mechanisms a reviewer should test hardest.</p>
+</div>
+
+<section id="s1">
+  <h2><span class="num">1</span>Context and current state</h2><div class="rule"></div>
+  <p>Today a Service Partner raising a query in the partner app reaches a human agent. There is no self-service layer, no automated resolution, and no structured capture of why the partner got in touch — the reason exists only as free text in a ticket and in the agent's head.</p>
+  <p>Three repositories are relevant, and the distinction matters because it constrains where anything can live:</p>
+  <div class="tw">
+    <table>
+      <thead><tr><th>Repository</th><th>Audience</th><th>Relevance</th></tr></thead>
+      <tbody>
+        <tr><td><code>empapi</code></td><td>Service Partners</td><td><strong>Where partner identity, wallet, leave and fines live.</strong> The only viable host if we do not build standalone, and the target of every Layer 6 call either way</td></tr>
+        <tr><td><code>admin</code></td><td>Internal agents</td><td>Renders the agent screen. A UI concern — not a backend host candidate</td></tr>
+        <tr><td><code>app_server</code></td><td>Customers</td><td><strong>Ruled out.</strong> Wrong audience entirely</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <p>External reference: Swiggy's published account of their enterprise support agent is the closest public analogue, and its central finding shaped ADR-003 — end-to-end LLM routing plateaued around 90% accuracy for them, and they improved on it by combining <strong>rule-based routing with one small model doing one narrow job</strong>. That is the boundary this design draws.</p>
+</section>
+
+<section id="s2">
+  <h2><span class="num">2</span>Solution overview</h2><div class="rule"></div>
+  <p>Every request follows the same seven-step chain, regardless of concern. What differs between concerns is configuration, not code path.</p>
+
+  <figure>
+    <svg viewBox="0 0 1000 150" role="img" aria-label="Seven-step resolution chain from concern selection through to action dispatch">
+      <defs>
+        <marker id="ar1" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto">
+          <path d="M0,0 L10,5 L0,10 z" class="arrow-fill"/>
+        </marker>
+      </defs>
+      <rect class="rect-a" x="16" y="30" width="124" height="52" rx="3"/>
+      <text class="lbl-name" x="78" y="52" text-anchor="middle">Select</text>
+      <text class="lbl-name" x="78" y="68" text-anchor="middle">L1 + L2</text>
+      <text class="lbl-sub" x="78" y="102" text-anchor="middle">client</text>
+
+      <rect class="rect-a" x="156" y="30" width="124" height="52" rx="3"/>
+      <text class="lbl-name" x="218" y="52" text-anchor="middle">Catalogue</text>
+      <text class="lbl-name" x="218" y="68" text-anchor="middle">lookup</text>
+      <text class="lbl-sub" x="218" y="102" text-anchor="middle">concern_catalogue</text>
+
+      <rect class="rect-a" x="296" y="30" width="124" height="52" rx="3"/>
+      <text class="lbl-name" x="358" y="52" text-anchor="middle">Start</text>
+      <text class="lbl-name" x="358" y="68" text-anchor="middle">process</text>
+      <text class="lbl-sub" x="358" y="102" text-anchor="middle">process_key</text>
+
+      <rect class="rect-a" x="436" y="30" width="124" height="52" rx="3"/>
+      <text class="lbl-name" x="498" y="52" text-anchor="middle">Fetch</text>
+      <text class="lbl-name" x="498" y="68" text-anchor="middle">facts</text>
+      <text class="lbl-sub" x="498" y="102" text-anchor="middle">fact_provider</text>
+
+      <rect class="rect-b" x="576" y="30" width="124" height="52" rx="3"/>
+      <text class="lbl-name" x="638" y="52" text-anchor="middle">Evaluate</text>
+      <text class="lbl-name" x="638" y="68" text-anchor="middle">DMN</text>
+      <text class="lbl-sub" x="638" y="102" text-anchor="middle">dmn_key</text>
+
+      <rect class="rect-a" x="716" y="30" width="124" height="52" rx="3"/>
+      <text class="lbl-name" x="778" y="52" text-anchor="middle">Kill-switch</text>
+      <text class="lbl-name" x="778" y="68" text-anchor="middle">gate</text>
+      <text class="lbl-sub" x="778" y="102" text-anchor="middle">togglz_flag</text>
+
+      <rect class="rect-a" x="856" y="30" width="128" height="52" rx="3"/>
+      <text class="lbl-name" x="920" y="52" text-anchor="middle">Dispatch or</text>
+      <text class="lbl-name" x="920" y="68" text-anchor="middle">escalate</text>
+      <text class="lbl-sub" x="920" y="102" text-anchor="middle">tier from DMN</text>
+
+      <line class="edge" x1="140" y1="56" x2="150" y2="56" marker-end="url(#ar1)"/>
+      <line class="edge" x1="280" y1="56" x2="290" y2="56" marker-end="url(#ar1)"/>
+      <line class="edge" x1="420" y1="56" x2="430" y2="56" marker-end="url(#ar1)"/>
+      <line class="edge" x1="560" y1="56" x2="570" y2="56" marker-end="url(#ar1)"/>
+      <line class="edge" x1="700" y1="56" x2="710" y2="56" marker-end="url(#ar1)"/>
+      <line class="edge" x1="840" y1="56" x2="850" y2="56" marker-end="url(#ar1)"/>
+
+      <text class="lbl-edge" x="16" y="132">Steps 2–6 are driven entirely by one row of concern_catalogue. Adding a concern means adding a row and the four artifacts it points at.</text>
+    </svg>
+    <figcaption>Figure 1 — The resolution chain. Labels under each step name the configuration that selects it, not the class that runs it.</figcaption>
+  </figure>
+
+  <p><strong>Tier is decided at step 5, at runtime, by the decision table</strong> — it is not a fixed property of a concern. The same concern can resolve at T1 for one partner and escalate to T3 for another, because the facts differ. This is a deliberate departure from the BRD's Table 9, which assigns a tier per concern; the two are reconcilable if Table 9 is read as the expected majority outcome rather than a constraint (open question O-4, §13).</p>
+
+  <h3>Where the language model fits</h3>
+  <p>The menu path needs no AI at all. Free text appears in exactly two places, and both are the same problem — <em>turn unconstrained human language into one value from a fixed list</em>:</p>
+  <ul class="plain">
+    <li><strong>Entry with no selection.</strong> The partner opens Help and types <code>"mera aaj strike laga hai usko hatao"</code> instead of tapping a menu. Nothing downstream can start, because a process is selected by name and we have no name yet. Handled by <code>/classify-intent</code> against the whole taxonomy.</li>
+    <li><strong>The reason step.</strong> Within a known concern, the partner explains <em>why</em>. Handled by <code>/classify</code> against that one concern's fixed category list.</li>
+  </ul>
+  <p>These are different jobs at different scales, which is why they are separate endpoints rather than a mode flag. Consequently, <strong>Python is called based on input shape, not on tier</strong>. T0 and T1 never call it. A fully menu-driven T2 session calls it zero times.</p>
+</section>
+
+<section id="s3">
+  <h2><span class="num">3</span>Architecture</h2><div class="rule"></div>
+  <div class="note">
+    <p><strong>Layers are logical; deployables are physical.</strong> Reviewers consistently ask "so where does this actually run?" — and a layer name never answers it. There are two things we build and deploy. Everything else on the diagram belongs to someone else.</p>
+  </div>
+
+  <figure>
+    <svg viewBox="0 0 1000 420" role="img" aria-label="Deployment view showing the BOTIn backend JVM, the Python classifier, and the external systems each talks to">
+      <defs>
+        <marker id="ar2" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto">
+          <path d="M0,0 L10,5 L0,10 z" class="arrow-fill"/>
+        </marker>
+      </defs>
+
+      <!-- left: clients -->
+      <rect class="rect-a" x="14" y="96" width="132" height="46" rx="3"/>
+      <text class="lbl-name" x="80" y="116" text-anchor="middle">SP mobile app</text>
+      <text class="lbl-sub" x="80" y="131" text-anchor="middle">not ours</text>
+
+      <rect class="rect-a" x="14" y="172" width="132" height="46" rx="3"/>
+      <text class="lbl-name" x="80" y="192" text-anchor="middle">admin</text>
+      <text class="lbl-sub" x="80" y="207" text-anchor="middle">agent screen</text>
+
+      <!-- JVM boundary -->
+      <rect class="rect-o" x="240" y="60" width="460" height="316" rx="4"/>
+      <text class="lbl-box" x="256" y="82">DEPLOYABLE 1 — BOTIn BACKEND · ONE SPRING BOOT JVM</text>
+
+      <rect class="rect-b" x="256" y="94" width="428" height="42" rx="3"/>
+      <text class="lbl-name" x="470" y="112" text-anchor="middle">REST controllers</text>
+      <text class="lbl-sub" x="470" y="127" text-anchor="middle">HelpSessionController (L1) · AgentContextController (L8)</text>
+
+      <rect class="rect-a" x="256" y="152" width="182" height="46" rx="3"/>
+      <text class="lbl-name" x="347" y="172" text-anchor="middle">Flowable process engine</text>
+      <text class="lbl-sub" x="347" y="187" text-anchor="middle">L3 · BPMN · stateful</text>
+
+      <rect class="rect-a" x="446" y="152" width="118" height="46" rx="3"/>
+      <text class="lbl-name" x="505" y="172" text-anchor="middle">DMN engine</text>
+      <text class="lbl-sub" x="505" y="187" text-anchor="middle">L4 · stateless</text>
+
+      <rect class="rect-a" x="572" y="152" width="112" height="46" rx="3"/>
+      <text class="lbl-name" x="628" y="172" text-anchor="middle">Togglz</text>
+      <text class="lbl-sub" x="628" y="187" text-anchor="middle">L7 · kill switch</text>
+
+      <rect class="rect-a" x="256" y="214" width="428" height="46" rx="3"/>
+      <text class="lbl-name" x="470" y="234" text-anchor="middle">Outbound adapters</text>
+      <text class="lbl-sub" x="470" y="249" text-anchor="middle">ClassifierClient (L5) · *ActionService (L6) · TelephonyClient (L8)</text>
+
+      <rect class="rect-a" x="256" y="276" width="428" height="42" rx="3"/>
+      <text class="lbl-name" x="470" y="294" text-anchor="middle">Session &amp; ticket state</text>
+      <text class="lbl-sub" x="470" y="309" text-anchor="middle">L2 · a package, zero endpoints, zero outbound calls</text>
+
+      <text class="lbl-edge" x="256" y="350">Flowable (both engines) and Togglz are libraries in this JVM.</text>
+      <text class="lbl-edge" x="256" y="364">They are not separate services and need no infrastructure.</text>
+
+      <!-- right: externals -->
+      <rect class="rect-a" x="800" y="96" width="186" height="46" rx="3"/>
+      <text class="lbl-name" x="893" y="116" text-anchor="middle">Exotel / Ozonetel</text>
+      <text class="lbl-sub" x="893" y="131" text-anchor="middle">telephony vendor</text>
+
+      <rect class="rect-a" x="800" y="164" width="186" height="46" rx="3"/>
+      <text class="lbl-name" x="893" y="184" text-anchor="middle">empapi</text>
+      <text class="lbl-sub" x="893" y="199" text-anchor="middle">wallet · leave · fines</text>
+
+      <rect class="rect-b" x="800" y="232" width="186" height="46" rx="3"/>
+      <text class="lbl-name" x="893" y="252" text-anchor="middle">Python classifier</text>
+      <text class="lbl-sub" x="893" y="267" text-anchor="middle">DEPLOYABLE 2 · FastAPI · L5, L5b</text>
+
+      <rect class="rect-a" x="800" y="296" width="186" height="46" rx="3"/>
+      <text class="lbl-name" x="893" y="316" text-anchor="middle">Shared database</text>
+      <text class="lbl-sub" x="893" y="331" text-anchor="middle">ACT_* tables + our 6</text>
+
+      <!-- edges in -->
+      <path class="edge" d="M146,119 L200,119 L200,108 L234,108" marker-end="url(#ar2)"/>
+      <text class="lbl-edge" x="152" y="113">HTTPS</text>
+      <path class="edge" d="M146,195 L200,195 L200,124 L234,124" marker-end="url(#ar2)"/>
+      <text class="lbl-edge" x="152" y="189">HTTPS</text>
+      <text class="lbl-edge" x="152" y="210">cross-origin</text>
+
+      <!-- edges out -->
+      <path class="edge-net" d="M684,232 L726,232 L726,119 L794,119" marker-end="url(#ar2)"/>
+      <path class="edge-net" d="M684,237 L738,237 L738,187 L794,187" marker-end="url(#ar2)"/>
+      <path class="edge-net" d="M684,242 L750,242 L750,255 L794,255" marker-end="url(#ar2)"/>
+      <path class="edge-net" d="M684,297 L726,297 L726,319 L794,319" marker-end="url(#ar2)"/>
+      <text class="lbl-edge" x="732" y="113">REST</text>
+      <text class="lbl-edge" x="744" y="181">REST</text>
+      <text class="lbl-edge" x="700" y="270">HTTP · 3s</text>
+      <text class="lbl-edge" x="732" y="313">JDBC</text>
+    </svg>
+    <figcaption>Figure 2 — Deployment view. Dashed connectors are network hops. The <code>empapi</code> hop becomes an in-process method call if D-1 resolves in favour of hosting inside <code>empapi</code>; nothing above the adapter layer changes either way.</figcaption>
+  </figure>
+
+  <h3>Layer to deployable mapping</h3>
+  <div class="tw">
+    <table>
+      <caption>The thirteen logical layers and where each physically runs.</caption>
+      <thead><tr><th>Layer</th><th>What it is</th><th>Deployable</th><th>Principal type</th></tr></thead>
+      <tbody>
+        <tr><td>L1 Client integration</td><td>Server-driven conversation API</td><td>BOTIn backend</td><td><code>HelpSessionController</code></td></tr>
+        <tr><td>L2 Session &amp; ticket state</td><td>Persistence and audit backbone</td><td>BOTIn backend</td><td>package — no endpoints</td></tr>
+        <tr><td>L3 Orchestration</td><td>Flowable process engine (BPMN)</td><td>BOTIn backend</td><td>library</td></tr>
+        <tr><td>L4 Decision logic</td><td>Flowable DMN engine — same dependency</td><td>BOTIn backend</td><td>library</td></tr>
+        <tr><td>L5 Language understanding</td><td><code>POST /classify</code></td><td>Python classifier</td><td>FastAPI route</td></tr>
+        <tr><td>L5b Intent routing</td><td><code>POST /classify-intent</code></td><td>Python classifier</td><td>FastAPI route</td></tr>
+        <tr><td>L6 Action executors</td><td>One interface per capability</td><td>BOTIn backend</td><td><code>*ActionService</code></td></tr>
+        <tr><td>L7 Safety</td><td>Idempotency, kill switches, reconciliation</td><td>BOTIn backend</td><td>cross-cutting</td></tr>
+        <tr><td>L8 Agent connect</td><td>Context endpoints + outbound call</td><td>BOTIn backend (<code>admin</code> renders)</td><td><code>AgentContextController</code></td></tr>
+        <tr><td>L9 Observability</td><td>Micrometer + OpenTelemetry</td><td>BOTIn backend</td><td>cross-cutting</td></tr>
+        <tr><td>L10 Flows</td><td>Documentation, not code</td><td>—</td><td>—</td></tr>
+        <tr><td>L11 Access control</td><td><span class="chip c-open">Not designed</span> — see D-7</td><td>BOTIn backend</td><td>—</td></tr>
+        <tr><td>L12 LLM guardrails</td><td><span class="chip c-open">Not designed</span></td><td>Both</td><td>—</td></tr>
+        <tr><td>L13 AI agents</td><td><span class="chip c-def">Future</span> — Wave 4 only</td><td>—</td><td>—</td></tr>
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<section id="s4">
+  <h2><span class="num">4</span>Architecture decision records</h2><div class="rule"></div>
+  <p>Eight decisions that shape everything else. Each records what was rejected and what the choice costs — a decision presented without its cost is not a decision, it is advocacy.</p>
+
+  <div class="adr">
+    <div class="adr-h"><span class="id">ADR-001</span><span class="ti">Embedded BPMN engine (Flowable) for orchestration</span><span class="chip c-dec">Decided</span></div>
+    <div class="adr-b">
+      <dl>
+        <dt>Context</dt><dd>T0, T1 and T2 could be plain Java — request in, response out. <strong>T3 cannot.</strong> It pauses at "waiting for an agent" and must resume hours later, across deploys and restarts, without losing where it was.</dd>
+        <dt>Options</dt><dd><strong>Hand-rolled state machine</strong> — no dependency, but we write and debug persistence, resumption, retry and timer semantics ourselves. <strong>Temporal</strong> — purpose-built and excellent, but a server to operate and a new paid platform; <span class="chip c-open">rejected</span> — it adds infrastructure to run, which this design explicitly avoids. <strong>Flowable, embedded</strong> — a Maven dependency running in our JVM, persisting to the database we already have.</dd>
+        <dt>Decision</dt><dd>Flowable, embedded. On startup it creates roughly 25 <code>ACT_*</code> tables and scans <code>src/main/resources/processes/*.bpmn20.xml</code>. Each Service Task calls a Spring bean via <code>flowable:delegateExpression="${beanName}"</code>. "Route to Agent 2" is a native User Task with queue semantics, not something we build.</dd>
+        <dt>Consequences</dt><dd>The diagram <em>is</em> the executable, so the flow can be reviewed by someone who does not read Java. In exchange: ~25 tables in our schema, a new notation to author and review, and in-flight instances pinned to the old process version across a deploy. History level is set to <code>AUDIT</code>, not <code>FULL</code>, to bound write volume.</dd>
+      </dl>
+    </div>
+  </div>
+
+  <div class="adr">
+    <div class="adr-h"><span class="id">ADR-002</span><span class="ti">Business rules as DMN tables, not Java conditionals</span><span class="chip c-dec">Decided</span></div>
+    <div class="adr-b">
+      <dl>
+        <dt>Context</dt><dd>The "is this a genuine case?" rules will be tuned repeatedly — thresholds move, medal bands get exceptions, new reason categories appear. Routing every tuning cycle through a code deploy puts engineering in the path of a business decision.</dd>
+        <dt>Options</dt><dd><strong>Java <code>if</code> chains</strong> — fastest to write, invisible to ops, needs a deploy per change. <strong>BPMN gateways</strong> — fine for two or three branches, unreadable as a rule grid. <strong>DMN decision tables</strong> — a grid of conditions and outcomes, and already available: Flowable's DMN engine ships in the same dependency as the process engine, so this costs no new library.</dd>
+        <dt>Decision</dt><dd>One DMN table per automated concern, hit policy <code>FIRST</code>, bound from the BPMN diagram by a single Business Rule Task. Cells use FEEL — <code>&gt;= 0.7</code>, <code>&lt;= 2</code>, <code>"TITANIUM","QUEEN"</code> — which is deliberately readable without Java.</dd>
+        <dt>Consequences</dt><dd>Editing one cell and redeploying the <code>.dmn</code> file changes behaviour with no recompile. That is the benefit and the hazard: <strong>these rows move money</strong>. Row order is semantically significant under <code>FIRST</code>, so a misordered catch-all silently swallows specific rules. Requires the review gate in D-3 before Wave 1.</dd>
+      </dl>
+    </div>
+  </div>
+
+  <div class="adr">
+    <div class="adr-h"><span class="id">ADR-003</span><span class="ti">A separate Python service for language understanding</span><span class="chip c-dec">Decided</span></div>
+    <div class="adr-b">
+      <dl>
+        <dt>Context</dt><dd>Partners write in mixed Hindi, English and transliterated Hinglish, in one sentence. Keyword matching is brittle against this; classical NLU needs labelled training data we do not have; an LLM works from a described category list with no training data at all.</dd>
+        <dt>Options</dt><dd><strong>An LLM client inside the Java service</strong> — one deployable, simpler ops. <strong>A separate Python service</strong> — Pydantic response validation and mature vendor SDKs, independent deploy cadence, and a physical safety boundary.</dd>
+        <dt>Decision</dt><dd>A small FastAPI service with two endpoints and no database credentials. Called with a 3-second timeout behind a Resilience4j circuit breaker.</dd>
+        <dt>Consequences</dt><dd>The classifier <em>can misclassify but cannot wrongly credit a wallet</em>, because it structurally cannot reach one. That is a real property, not a diagram aesthetic. <strong>Stated honestly: a well-isolated Java package would achieve most of the same isolation.</strong> This choice is defensible, not a slam dunk, and it costs one more deployable to operate.</dd>
+      </dl>
+    </div>
+  </div>
+
+  <div class="adr">
+    <div class="adr-h"><span class="id">ADR-004</span><span class="ti">Partner-facing responses are templates, never generated</span><span class="chip c-dec">Decided</span></div>
+    <div class="adr-b">
+      <dl>
+        <dt>Context</dt><dd>Once a case is resolved, something has to tell the partner. The obvious question is whether the model already in the stack should write that message.</dd>
+        <dt>Options</dt><dd><strong>Templates keyed by the DMN action output</strong>. <strong>Model localises a template at runtime</strong>. <strong>Model generates freely</strong>. <strong>Model drafts translations at design time, a human reviews and commits them.</strong></dd>
+        <dt>Decision</dt><dd>Templates, plus design-time model-assisted translation with human review. Language selection is solved by <em>classification</em>, not generation: <code>/classify</code> returns <code>detectedLanguage</code> and Java picks the matching template. <strong>Python understands language; Java produces it.</strong></dd>
+        <dt>Consequences</dt><dd>Rules out hallucinated amounts and dates in financial messages, unauthorised commitments, and non-deterministic text in a dispute. A template can be reviewed <em>before</em> it is sent; generated text only after. It also keeps T0 and T1 at zero model calls. <strong>What we give up is naturalness</strong> — a real cost, and a smaller one than a wrong number in a message about money. Roughly 30 concerns × 3–4 outcomes ≈ 100 messages: a content problem, not a generation problem.</dd>
+      </dl>
+    </div>
+  </div>
+
+  <div class="adr">
+    <div class="adr-h"><span class="id">ADR-005</span><span class="ti">The action record commits in its own transaction</span><span class="chip c-dec">Decided</span></div>
+    <div class="adr-b">
+      <dl>
+        <dt>Context</dt><dd>A Flowable Service Task runs inside the engine's transaction. If a later step in the same transaction throws, everything rolls back — <em>including our record that we called an external system</em>. The external system does not roll back with it.</dd>
+        <dt>Options</dt><dd><strong>Accept the default transaction</strong> — simplest, and the failure mode is money moved with no trace of it. <strong>Write the record after the call succeeds</strong> — narrows the window, does not close it. <strong><code>@Transactional(propagation = REQUIRES_NEW)</code></strong> on the attempt record, committed before the external call.</dd>
+        <dt>Decision</dt><dd><code>TicketActionRecorder.recordAttempt()</code> is annotated <code>REQUIRES_NEW</code> and commits an <code>ATTEMPTED</code> row <em>before</em> the outbound call is made.</dd>
+        <dt>Consequences</dt><dd>A rollback can now leave an <code>ATTEMPTED</code> row with no completion — which is exactly right: reconciliation can see it and resolve it. The alternative loses the evidence entirely. <strong>This single annotation is the most load-bearing line in the design</strong>, which is why POC Phase 8 tests it deliberately rather than trusting it.</dd>
+      </dl>
+    </div>
+  </div>
+
+  <div class="adr">
+    <div class="adr-h"><span class="id">ADR-006</span><span class="ti"><code>concern_catalogue</code> as the single source of the taxonomy</span><span class="chip c-dec">Decided</span></div>
+    <div class="adr-b">
+      <dl>
+        <dt>Context</dt><dd>The L1/L2 concern list is consumed in at least six places: the client menu, process selection, fact fetching, decision table binding, the kill switch, and wave planning. Six copies of a list is six chances to drift.</dd>
+        <dt>Options</dt><dd><strong>A Java enum</strong> — type-safe, needs a deploy to change, invisible to ops. <strong>Config files</strong> — editable, no referential integrity. <strong>A database table</strong> whose columns are pointers to the other five artifacts.</dd>
+        <dt>Decision</dt><dd>One table. Beyond labels and ordering it carries <code>process_key</code> → Flowable, <code>fact_provider</code> → the <code>ConcernFactProvider</code> bean, <code>dmn_key</code> → the decision table, <code>togglz_flag</code> → the kill switch, plus <code>default_tier</code> and <code>wave</code>.</dd>
+        <dt>Consequences</dt><dd>One generic <code>fetchFactsDelegate</code> serves all ~30 concerns by resolving a provider from the row. <strong>But adding an L2 concern is never a pure config change</strong> — the row is only useful once the BPMN process, the fact provider bean, the DMN table and the templates exist. Saying otherwise would set a false expectation with ops. See §10.</dd>
+      </dl>
+    </div>
+  </div>
+
+  <div class="adr">
+    <div class="adr-h"><span class="id">ADR-007</span><span class="ti">Kill switches via Togglz, with fail-to-human semantics</span><span class="chip c-dec">Decided</span></div>
+    <div class="adr-b">
+      <dl>
+        <dt>Context</dt><dd>The gap between noticing that money is moving wrongly and stopping it. Via revert-rebuild-redeploy that gap is 15–30 minutes of continued incorrect payments.</dd>
+        <dt>Options</dt><dd><strong>A config flag with a restart</strong> — minutes, and a restart under incident conditions. <strong>A database column checked in code</strong> — works, hand-built, no console. <strong>Togglz</strong> — a Spring-native library, no server: a Feature enum, a <code>JDBCStateRepository</code>, and a console at <code>/togglz-console</code>.</dd>
+        <dt>Decision</dt><dd>Togglz, one flag per automated concern, checked <em>after</em> the decision table returns auto-approve and <em>before</em> the action executor runs. Gradual percentage rollout is built in, which is the BRD's ramp requirement for free.</dd>
+        <dt>Consequences</dt><dd><strong>The critical semantic: flag off does not mean fail — it means do not automate, send to a human (T3).</strong> The partner still gets service. Two known costs: <code>concern_catalogue.togglz_flag</code> is a runtime string against an enum-based API, resolved with <code>new NamedFeature(...)</code>, which bypasses enum type safety and needs startup validation; and <code>JDBCStateRepository</code> stores current state only — <strong>not who flipped it or when</strong>. Flip auditing must be added before Wave 1 (D-7).</dd>
+      </dl>
+    </div>
+  </div>
+
+  <div class="adr">
+    <div class="adr-h"><span class="id">ADR-008</span><span class="ti">Tier is a runtime outcome, not a property of a concern</span><span class="chip c-dec">Decided</span></div>
+    <div class="adr-b">
+      <dl>
+        <dt>Context</dt><dd>The BRD's Table 9 assigns a tier to each concern. But two partners raising the identical concern can warrant different treatment — one has a clean history and a clear fact pattern, the other has three similar claims this month.</dd>
+        <dt>Options</dt><dd><strong>Fixed tier per concern</strong> — simple, and forces the automation threshold to the most cautious case, discarding most of the benefit. <strong>Tier as a decision-table output</strong>, computed per request from the facts.</dd>
+        <dt>Decision</dt><dd><code>tier</code> is an output column of the DMN table, alongside <code>action</code>. <code>concern_catalogue.default_tier</code> exists only as a fallback when no table is configured.</dd>
+        <dt>Consequences</dt><dd>Automation rate becomes a tunable rather than a fixed property, and medal-band differentiation is one table row rather than a code branch. It also means <strong>no static document can state the tier of a concern</strong> — including this one. Any conflict with BRD Table 9 should be read as Table 9 describing the expected majority outcome (O-4, §13).</dd>
+      </dl>
+    </div>
+  </div>
+</section>
+
+<section id="s5">
+  <h2><span class="num">5</span>Data model</h2><div class="rule"></div>
+  <p>Six tables. Layer 2 is a package, not a service — <strong>zero HTTP endpoints and zero outbound calls</strong>, which makes it a leaf in the dependency graph and safe for everything else to depend on.</p>
+  <div class="tw">
+    <table>
+      <thead><tr><th>Table</th><th>Created when</th><th>Key fields</th><th>Write pattern</th></tr></thead>
+      <tbody>
+        <tr><td><code>concern_catalogue</code></td><td>Seeded per concern</td><td><code>l1_code</code>, <code>l2_code</code>, <code>process_key</code>, <code>fact_provider</code>, <code>dmn_key</code>, <code>togglz_flag</code>, <code>default_tier</code>, <code>wave</code></td><td>Reference data — read-mostly</td></tr>
+        <tr><td><code>help_session</code></td><td>The instant Help is tapped</td><td><code>spId</code>, <code>currentStep</code>, <code>l1Concern</code>, <code>l2Concern</code>, <code>selectedBookingId</code>, <code>nextStep</code></td><td>Synchronous</td></tr>
+        <tr><td><code>ticket</code></td><td><strong>Gate 1</strong> — an L2 concern needing an answer or action is selected</td><td><code>helpSessionId</code>, <code>l1</code>, <code>l2</code>, <code>l3</code>, <code>tier</code>, <code>status</code>, <code>agentOwner</code>, <code>csatResult</code></td><td>Synchronous</td></tr>
+        <tr><td><code>ticket_action</code></td><td>One row per attempted backend action</td><td><code>actionType</code>, <code>idempotencyKey</code> <em>(unique)</em>, <code>status</code>, <code>requestPayload</code>, <code>responsePayload</code></td><td>Synchronous, <code>REQUIRES_NEW</code> — see ADR-005</td></tr>
+        <tr><td><code>conversation_message</code></td><td>Every turn, every tier</td><td><code>sender</code>, <code>content</code>, <code>stepType</code>, <code>timestamp</code></td><td><strong>Deferred</strong> — <code>ApplicationEvent</code> + <code>@TransactionalEventListener(AFTER_COMMIT)</code> + <code>@Async</code></td></tr>
+        <tr><td><code>escalation_context</code></td><td>Once, when a T3 trigger fires</td><td><code>category</code>, <code>confidenceScore</code>, <code>extractedReason</code>, <code>medalBand</code>, <code>recentTicketHistory</code>, <code>priorTicketActions</code>, <code>triggerReason</code></td><td>Synchronous, once</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <p><strong>Two entities, not one, for a reason.</strong> A Help interaction exists before a ticket does. A T0 deflection creates a <code>help_session</code> and never creates a <code>ticket</code> — which is the BRD's Gate 1 made literal, and the reason T0 volume does not appear in ticket counts at all.</p>
+  <p><strong>Write criticality is tiered deliberately.</strong> Four of the six are on the request path and must be synchronous. <code>conversation_message</code> is the highest-volume write and the least critical — it is the raw transcript, deliberately not what an agent sees first — so it is published as an event after commit and written on a separate thread. That keeps transcript volume off the partner's response latency without risking the records that matter.</p>
+  <p><strong>Index required before Wave 1:</strong> <code>ticket(sp_id, created_at)</code>. The claim-frequency read sits on the critical path of every T2 decision.</p>
+</section>
+
+<section id="s6">
+  <h2><span class="num">6</span>Interfaces</h2><div class="rule"></div>
+  <div class="tw">
+    <table>
+      <caption>Complete API inventory. Ten endpoints, nine designed.</caption>
+      <thead><tr><th>Endpoint</th><th>Direction</th><th>Owner class</th><th>Status</th></tr></thead>
+      <tbody>
+        <tr><td><code>POST /help/sessions</code></td><td>In — SP app</td><td><code>HelpSessionController</code></td><td><span class="chip c-dec">Designed</span></td></tr>
+        <tr><td><code>POST /help/sessions/{id}/input</code></td><td>In — SP app</td><td><code>HelpSessionController</code></td><td><span class="chip c-dec">Designed</span></td></tr>
+        <tr><td><code>GET /help/sessions/{id}</code></td><td>In — SP app</td><td><code>HelpSessionController</code></td><td><span class="chip c-dec">Designed</span></td></tr>
+        <tr><td><code>GET /tickets/{id}/escalation-context</code></td><td>In — <code>admin</code>, cross-origin</td><td><code>AgentContextController</code></td><td><span class="chip c-dec">Designed</span></td></tr>
+        <tr><td><code>GET /tickets/{id}/conversation</code></td><td>In — <code>admin</code>, cross-origin</td><td><code>AgentContextController</code></td><td><span class="chip c-dec">Designed</span></td></tr>
+        <tr><td><code>POST /internal/tickets/{id}/closed</code></td><td>In — <code>admin</code></td><td><code>TicketCallbackController</code></td><td><span class="chip c-open">Webhook vs polling undecided</span></td></tr>
+        <tr><td><code>POST /classify</code></td><td>Out — Python</td><td><code>ClassifierClient</code></td><td><span class="chip c-dec">Designed</span></td></tr>
+        <tr><td><code>POST /classify-intent</code></td><td>Out — Python</td><td><code>ClassifierClient</code></td><td><span class="chip c-dec">Designed</span></td></tr>
+        <tr><td>Wallet / leave / fine actions</td><td>Out — <code>empapi</code></td><td><code>*ActionService</code></td><td><span class="chip c-open">HTTP or in-process — D-1</span></td></tr>
+        <tr><td>Outbound call trigger</td><td>Out — telephony vendor</td><td><code>TelephonyClient</code></td><td><span class="chip c-dec">Designed</span></td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <h3>The client contract</h3>
+  <p>Every response carries a <code>nextStep</code> descriptor — <code>menu</code>, <code>dropdown</code>, <code>text</code>, <code>message</code> or <code>csat</code> — plus its options or content. <strong>The backend owns 100% of the flow logic; the client is a thin renderer.</strong> The alternative puts flow logic in two places, where it drifts.</p>
+  <p>One mechanism worth stating because it is a real trap: after <code>startProcessInstanceByKey(...)</code> returns, <strong>Layer 1 must not read process variables</strong>. A completed process instance has its runtime row deleted, so those variables are gone. The process's final Service Task writes <code>nextStep</code> onto the <code>help_session</code> row, and Layer 1 re-reads it from there.</p>
+
+  <h3>The two classification contracts</h3>
+  <p>Different scales, different prompts, tuned independently:</p>
+  <div class="tw">
+    <table>
+      <thead><tr><th>&nbsp;</th><th><code>/classify</code></th><th><code>/classify-intent</code></th></tr></thead>
+      <tbody>
+        <tr><td>Called when</td><td>Concern known, partner explains why</td><td>No concern yet — free text as the first message</td></tr>
+        <tr><td>Classifies against</td><td>One concern's fixed category list (6 for leave fine)</td><td>The entire L1/L2 taxonomy (~30)</td></tr>
+        <tr><td>Request</td><td><code>{ ticketId, l2Concern, freeText }</code></td><td><code>{ sessionId, freeText }</code></td></tr>
+        <tr><td>Response</td><td><code>{ category, confidenceScore, extractedReason, detectedLanguage }</code></td><td><code>{ l1Concern, l2Concern, confidenceScore }</code></td></tr>
+        <tr><td>Frequency</td><td>Per reason step — overwhelmingly T2</td><td>At most once per session</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <h3>The agent handoff — two calls, unequal weight</h3>
+  <p><code>GET /tickets/{id}/escalation-context</code> is called first, before the call even connects, and returns computed facts: category, confidence, the already-extracted reason, medal band, a recent-history rollup, prior actions, and which trigger fired. <code>GET /tickets/{id}/conversation</code> is secondary and lazy — behind a "view full conversation" control, not auto-loaded.</p>
+  <p><strong>Deliberately not built:</strong> a model call to write a prose summary for the agent. <code>extractedReason</code> already <em>is</em> the summary, structured rather than prose, reused from the classification that already ran. A third model touchpoint to re-summarise what has already been extracted is scope creep, not a missing piece.</p>
+</section>
+
+<section id="s7">
+  <h2><span class="num">7</span>Runtime trace — a T2 leave-fine refund</h2><div class="rule"></div>
+  <p>The highest-stakes path, traced end to end. Every step names what it receives, what it does, and what it passes on.</p>
+  <ol class="trace">
+    <li><b>SP app → <code>POST /help/sessions</code></b><span>Partner taps Help and selects <em>Leave fine</em>. <code>help_session</code> row created. No ticket yet.</span></li>
+    <li><b>Gate 1 — ticket created</b><span>An L2 concern needing an action was selected, so a <code>ticket</code> row is inserted. From here everything is attributable to a ticket id.</span></li>
+    <li><b>Catalogue lookup</b><span>One row of <code>concern_catalogue</code> yields <code>process_key=leave-fine</code>, <code>fact_provider=LEAVE_FINE</code>, <code>dmn_key=leave-fine-genuine</code>, <code>togglz_flag=leave-fine-auto-waive</code>.</span></li>
+    <li><b>Client renders the fine list, partner picks one, then types a reason</b><span>Two more <code>/input</code> calls. The free text lands as a process variable.</span></li>
+    <li><b>Flowable Service Task → <code>ClassifierClient</code> → <code>POST /classify</code></b><span>3-second timeout behind a circuit breaker. Returns <code>{category, confidenceScore, extractedReason, detectedLanguage}</code>. On timeout, non-2xx, or an open circuit, <code>tier</code> is set to T3 and the flow continues — it never blocks on a flaky dependency.</span></li>
+    <li><b>Service Task → <code>fetchFactsDelegate</code> → <code>LeaveFineFactProvider</code></b><span>Real database reads: <code>fineExists</code>, <code>fineAmount</code>, <code>fineAgeDays</code>, <code>alreadyRefunded</code>, <code>leaveBalance</code>, <code>claimFreq30d</code>, <code>medalBand</code>.</span></li>
+    <li><b>Business Rule Task → DMN engine</b><span>The facts and the category go in as a map; <code>{tier, action}</code> comes out. Synchronous, in-process, sub-millisecond. This is the only bridge between the process engine and the decision engine.</span></li>
+    <li><b>Exclusive Gateway on <code>${tier}</code></b><span>T2 continues to the action path. T1 goes to a message. T3 goes to the escalation path.</span></li>
+    <li><b>Gateway on the Togglz flag</b><span>If <code>leave-fine-auto-waive</code> is off, the flow routes to T3 — <strong>a human, not an error</strong>.</span></li>
+    <li><b><code>recordAttempt()</code> — <code>REQUIRES_NEW</code>, commits first</b><span>An <code>ATTEMPTED</code> <code>ticket_action</code> row with <code>idempotencyKey = hash(ticketId, actionType)</code> is committed <em>before</em> any external call. ADR-005 in one line.</span></li>
+    <li><b><code>FineActionService.refund(...)</code></b><span>The money moves. Same idempotency key on retry, so a duplicate is a no-op rather than a double credit.</span></li>
+    <li><b>Record the outcome, select a template</b><span><code>ticket_action</code> updated to <code>SUCCEEDED</code>. The template is chosen by DMN <code>action</code> + <code>detectedLanguage</code>.</span></li>
+    <li><b><code>finalizeDelegate</code> writes <code>nextStep</code> to <code>help_session</code></b><span>Not to process variables — those vanish on completion (§6).</span></li>
+    <li><b>Client polls or re-reads, renders the message, then CSAT</b><span>Ticket closed. Total model calls in this path: one.</span></li>
+  </ol>
+
+  <h3>The decision table this path evaluated</h3>
+  <p>Rendered as it appears in the modeller. <span style="color:var(--t1)">⇥</span> marks input columns, <span style="color:var(--t2)">⇤</span> outputs. Hit policy <code>FIRST</code>, so <strong>row order is semantically significant</strong> — the catch-all must stay last.</p>
+  <div class="tw">
+    <table class="dmn">
+      <caption>leave-fine-genuine.dmn — abridged. Categories are taken verbatim from the SOP, not invented.</caption>
+      <thead><tr>
+        <th>#</th><th class="in">⇥ category</th><th class="in">⇥ confidence</th><th class="in">⇥ facts</th><th class="out">⇤ tier</th><th class="out">⇤ action</th>
+      </tr></thead>
+      <tbody>
+        <tr><td>1</td><td>–</td><td>&lt; 0.7</td><td>–</td><td>T3</td><td>route_agent</td></tr>
+        <tr><td>2</td><td>–</td><td>–</td><td>fineExists = false</td><td>T1</td><td>explain_no_fine</td></tr>
+        <tr><td>3</td><td>–</td><td>–</td><td>alreadyRefunded = true</td><td>T1</td><td>explain_already_refunded</td></tr>
+        <tr><td>4</td><td>"leave_impact"</td><td>&gt;= 0.7</td><td>leaveBalance = 0</td><td>T2</td><td>auto_waive</td></tr>
+        <tr><td>5</td><td>"health_issue"</td><td>&gt;= 0.7</td><td>claimFreq30d &lt;= 2</td><td>T2</td><td>auto_waive</td></tr>
+        <tr><td>6</td><td>"health_issue"</td><td>&gt;= 0.7</td><td>medalBand in "TITANIUM","QUEEN"</td><td>T2</td><td>auto_waive</td></tr>
+        <tr><td>7</td><td>"personal_reasons"</td><td>–</td><td>–</td><td>T3</td><td>route_agent</td></tr>
+        <tr><td>8</td><td>–</td><td>–</td><td>–</td><td>T3</td><td>route_agent</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <p>Row 6 is the one worth pointing at in a review: <em>a Titanium or Queen partner gets the benefit of the doubt even at a high claim rate.</em> That is the BRD's medal-band differentiation expressed as one table row, with no code. Row 3 exists because the SOP already ships a response template for an already-refunded fine — a scenario the original design had missed, surfaced by reading the SOP rather than reasoning from the architecture.</p>
+</section>
+
+<section id="s8">
+  <h2><span class="num">8</span>Money safety</h2><div class="rule"></div>
+  <p>T2 moves money with no human in the loop. Four independent controls, each covering a failure the others do not.</p>
+
+  <div class="note hazard">
+    <p><strong>The hazard, stated plainly.</strong> A Flowable Service Task runs inside the engine's transaction. If a step after the external call throws, the engine rolls back — and the rollback erases our record that we called the external system. <strong>The external system does not roll back.</strong> The result is money moved and no evidence in our database that we moved it. Not a lost record: a financial reconciliation failure with no audit trail.</p>
+  </div>
+
+  <div class="tw">
+    <table>
+      <thead><tr><th>Control</th><th>Mechanism</th><th>Covers</th></tr></thead>
+      <tbody>
+        <tr><td><strong>Idempotency key</strong></td><td>Unique constraint on <code>ticket_action.idempotency_key</code>, generated as <code>hash(ticketId, actionType)</code></td><td>Retries and duplicate submissions. A repeat is a no-op, not a second credit</td></tr>
+        <tr><td><strong>Independent transaction</strong></td><td><code>@Transactional(propagation = REQUIRES_NEW)</code> on <code>recordAttempt()</code>, committed before the outbound call</td><td>The hazard above. A rollback leaves an <code>ATTEMPTED</code> row that reconciliation can see and resolve</td></tr>
+        <tr><td><strong>Kill switch</strong></td><td>Togglz flag per concern, checked after the decision and before the action</td><td>Systematic error discovered in production. Seconds to stop, and partners still get served — by a human</td></tr>
+        <tr><td><strong>Reconciliation</strong></td><td>A Spring <code>@Scheduled</code> job summing <code>ticket_action</code> credits per partner against the actual ledger</td><td>Everything the first three miss. Alerts on any mismatch — target is zero, so any non-zero is actionable</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <p><strong>Retry and idempotency are a designed pair, not two features.</strong> Flowable will retry a failed job; the idempotency key is what makes that retry safe. Neither is sound without the other, and reviewing one without the other misses the point.</p>
+  <p>POC Phase 8 tests the second control by deliberately constructing the failure: record the attempt, simulate a successful external call, throw from a later delegate, then assert that the Flowable transaction rolled back <strong>and the <code>ticket_action</code> row survived</strong>. If that test fails, the money-safety model needs redesign and the project stops there rather than continuing.</p>
+</section>
+
+<section id="s9">
+  <h2><span class="num">9</span>Failure modes</h2><div class="rule"></div>
+  <p>The governing principle throughout: <strong>degrade to a human, never break.</strong> Every dependency failure below routes to T3 rather than surfacing an error to the partner.</p>
+  <div class="tw">
+    <table>
+      <thead><tr><th>What fails</th><th>Detected by</th><th>System behaviour</th><th>Partner experiences</th></tr></thead>
+      <tbody>
+        <tr><td>Python classifier down or slow</td><td>3s timeout; Resilience4j circuit breaker</td><td><code>tier = T3</code></td><td>An agent calls them</td></tr>
+        <tr><td>Classifier returns low confidence</td><td><code>confidenceScore &lt; 0.7</code> — DMN row 1</td><td><code>tier = T3</code></td><td>An agent calls them</td></tr>
+        <tr><td>Kill switch flipped off</td><td>Togglz gate after the decision</td><td><code>tier = T3</code></td><td>An agent calls them</td></tr>
+        <tr><td><code>empapi</code> action fails</td><td>Non-2xx from <code>*ActionService</code></td><td><code>ticket_action</code> marked <code>FAILED</code>; Flowable retries; escalate on exhaustion</td><td>Slower resolution, or an agent</td></tr>
+        <tr><td>JVM restarts mid-flow</td><td>—</td><td>Process state is in the database; the instance resumes where it paused</td><td>Nothing</td></tr>
+        <tr><td>Telephony call fails</td><td>Non-2xx from vendor</td><td><span class="chip c-open">Retry policy undecided</span> — O-7, §13</td><td>Possibly no callback. A real gap</td></tr>
+        <tr><td>Fact provider finds no record</td><td>Empty result</td><td><span class="chip c-open">Convention undecided</span> — O-8, §13</td><td>Undefined. Must be settled before Wave 1</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <p>The last two rows are genuine gaps, listed here rather than omitted. Both are small to close and neither blocks the POC.</p>
+</section>
+
+<section id="s10">
+  <h2><span class="num">10</span>What is code and what is configuration</h2><div class="rule"></div>
+  <p>The split is deliberate and worth stating precisely, because it sets expectations about who can change what without engineering.</p>
+  <div class="note">
+    <p><strong>What data to fetch is code. What to conclude from it is configuration.</strong> A fact provider is a Java bean because fetching correctly is an engineering concern. A decision table is a grid because concluding correctly is a business concern that will be tuned.</p>
+  </div>
+  <div class="tw">
+    <table>
+      <thead><tr><th>Change</th><th>Artifact</th><th>Deploy needed</th><th>Who can do it</th></tr></thead>
+      <tbody>
+        <tr><td>Move a confidence threshold</td><td><code>.dmn</code> cell</td><td>Redeploy the file only</td><td>Ops, subject to D-3</td></tr>
+        <tr><td>Add a medal-band exception</td><td><code>.dmn</code> row</td><td>Redeploy the file only</td><td>Ops, subject to D-3</td></tr>
+        <tr><td>Turn a concern's automation off</td><td>Togglz console</td><td>None — seconds</td><td>Ops</td></tr>
+        <tr><td>Reword a partner response</td><td>Template bundle</td><td>Deploy</td><td>D-4 — <span class="chip c-open">owner undecided</span></td></tr>
+        <tr><td>Change the order of conversation steps</td><td><code>.bpmn20.xml</code></td><td>Redeploy the file only</td><td>Engineering</td></tr>
+        <tr><td>Fetch a new fact</td><td><code>ConcernFactProvider</code> bean</td><td>Full deploy</td><td>Engineering</td></tr>
+        <tr><td><strong>Add an L2 concern</strong></td><td>Catalogue row <strong>+ BPMN + fact provider + DMN + templates</strong></td><td>Full deploy</td><td>Engineering</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <p>The last row is the one to be honest about. <code>concern_catalogue</code> makes a concern <em>configurable</em>, not <em>free</em> — the row is a set of pointers, and the things it points at have to exist. Presenting it as "just add a row" would set an expectation with ops that the design cannot meet.</p>
+  <p><strong>Where response templates live and who owns editing them is not yet designed.</strong> A <code>messages/</code> resource bundle keyed by action and language is the obvious answer, but it is an assumption, not a decision — see D-4.</p>
+</section>
+
+<section id="s11">
+  <h2><span class="num">11</span>Non-functional concerns</h2><div class="rule"></div>
+  <h3>Observability <span class="chip c-dec">Designed</span></h3>
+  <p>Micrometer instrumented at each layer, exported via the OpenTelemetry Java agent into Prometheus and Grafana — or whatever the EKS cluster already runs, which is worth confirming before standing anything up (O-9, §13). Dashboards carry the KPIs from §A.7 with the alert thresholds attached.</p>
+
+  <h3>Access control <span class="chip c-open">Not designed — D-7</span></h3>
+  <p>Deliberately marked as a gap rather than hand-waved. The unresolved questions are concrete: who may flip a kill switch; who may edit a decision table that moves money; who may read a partner's transcript, which contains whatever they typed; and how <code>admin</code> authenticates to the BOTIn backend across origins. <strong>This must land before Wave 1 go-live, not after.</strong> Shipping a money-moving system with an unauthenticated <code>/togglz-console</code> is not acceptable, and the current design has no answer for it.</p>
+
+  <h3>LLM guardrails <span class="chip c-open">Not designed</span></h3>
+  <p>The classifier returns a category string that selects a code path. Nothing today validates that the returned category is a member of the expected enum, and nothing constrains what a prompt-injected free-text field could elicit. The mitigation is structural rather than clever — Python holds no credentials and can take no action (ADR-003) — so the blast radius is a misclassification, which routes to a human. Explicit validation still needs designing.</p>
+
+  <h3>Data retention</h3>
+  <p><code>conversation_message</code> is the highest-volume table and holds whatever partners type, which may include personal information. Retention, archival and a PII policy are open (O-10, §13). Flowable history is capped at <code>AUDIT</code> level rather than <code>FULL</code> to bound its own growth.</p>
+</section>
+
+<section id="s12">
+  <h2><span class="num">12</span>Delivery plan</h2><div class="rule"></div>
+  <h3>Phase 1 — the proof of concept</h3>
+  <p>One concern, carried end to end through every module the design needs. It exists to answer five questions that would be expensive to get wrong later. <strong>It is not a small version of the product</strong> — it is the shortest path that exercises Flowable, the DMN engine, the classifier, the action executor and the transaction boundary at once.</p>
+  <div class="tw">
+    <table>
+      <thead><tr><th>#</th><th>Question</th><th>Answered by</th><th>If the answer is bad</th></tr></thead>
+      <tbody>
+        <tr><td>U-1</td><td>Does Flowable really pause at a User Task, survive a JVM restart, and resume?</td><td>POC Phase 8 — the restart test</td><td><strong>Stop.</strong> The entire justification for ADR-001 collapses</td></tr>
+        <tr><td>U-2</td><td>Does the model reach usable accuracy on real Hinglish?</td><td>POC Phase 10 — 150–200 hand-labelled real tickets</td><td>Raise the threshold and accept a higher agent-connect rate, or make free text a fallback rather than a front door</td></tr>
+        <tr><td>U-3</td><td>Does <code>REQUIRES_NEW</code> really protect the action record through a rollback?</td><td>POC Phase 8 — the rollback test</td><td><strong>Stop.</strong> The money-safety model needs redesign</td></tr>
+        <tr><td>U-4</td><td>Do the leave and fine capabilities exist as callable methods in <code>empapi</code>?</td><td>POC Phase 0 — an audit of the codebase, no code written</td><td>Not a blocker. Layer 6 becomes a build rather than an integration; nothing above the interface changes</td></tr>
+        <tr><td>U-5</td><td>Can a DMN edit change behaviour with no redeploy?</td><td>POC Phase 11</td><td>ADR-002's main benefit is lost; rules become an engineering task</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <p><strong>Exit criteria are agreed before the numbers are known</strong>, which is the only way a threshold means anything: ≥ 90% classifier accuracy means the design holds; 75–90% means proceed with a raised threshold and a higher expected agent-connect rate; below 75% means rethink the approach. Either safety test failing means stop.</p>
+  <p><strong>One dependency worth naming:</strong> POC Phases 1–8 depend on nothing from Phase 0 except the test environment, so the data-labelling work is independent of the build. That labelling is also the step most likely to be dropped — and without it, Phase 10 produces an impression rather than a number, which forfeits the whole reason for running U-2.</p>
+
+  <h3>Phases 2 onward</h3>
+  <p>The shape of Phase 2 depends on U-4. An integration and a build are materially different pieces of work in Layer 6, and the rest of the phase cannot be scoped meaningfully until that audit returns.</p>
+</section>
+
+<section id="s13">
+  <h2><span class="num">13</span>Open questions</h2><div class="rule"></div>
+  <p>Distinct from §A.4: those need a decision from someone else. These are things not yet designed. None blocks the POC.</p>
+  <div class="tw">
+    <table>
+      <thead><tr><th>#</th><th>Question</th><th>Blocks</th></tr></thead>
+      <tbody>
+        <tr><td>O-1</td><td>One BPMN process per concern (~30 diagrams) or one parameterised process?</td><td>Wave 2 scale-up</td></tr>
+        <tr><td>O-2</td><td>Ticket-closed callback: webhook from <code>admin</code>, or polling?</td><td>Wave 1</td></tr>
+        <tr><td>O-3</td><td>Low-confidence policy at the entry point — fall back to the menu, or escalate as "unclassified"?</td><td>Nothing. A product call, not an architecture one</td></tr>
+        <tr><td>O-4</td><td>Reconcile BRD Table 9's per-concern tiers with runtime tier assignment (ADR-008)</td><td>Nothing — but it will be asked in review</td></tr>
+        <tr><td>O-5</td><td>Trigger A, B and E behaviour is undefined in the BRD</td><td>Wave 1</td></tr>
+        <tr><td>O-6</td><td>Decision-table versioning — does in-flight pinning apply as it does to BPMN?</td><td>Wave 1</td></tr>
+        <tr><td>O-7</td><td>Telephony retry policy on vendor failure</td><td>Wave 1</td></tr>
+        <tr><td>O-8</td><td>Convention when a fact provider finds no matching record — must be consistent across all ~30</td><td>Wave 1</td></tr>
+        <tr><td>O-9</td><td>Does EKS already run Prometheus and Grafana?</td><td>Nothing — may save work</td></tr>
+        <tr><td>O-10</td><td>Transcript retention, archival and PII policy</td><td>Wave 1</td></tr>
+        <tr><td>O-11</td><td>Async job executor configuration for multi-pod EKS, and dead-letter job monitoring</td><td>Wave 1</td></tr>
+        <tr><td>O-12</td><td><code>concern_catalogue</code> needs populating from the SOP (~30 rows); labels need multi-language treatment</td><td>Wave 2</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <p>One input is still outstanding and worth naming: <strong><code>SP_Help_Flows.drawio</code></strong> — 51 flowcharts referenced by the BRD, not yet in hand. It is the most likely source of detail that would change O-1 and O-12.</p>
+</section>
+
+<section id="s14">
+  <h2><span class="num">14</span>Terminology</h2><div class="rule"></div>
+  <div class="tw">
+    <table>
+      <thead><tr><th>Term</th><th>Expansion</th><th>What it is here</th></tr></thead>
+      <tbody>
+        <tr><td>BPMN</td><td>Business Process Model and Notation</td><td>An OMG specification for describing a <em>process</em> — sequence, branches, waits. Renders as a flowchart. Layer 3</td></tr>
+        <tr><td>DMN</td><td>Decision Model and Notation</td><td>An OMG specification for describing a <em>decision</em> — conditions to outcomes. Renders as a table. Layer 4</td></tr>
+        <tr><td>CMMN</td><td>Case Management Model and Notation</td><td>The third OMG sibling. <strong>Not used</strong></td></tr>
+        <tr><td>OMG</td><td>Object Management Group</td><td>The standards body behind all three, and behind UML</td></tr>
+        <tr><td>FEEL</td><td>Friendly Enough Expression Language</td><td>The cell syntax inside a DMN table. Readable without Java, by design</td></tr>
+        <tr><td>Flowable</td><td>—</td><td>A <em>product</em> — the JAR. BPMN is the specification, "BPMN process engine" is the software category, Flowable is one product in it. Peers: Camunda, jBPM, Activiti</td></tr>
+        <tr><td>SP</td><td>Service Partner</td><td>The person this system serves</td></tr>
+        <tr><td>CTI</td><td>Computer Telephony Integration</td><td>The screen-pop link between an inbound call and the agent's view. Layer 8</td></tr>
+        <tr><td>Gate 1</td><td>—</td><td>The BRD's term for the moment a ticket is created — an L2 concern needing an answer or action is selected</td></tr>
+        <tr><td>Medal band</td><td>—</td><td>The partner standing tier (Titanium, Queen and others) used as a DMN input</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <div class="note">
+    <p><strong>The distinction reviewers most often collapse:</strong> the process engine <em>remembers</em>, the decision engine does not. The process engine is stateful — it writes <code>ACT_RU_*</code> rows, waits indefinitely, and survives restarts. The DMN engine is a stateless pure function: facts in, <code>{tier, action}</code> out. They ship in the same dependency and meet at exactly one place, the Business Rule Task.</p>
+  </div>
+</section>
+
+</main>
+
+<footer>
+  BOTIn Mod · Technical Design Document<br>
+  Source documents — PX Outbound Model BOT Intervention BRD (v2) · Ticket Flow Automation, Partner Support (SOP workbook)<br>
+  External reference — <a href="https://www.databricks.com/blog/redefining-customer-support-swiggys-enterprise-scale-ai-agent-built-databricks">Swiggy's enterprise-scale support agent</a><br>
+  Companion documents — <a href="https://claude.ai/code/artifact/59ebff15-5103-46e6-9bb0-78e92cd366b2">Layer Reference</a> · <a href="https://claude.ai/code/artifact/9c1c15c9-5c33-4d8b-9d8a-3191e158e92c">Flow Map</a> · <a href="https://claude.ai/code/artifact/fadeaced-ed53-4812-9455-db3f625ada34">POC Scope Lock</a> · <a href="https://claude.ai/code/artifact/f3ae08c5-d343-4790-bbbc-0693cb54c82d">POC Checklist</a><br>
+  Contains internal business rules and repository names. Private until deliberately shared.
+</footer>
+
+</div>

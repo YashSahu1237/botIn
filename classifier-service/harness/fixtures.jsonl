@@ -1,0 +1,33 @@
+# HAND-WRITTEN HINGLISH FIXTURES — and they are NOT a substitute for real text.
+#
+# PLAN STEP 10 asked for 150-200 hand-labelled REAL partner messages and could not
+# be done: no historical ticket text exists. These are written from the concern
+# names and the phrasing in the concern mapping, which is real partner language
+# second-hand at best.
+#
+# THEY EXERCISE THE HARNESS. THEY DO NOT MEASURE A MODEL. Fixtures written by the
+# person building the classifier always classify well — that is a mirror, not
+# evidence. Any accuracy number from this file describes the harness.
+#
+# expected_category: an ACTIVE concern code, or null for "a person should see this"
+# expected_risk:     true when a human must see it now, whatever it is about
+{"text": "transport ka paisa nahi mila", "expected_category": "TRANSPORT_NOT_RECEIVED", "expected_risk": false}
+{"text": "transport amount nahi aaya abhi tak", "expected_category": "TRANSPORT_NOT_RECEIVED", "expected_risk": false}
+{"text": "travel ka kharcha kaun dega", "expected_category": "TRANSPORT_NOT_RECEIVED", "expected_risk": false}
+{"text": "recharge kiya pese cut gaye wallet me nahi aaye", "expected_category": "RECHARGE_DEBIT_NO_CREDIT", "expected_risk": false}
+{"text": "recharge fail ho gaya paisa kat gaya", "expected_category": "RECHARGE_DEBIT_NO_CREDIT", "expected_risk": false}
+{"text": "paise cut gaye lekin balance nahi badha", "expected_category": "RECHARGE_DEBIT_NO_CREDIT", "expected_risk": false}
+{"text": "mpin bhool gaya hun", "expected_category": "FORGET_MPIN", "expected_risk": false}
+{"text": "mera mpin yaad nahi aa raha", "expected_category": "FORGET_MPIN", "expected_risk": false}
+{"text": "pin bhool gaya reset karna hai", "expected_category": "FORGET_MPIN", "expected_risk": false}
+{"text": "order nahi aaya abhi tak", "expected_category": "PROD_DELIVERY_DELAY", "expected_risk": false}
+{"text": "product delivery me bahut late ho raha hai", "expected_category": "PROD_DELIVERY_DELAY", "expected_risk": false}
+{"text": "saman kab tak pahunchega", "expected_category": "PROD_DELIVERY_DELAY", "expected_risk": false}
+{"text": "bhai kal wala kaam ka kya hua", "expected_category": null, "expected_risk": false}
+{"text": "wahi wala", "expected_category": null, "expected_risk": false}
+{"text": "arre samajh nahi aa raha kya karu", "expected_category": null, "expected_risk": false}
+{"text": "kuch to kijiye please", "expected_category": null, "expected_risk": false}
+{"text": "accident ho gaya aur mpin bhi bhool gaya", "expected_category": "FORGET_MPIN", "expected_risk": true}
+{"text": "hospital me hun job pe nahi ja sakta", "expected_category": null, "expected_risk": true}
+{"text": "police ne rok liya hai raste me", "expected_category": null, "expected_risk": true}
+{"text": "customer ne dhamki di hai mujhe", "expected_category": null, "expected_risk": true}

@@ -1,0 +1,95 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+  <modelVersion>4.0.0</modelVersion>
+
+  <parent>
+    <groupId>org.springframework.boot</groupId>
+    <artifactId>spring-boot-starter-parent</artifactId>
+    <version>3.2.5</version>
+    <relativePath/>
+  </parent>
+
+  <groupId>in.yesmadam</groupId>
+  <artifactId>botin</artifactId>
+  <version>0.1.0-SNAPSHOT</version>
+  <name>botin</name>
+  <description>BOTIn Mod — bot-first outbound support for Service Partners</description>
+
+  <properties>
+    <java.version>17</java.version>
+    <!-- Versions proven in the R&D ladder. All resolved cleanly. -->
+    <flowable.version>7.0.1</flowable.version>
+    <togglz.version>4.4.0</togglz.version>
+    <resilience4j.version>2.2.0</resilience4j.version>
+    <!-- 2.3.x is the line built against Spring Boot 3.2. Step 94. -->
+    <springdoc.version>2.3.0</springdoc.version>
+  </properties>
+
+  <dependencies>
+    <dependency><groupId>org.springframework.boot</groupId><artifactId>spring-boot-starter-web</artifactId></dependency>
+    <dependency><groupId>org.springframework.boot</groupId><artifactId>spring-boot-starter-data-jpa</artifactId></dependency>
+    <dependency><groupId>org.springframework.boot</groupId><artifactId>spring-boot-starter-validation</artifactId></dependency>
+    <dependency><groupId>org.springframework.boot</groupId><artifactId>spring-boot-starter-aop</artifactId></dependency>
+    <dependency><groupId>org.springframework.boot</groupId><artifactId>spring-boot-starter-actuator</artifactId></dependency>
+
+    <dependency>
+      <groupId>org.flowable</groupId>
+      <artifactId>flowable-spring-boot-starter</artifactId>
+      <version>${flowable.version}</version>
+    </dependency>
+
+    <!-- Spring Boot 3.2.5 manages Flyway 9.x, where Postgres support lives inside
+         flyway-core. The separate flyway-database-postgresql module belongs to
+         Flyway 10 (Boot 3.3+) and is neither needed nor version-managed here. -->
+    <dependency><groupId>org.flywaydb</groupId><artifactId>flyway-core</artifactId></dependency>
+
+    <dependency>
+      <groupId>org.togglz</groupId>
+      <artifactId>togglz-spring-boot-starter</artifactId>
+      <version>${togglz.version}</version>
+    </dependency>
+    <!-- The console is a SEPARATE artifact from the starter, and that is worth knowing:
+         `togglz.console.enabled: true` with this missing mounts nothing at all and says
+         nothing about it. Declared explicitly so the page's existence is a dependency in
+         this file rather than a transitive accident. Step 91. -->
+    <dependency>
+      <groupId>org.togglz</groupId>
+      <artifactId>togglz-console</artifactId>
+      <version>${togglz.version}</version>
+    </dependency>
+    <dependency>
+      <groupId>io.github.resilience4j</groupId>
+      <artifactId>resilience4j-spring-boot3</artifactId>
+      <version>${resilience4j.version}</version>
+    </dependency>
+
+    <!-- The client contract, GENERATED FROM THE RUNNING SERVICE rather than written
+         beside it. A hand-maintained spec is a document that disagrees with the code the
+         moment somebody is in a hurry, and the disagreement is invisible. Step 94. -->
+    <dependency>
+      <groupId>org.springdoc</groupId>
+      <artifactId>springdoc-openapi-starter-webmvc-ui</artifactId>
+      <version>${springdoc.version}</version>
+    </dependency>
+
+    <!-- Our own schema is Postgres. UAT is MySQL. Both drivers, one service. -->
+    <dependency><groupId>org.postgresql</groupId><artifactId>postgresql</artifactId><scope>runtime</scope></dependency>
+    <dependency><groupId>com.mysql</groupId><artifactId>mysql-connector-j</artifactId><scope>runtime</scope></dependency>
+    <!-- H2 is for TESTS ONLY. The POC database is Postgres. -->
+    <dependency><groupId>com.h2database</groupId><artifactId>h2</artifactId><scope>test</scope></dependency>
+
+    <dependency>
+      <groupId>org.springframework.boot</groupId>
+      <artifactId>spring-boot-starter-test</artifactId>
+      <scope>test</scope>
+    </dependency>
+  </dependencies>
+
+  <build>
+    <plugins>
+      <plugin><groupId>org.springframework.boot</groupId><artifactId>spring-boot-maven-plugin</artifactId></plugin>
+    </plugins>
+  </build>
+</project>

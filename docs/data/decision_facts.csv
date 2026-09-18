@@ -1,0 +1,68 @@
+domain,signal
+Booking / job,Order ID
+Booking / job,cancellation status (NR / by Agent / CR)
+Booking / job,arrivedAt300metre event
+Booking / job,scheduled start and end
+Booking / job,assignment timestamp
+Booking / job,reassignment timestamp
+Booking / job,OTP / job-start timestamp
+Booking / job,extra-services flag
+Booking / job,booking total order value
+Booking / job,booking type (exclusive vs not)
+Booking / job,booking creation source (app vs admin)
+Booking / job,booking completion status
+Booking / job,booking required gender
+Booking / job,job address lat/long
+Booking / job,preceding booking within 2-hr window
+Booking / job,SP's last 5 orders + customer names
+Booking / job,reject reason chosen in SP app
+Wallet / ledger,existing transport credit for Order ID
+Wallet / ledger,customer transport charge
+Wallet / ledger,last-min cancellation cashback
+Wallet / ledger,'Booking Online Transaction' ledger entry
+Wallet / ledger,prepaid-received flag
+Wallet / ledger,payment type
+Wallet / ledger,commission computation
+Wallet / ledger,main wallet balance
+Wallet / ledger,advance-pending flag
+Wallet / ledger,withdrawal count this month
+Wallet / ledger,total withdrawn this month
+Wallet / ledger,referral cashback entries
+Wallet / ledger,cashback credit vs Order ID
+Wallet / ledger,wallet credit status vs PayU txn ID
+Hub / geo,cs_address
+Hub / geo,mapped hub centre lat/long
+Hub / geo,hub_radius
+Hub / geo,hub type (primary / secondary / exclusive)
+Hub / geo,current hub mapping
+Violation / strike,violation record
+Violation / strike,violation type
+Violation / strike,violation date
+Violation / strike,GRANTED emergency removals this month
+Violation / strike,period leaves this calendar month
+Violation / strike,SR2 grants in current 25-job cycle
+Violation / strike,product-removal grants in current cycle
+Violation / strike,position in current 25-job cycle
+Leave,leave record + app-recorded reason
+Leave,leave status
+Leave,confirmed-assignment status
+Product / inventory,product catalogue (fuzzy match)
+Product / inventory,product category vs SP category
+Product / inventory,backend inventory for the item
+Product / inventory,order placed for the missing product
+Product / inventory,order type (Express / Standard)
+Product / inventory,delivery TAT
+Product / inventory,order placement time
+Product / inventory,in-transit orders list
+Call / telephony,partner-customer call log (any attempt)
+Call / telephony,conversation duration
+Call / telephony,OBD verification result
+Call / telephony,call recording (v2 only)
+External systems,PayU transaction status
+External systems,Cashfree payout-rail balance
+SP profile,SP lookup by referee phone number
+SP profile,referee onboarding status
+SP profile,referrer on record
+SP profile,SP gender
+SP profile,SP category
+SP profile,current shift time

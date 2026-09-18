@@ -1,0 +1,235 @@
+<title>Leave Fine POC Scope Lock</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#F6F7FA; --surface:#FFFFFF; --panel:#EAEDF2; --panel-border:#D2D8E1;
+    --ink:#1B2029; --ink-soft:#4A5262; --muted:#8891A0; --line:#C6CCD6;
+    --accent:#33415C; --mono-bg:#EDEFF3; --code-ink:#33415C;
+    --t1:#2F63C9; --t2:#9C5D0B; --t3:#93356B;
+    --in:#1C7A55; --in-bg:#EAF5EF; --out:#93356B; --out-bg:#F7EDF3;
+    --ask:#A5590B; --ask-bg:#FBF0E4;
+    --font-sans:'IBM Plex Sans',system-ui,-apple-system,sans-serif;
+    --font-mono:'IBM Plex Mono',ui-monospace,SFMono-Regular,Menlo,monospace;
+  }
+  @media (prefers-color-scheme: dark){
+    :root:not([data-theme="light"]){
+      --bg:#12151B; --surface:#171B22; --panel:#1E2430; --panel-border:#2B3240;
+      --ink:#E7EAF0; --ink-soft:#B7BEC9; --muted:#6B7484; --line:#313846;
+      --accent:#9FB2DE; --mono-bg:#1B212B; --code-ink:#B9C6E6;
+      --t1:#6C97F0; --t2:#E0A23C; --t3:#D273A8;
+      --in:#3FBE94; --in-bg:#152420; --out:#D273A8; --out-bg:#241A20;
+      --ask:#E0A23C; --ask-bg:#241E14;
+    }
+  }
+  :root[data-theme="dark"]{
+    --bg:#12151B; --surface:#171B22; --panel:#1E2430; --panel-border:#2B3240;
+    --ink:#E7EAF0; --ink-soft:#B7BEC9; --muted:#6B7484; --line:#313846;
+    --accent:#9FB2DE; --mono-bg:#1B212B; --code-ink:#B9C6E6;
+    --t1:#6C97F0; --t2:#E0A23C; --t3:#D273A8;
+    --in:#3FBE94; --in-bg:#152420; --out:#D273A8; --out-bg:#241A20;
+    --ask:#E0A23C; --ask-bg:#241E14;
+  }
+  *{box-sizing:border-box;}
+  body{margin:0; background:var(--bg); color:var(--ink); font-family:var(--font-sans);
+       line-height:1.58; -webkit-font-smoothing:antialiased;}
+  .wrap{max-width:880px; margin:0 auto; padding:48px 24px 90px;}
+
+  .eyebrow{font-family:var(--font-mono); font-size:12px; letter-spacing:.08em;
+           text-transform:uppercase; color:var(--muted); margin:0 0 10px;}
+  h1{font-size:clamp(26px,4vw,35px); font-weight:600; margin:0 0 12px; letter-spacing:-.015em;}
+  .dek{color:var(--ink-soft); font-size:15.5px; margin:0; max-width:68ch;}
+  .stamp{display:flex; gap:22px; flex-wrap:wrap; margin-top:20px; padding-top:18px;
+         border-top:1px solid var(--line); font-family:var(--font-mono); font-size:12px; color:var(--muted);}
+  .stamp b{color:var(--ink); font-weight:600;}
+
+  h2{font-size:19px; font-weight:600; margin:44px 0 8px; letter-spacing:-.01em;
+     padding-top:24px; border-top:1px solid var(--line);}
+  h2:first-of-type{padding-top:0; border-top:none;}
+  .sub{color:var(--ink-soft); font-size:14.5px; margin:0 0 16px; max-width:70ch;}
+  p{margin:0 0 14px; max-width:72ch;}
+
+  code{font-family:var(--font-mono); background:var(--mono-bg); color:var(--code-ink);
+       padding:1.5px 6px; border-radius:4px; font-size:12.5px;}
+
+  .table-scroll{overflow-x:auto; margin-bottom:18px;}
+  table{width:100%; border-collapse:collapse; font-size:14px; background:var(--surface);
+        border:1px solid var(--line); border-radius:6px;}
+  th,td{text-align:left; padding:10px 13px; border-bottom:1px solid var(--line); vertical-align:top;}
+  th{font-family:var(--font-mono); font-size:11px; text-transform:uppercase;
+     letter-spacing:.05em; color:var(--muted); font-weight:500;}
+  tr:last-child td{border-bottom:none;}
+
+  .cols{display:grid; grid-template-columns:1fr 1fr; gap:18px; margin-bottom:6px;}
+  @media (max-width:700px){.cols{grid-template-columns:1fr;}}
+  .col{border-radius:6px; padding:17px 19px;}
+  .col.yes{background:var(--in-bg); border:1px solid color-mix(in srgb, var(--in) 32%, var(--panel-border));}
+  .col.no{background:var(--out-bg); border:1px solid color-mix(in srgb, var(--out) 32%, var(--panel-border));}
+  .col h3{margin:0 0 11px; font-size:12.5px; font-family:var(--font-mono);
+          text-transform:uppercase; letter-spacing:.05em;}
+  .col.yes h3{color:var(--in);} .col.no h3{color:var(--out);}
+  .col ul{margin:0; padding:0; list-style:none; display:flex; flex-direction:column; gap:8px;}
+  .col li{padding-left:17px; position:relative; font-size:14px;}
+  .col.yes li::before{content:"✓"; position:absolute; left:0; color:var(--in); font-weight:700;}
+  .col.no li::before{content:"✕"; position:absolute; left:0; color:var(--out); font-weight:700;}
+
+  .quote{border-left:3px solid var(--accent); background:var(--panel); border-radius:0 6px 6px 0;
+         padding:14px 18px; margin:0 0 16px; font-size:14.5px; color:var(--ink-soft);}
+  .quote cite{display:block; margin-top:8px; font-family:var(--font-mono); font-size:11.5px;
+              color:var(--muted); font-style:normal;}
+
+  .flag{background:var(--ask-bg); border:1px solid color-mix(in srgb, var(--ask) 34%, var(--panel-border));
+        border-radius:6px; padding:16px 19px; margin-bottom:14px;}
+  .flag .tag{display:inline-block; font-family:var(--font-mono); font-size:10.5px; font-weight:600;
+             letter-spacing:.05em; text-transform:uppercase; color:var(--ask);
+             border:1px solid color-mix(in srgb, var(--ask) 45%, transparent);
+             border-radius:4px; padding:1px 7px; margin-bottom:9px;}
+  .flag p{margin:0; font-size:14.5px;}
+  .flag p + p{margin-top:9px;}
+
+  ol.asks{margin:0; padding-left:22px; display:flex; flex-direction:column; gap:13px;}
+  ol.asks li{font-size:14.5px;}
+  ol.asks strong{display:block; margin-bottom:3px;}
+
+  .signoff{background:var(--surface); border:1px solid var(--line); border-radius:6px;
+           padding:20px 22px; margin-top:8px;}
+  .signoff table{border:none;}
+  .signoff td{padding:12px 10px;}
+  .sig-line{display:block; border-bottom:1px solid var(--line); height:20px; margin-top:4px;}
+
+  footer{margin-top:44px; padding-top:18px; border-top:1px solid var(--line);
+         font-size:13px; color:var(--muted); font-family:var(--font-mono);}
+  footer a{color:var(--accent);}
+</style>
+
+<div class="wrap">
+  <p class="eyebrow">BOTIn Mod · POC · Step 1 of 56</p>
+  <h1>Leave Fine POC — Scope Lock</h1>
+  <p class="dek">What this proof of concept will and will not cover. Circulated for agreement before any code is written, so that "can we also add…" has a document to be measured against.</p>
+  <div class="stamp">
+    <span>Concern <b>Leaves fine</b></span>
+    <span>Volume <b>6,245 tickets · 12.46%</b></span>
+    <span>Target tier <b>T2 Bot action</b></span>
+    <span>Duration <b>~3 weeks</b></span>
+    <span>Status <b>Draft — awaiting sign-off</b></span>
+  </div>
+
+  <h2>The concern, precisely</h2>
+  <p class="sub">Named exactly as the SOP names it, so there is no ambiguity with the adjacent leave concerns.</p>
+  <div class="table-scroll">
+    <table>
+      <tbody>
+        <tr><th>L1</th><td><code>Fine related</code></td></tr>
+        <tr><th>L2</th><td><code>Leave fine</code> — row 13 of the Priority Build tab</td></tr>
+        <tr><th>Volume</th><td>6,245 tickets in May · 12.46% of total · cumulative 66.7%</td></tr>
+        <tr><th>Assigned tier</th><td>T2 Bot action</td></tr>
+        <tr><th>Ticket close</th><td>Main concern <code>Fine related</code>, Sub concern <code>Leave fine</code>, TAT <em>Instant</em>, status <em>Resolved NR</em></td></tr>
+        <tr><th>Not this</th><td><code>Leave hata dijiye</code> (row 43, 314 tickets) is a <strong>separate</strong> T2 concern and is out of scope. Easy to confuse.</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <h2>Reason categories — taken from the SOP, not invented</h2>
+  <div class="quote">
+    "Partner raises a fine refund request related to <strong>health issues, product unavailability, emergency leave, leave impact</strong> (when leave balance is not available), or <strong>personal reasons</strong>."
+    <cite>SOP tab · Leaves fine · Step 1</cite>
+  </div>
+  <p>The Rough tab's L3 breakdown lists the same four named scenarios. These six categories drive the hand-labelling, the DMN table, and the classifier prompt — so they are locked here rather than being chosen during implementation.</p>
+  <div class="table-scroll">
+    <table>
+      <thead><tr><th>#</th><th>Category</th><th>Meaning</th><th>Source</th></tr></thead>
+      <tbody>
+        <tr><td>1</td><td><code>health_issue</code></td><td>Partner unwell</td><td>SOP step 1 · Rough L3</td></tr>
+        <tr><td>2</td><td><code>product_unavailability</code></td><td>Required product not available</td><td>SOP step 1 · Rough L3</td></tr>
+        <tr><td>3</td><td><code>emergency_leave</code></td><td>Unplanned emergency</td><td>SOP step 1 · Rough L3</td></tr>
+        <tr><td>4</td><td><code>leave_impact</code></td><td>Leave balance was not available</td><td>SOP step 1 · Rough L3</td></tr>
+        <tr><td>5</td><td><code>personal_reasons</code></td><td>Personal, non-emergency</td><td>SOP step 1</td></tr>
+        <tr><td>6</td><td><code>other</code></td><td>Catch-all → routes to an agent</td><td>—</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <h2>In and out</h2>
+  <div class="cols">
+    <div class="col yes">
+      <h3>In scope</h3>
+      <ul>
+        <li><strong>T1</strong> — explain (no fine found, already refunded, outside window)</li>
+        <li><strong>T2</strong> — automatic fine refund</li>
+        <li><strong>T3</strong> — route to a human agent</li>
+        <li>Six reason categories, classified from free text</li>
+        <li>Test SP accounts only</li>
+        <li>curl / Postman as the client, plus an optional demo page</li>
+        <li>English response templates</li>
+      </ul>
+    </div>
+    <div class="col no">
+      <h3>Out of scope</h3>
+      <ul>
+        <li><strong>T0</strong> — not applicable; leave fine always creates a ticket</li>
+        <li>Rule-break fine (30.2%) — the next concern, not this one</li>
+        <li><code>Leave hata dijiye</code> — separate concern</li>
+        <li>Telephony, agent screen, mobile app</li>
+        <li>Observability, access control, LLM guardrails</li>
+        <li>Hinglish templates — Wave 1 work</li>
+        <li>The Hydra &amp; Spa medical-report variant</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="flag">
+    <span class="tag">Hard boundary</span>
+    <p><strong>No real Service Partner ever interacts with this POC, and no production money moves.</strong> Every run is driven by a test client against test SP accounts, with the refund pointed at a non-production system throughout.</p>
+    <p>If that changes, this is no longer a POC and needs the safety scaffolding — kill switches, reconciliation, access control — that is explicitly excluded above.</p>
+  </div>
+
+  <h2>A finding worth flagging before we start</h2>
+  <div class="quote">
+    "How to refund fine — Admin → Escalation → View SP Escalation → Select date in data range → click on refund fine"
+    <cite>SOP tab · Leaves fine · Step 3 note</cite>
+  </div>
+  <p>The SOP documents the refund as an <strong>admin UI click-path, not an API call</strong>. That is not proof no service method exists behind it, but it is the strongest signal so far that the refund integration may need building rather than integrating. The POC's <code>empapi</code> audit now has a specific thing to look for, and the estimate for that layer may need revising afterwards.</p>
+
+  <h2>What the SOP already gives us</h2>
+  <p>Two response templates are already written, in Hinglish, and both end with a CSAT prompt:</p>
+  <div class="table-scroll">
+    <table>
+      <thead><tr><th>Case</th><th>Template</th></tr></thead>
+      <tbody>
+        <tr><td>Refund done</td><td><em>"Aapka fine refund kar diya gaya hai."</em></td></tr>
+        <tr><td>Already refunded</td><td><em>"Aapka fine <strong>already</strong> refund kar diya gaya hai."</em></td></tr>
+      </tbody>
+    </table>
+  </div>
+  <p><strong>"Already refunded" is a documented real scenario</strong> — the partner asking again for something that has already been done. It becomes a DMN row, and it doubles as a free test case for the idempotency work later in the build.</p>
+
+  <h2>Three questions this document cannot answer</h2>
+  <p class="sub">These need a decision from someone other than the developer before the scope is genuinely locked.</p>
+  <ol class="asks">
+    <li><strong>Is the Hydra &amp; Spa exception in or out?</strong>
+    The SOP carves it out: fines there are refunded only after validating genuine medical reports. That is document review, a materially different problem. Recommendation: exclude — but it is an ops call, not an engineering one.</li>
+    <li><strong>What does <code>Strike Concern = Yes</code> mean on all four leave-fine sub-scenarios?</strong>
+    If a refund must also reverse a strike, that is a second backend action and it expands the integration work. Needs clarifying before the action executor is designed.</li>
+    <li><strong>Does a service method exist for the refund, or only the admin UI path?</strong>
+    Answerable by inspecting <code>empapi</code>. The answer does not block the POC — the interface boundary absorbs either outcome — but it changes the estimate for production.</li>
+  </ol>
+
+  <h2>Sign-off</h2>
+  <p class="sub">Scope-lock only has value if someone other than the author agrees to it.</p>
+  <div class="signoff">
+    <table>
+      <thead><tr><th>Role</th><th>Name</th><th>Date</th></tr></thead>
+      <tbody>
+        <tr><td>Engineering (author)</td><td><span class="sig-line"></span></td><td><span class="sig-line"></span></td></tr>
+        <tr><td>SP Support Ops</td><td><span class="sig-line"></span></td><td><span class="sig-line"></span></td></tr>
+        <tr><td>Owner, fines / escalation system</td><td><span class="sig-line"></span></td><td><span class="sig-line"></span></td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <footer>
+    Sources — <code>Ticket Flow Automation · Partner Support.xlsx</code>, tabs SOP / Rough / Priority Build.
+    <br>Related — <a href="https://claude.ai/code/artifact/f3ae08c5-d343-4790-bbbc-0693cb54c82d">POC Build Checklist</a> · <a href="https://claude.ai/code/artifact/3cca1921-0e15-4ab2-af96-fc11e449a2d5">Tech Design</a>
+  </footer>
+</div>

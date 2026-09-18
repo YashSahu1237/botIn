@@ -1,0 +1,529 @@
+<title>BOTIn POC Build Plan</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#F4F6F9; --surface:#FFFFFF; --panel:#EAEEF5; --line:#CDD5E1; --line-soft:#E0E6EF;
+    --ink:#161A21; --ink-2:#454E5D; --muted:#798393;
+    --accent:#2F4468; --accent-soft:#E6ECF7; --accent-line:#B7C4DC;
+    --t0:#0F7A69; --t1:#2B5FC4; --t2:#8F5409; --t3:#8B3365;
+    --ok:#1A7550; --warn:#9A560B; --stop:#A93A38;
+    --check:#1A7550; --gate:#9A560B; --gate-bg:#FBF0E4;
+    --mono-bg:#EBEFF5; --code-ink:#2F4468;
+    --font-sans:'IBM Plex Sans',system-ui,-apple-system,'Segoe UI',sans-serif;
+    --font-mono:'IBM Plex Mono',ui-monospace,SFMono-Regular,Menlo,monospace;
+  }
+  @media (prefers-color-scheme: dark){ :root:not([data-theme="light"]){
+    --bg:#0F1218; --surface:#151921; --panel:#1C222D; --line:#2C3340; --line-soft:#222833;
+    --ink:#E5E9F1; --ink-2:#B2BAC7; --muted:#6A7383;
+    --accent:#9DB3DE; --accent-soft:#19212F; --accent-line:#31405A;
+    --t0:#33BFA2; --t1:#6B95EE; --t2:#DFA13B; --t3:#D172A7;
+    --ok:#3EBC92; --warn:#DFA13B; --stop:#E0736E;
+    --check:#3EBC92; --gate:#DFA13B; --gate-bg:#241E14;
+    --mono-bg:#1A202A; --code-ink:#B6C4E4; } }
+  :root[data-theme="dark"]{
+    --bg:#0F1218; --surface:#151921; --panel:#1C222D; --line:#2C3340; --line-soft:#222833;
+    --ink:#E5E9F1; --ink-2:#B2BAC7; --muted:#6A7383;
+    --accent:#9DB3DE; --accent-soft:#19212F; --accent-line:#31405A;
+    --t0:#33BFA2; --t1:#6B95EE; --t2:#DFA13B; --t3:#D172A7;
+    --ok:#3EBC92; --warn:#DFA13B; --stop:#E0736E;
+    --check:#3EBC92; --gate:#DFA13B; --gate-bg:#241E14;
+    --mono-bg:#1A202A; --code-ink:#B6C4E4; }
+
+  *{box-sizing:border-box;}
+  body{margin:0; background:var(--bg); color:var(--ink); font-family:var(--font-sans);
+       font-size:15px; line-height:1.6; -webkit-font-smoothing:antialiased;}
+  a{color:var(--accent);}
+  p{margin:0 0 14px; max-width:76ch;}
+  h2,h3,h4{text-wrap:balance;}
+  .shell{max-width:1080px; margin:0 auto; padding:0 24px 110px;}
+
+  header.mast{padding:44px 0 22px; border-bottom:2px solid var(--ink); margin-bottom:22px;}
+  .kicker{font-family:var(--font-mono); font-size:11.5px; letter-spacing:.11em;
+          text-transform:uppercase; color:var(--muted); margin:0 0 12px;}
+  h1{font-size:clamp(30px,4.4vw,42px); font-weight:600; letter-spacing:-.02em; margin:0 0 10px; line-height:1.12;}
+  .sub{color:var(--ink-2); font-size:16.5px; margin:0; max-width:72ch;}
+
+  .progress{position:sticky; top:0; z-index:6; background:var(--bg);
+            padding:14px 0 12px; margin:0 0 24px; border-bottom:1px solid var(--line);}
+  .bar{height:6px; background:var(--panel); border-radius:99px; overflow:hidden;}
+  .bar span{display:block; height:100%; width:0%; background:var(--check); border-radius:99px; transition:width .25s ease;}
+  .progress .meta{display:flex; justify-content:space-between; align-items:baseline;
+                  font-family:var(--font-mono); font-size:11.5px; color:var(--muted); margin-top:8px;}
+  .progress button{font-family:var(--font-mono); font-size:11px; color:var(--muted);
+                   background:none; border:1px solid var(--line); border-radius:4px; padding:3px 9px; cursor:pointer;}
+  .progress button:hover{color:var(--ink); background:var(--panel);}
+
+  section{margin:0 0 40px; scroll-margin-top:70px;}
+  section > h2{font-size:20px; font-weight:600; margin:0 0 6px; letter-spacing:-.012em;
+               display:flex; gap:12px; align-items:baseline;}
+  section > h2 .num{font-family:var(--font-mono); font-size:13px; color:var(--muted); font-weight:500; flex:none;}
+  section > h2 + .rule{height:1px; background:var(--line); margin:0 0 16px;}
+  h3{font-size:15.5px; font-weight:600; margin:26px 0 8px; letter-spacing:-.005em;}
+  h3 .tag{font-family:var(--font-mono); font-size:10px; letter-spacing:.08em; text-transform:uppercase;
+          color:var(--accent); font-weight:600; margin-right:9px;}
+
+  code{font-family:var(--font-mono); background:var(--mono-bg); color:var(--code-ink);
+       padding:1.5px 5px; border-radius:3px; font-size:12px;}
+  strong{font-weight:600;} em{font-style:italic; color:var(--ink-2);}
+  ul.plain{margin:0 0 14px; padding:0 0 0 20px; max-width:76ch;} ul.plain li{margin-bottom:6px;}
+
+  .tw{overflow-x:auto; margin:0 0 18px; border:1px solid var(--line); border-radius:3px; background:var(--surface);}
+  table{width:100%; border-collapse:collapse; font-size:13.5px; min-width:560px;}
+  caption{caption-side:top; text-align:left; font-family:var(--font-mono); font-size:11px; color:var(--muted); padding:11px 14px 0;}
+  th{text-align:left; padding:10px 14px; font-family:var(--font-mono); font-size:10.5px;
+     letter-spacing:.07em; text-transform:uppercase; color:var(--muted); font-weight:500;
+     border-bottom:1px solid var(--line); background:var(--panel); vertical-align:bottom;}
+  td{padding:10px 14px; border-bottom:1px solid var(--line-soft); vertical-align:top; color:var(--ink-2);}
+  td:first-child{color:var(--ink); font-weight:500;}
+  tbody tr:last-child td{border-bottom:none;}
+
+  .chip{display:inline-block; font-family:var(--font-mono); font-size:9.5px; font-weight:600;
+        letter-spacing:.05em; padding:2px 6px; border-radius:3px; border:1px solid currentColor;
+        white-space:nowrap; line-height:1.5;}
+  .c-t0{color:var(--t0);} .c-t1{color:var(--t1);} .c-t2{color:var(--t2);} .c-t3{color:var(--t3);}
+  .c-ok{color:var(--ok);} .c-mu{color:var(--muted);} .c-stop{color:var(--stop);}
+
+  .note{border:1px solid var(--line); border-left:3px solid var(--accent); background:var(--panel);
+        border-radius:3px; padding:14px 18px; margin:0 0 18px; font-size:14px; color:var(--ink-2);}
+  .note strong{color:var(--ink);} .note.hazard{border-left-color:var(--stop);}
+  .note p:last-child{margin-bottom:0;} .note p{max-width:none;}
+
+  ul.steps{list-style:none; margin:0 0 16px; padding:0; display:flex; flex-direction:column; gap:2px;}
+  li.step{border-radius:5px;}
+  li.step label{display:grid; grid-template-columns:auto 30px 1fr; gap:11px; align-items:start;
+                padding:9px 11px; cursor:pointer;}
+  li.step:hover{background:var(--panel);}
+  li.step input{appearance:none; width:16px; height:16px; margin:3px 0 0; flex:none;
+                border:1.5px solid var(--line); border-radius:4px; background:var(--surface);
+                cursor:pointer; position:relative;}
+  li.step input:checked{background:var(--check); border-color:var(--check);}
+  li.step input:checked::after{content:"\2713"; position:absolute; inset:0; display:flex;
+                               align-items:center; justify-content:center; color:#fff; font-size:11px; font-weight:700;}
+  li.step .num{font-family:var(--font-mono); font-size:11.5px; color:var(--muted); padding-top:2px;}
+  li.step .txt{font-size:14.5px;}
+  li.step input:checked ~ .txt{color:var(--muted); text-decoration:line-through; text-decoration-color:var(--line);}
+  li.step input:checked ~ .num{color:var(--line);}
+  li.step .note2{display:block; margin-top:4px; font-size:13px; color:var(--ink-2);}
+  li.step input:checked ~ .txt .note2{color:var(--muted);}
+  li.step.gate{background:var(--gate-bg); border:1px solid color-mix(in srgb, var(--gate) 32%, var(--line));}
+  li.step.gate:hover{background:var(--gate-bg);}
+  li.step.gate .txt{font-weight:600;}
+  li.step.gate .flag{display:inline-block; font-family:var(--font-mono); font-size:10px; font-weight:600;
+                     letter-spacing:.05em; text-transform:uppercase; color:var(--gate);
+                     border:1px solid color-mix(in srgb, var(--gate) 45%, transparent);
+                     border-radius:3px; padding:1px 6px; margin-right:8px; vertical-align:1px;}
+
+  pre{background:var(--surface); border:1px solid var(--line); border-radius:3px; padding:14px 16px;
+      overflow-x:auto; font-family:var(--font-mono); font-size:12px; line-height:1.65; margin:0 0 18px; color:var(--ink-2);}
+  pre b{color:var(--ink); font-weight:600;}
+  pre .cm{color:var(--muted);}
+
+  footer{margin-top:26px; padding-top:20px; border-top:2px solid var(--ink);
+         font-family:var(--font-mono); font-size:11.5px; color:var(--muted); line-height:1.8;}
+  footer a{color:var(--accent);}
+  :focus-visible{outline:2px solid var(--accent); outline-offset:2px;}
+  @media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important;}}
+</style>
+
+<div class="shell">
+
+<header class="mast">
+  <p class="kicker">Yesmadam · Partner Experience · Proof of Concept</p>
+  <h1>BOTIn POC Build Plan</h1>
+  <p class="sub">Eight concerns, twenty-six rules, every tier and every outcome type — API-driven, backend only. Built as the seed of the production service, not a spike.</p>
+</header>
+
+<div class="progress">
+  <div class="bar"><span id="bar"></span></div>
+  <div class="meta"><span id="count">0 of 0 done</span><button id="reset" type="button">Reset all</button></div>
+</div>
+
+<div class="note">
+  <p><strong>Three decisions this plan is built on.</strong> Fact providers read a <strong>real read-only replica wherever the signal exists</strong> and a mock where it doesn't, with every gap recorded — so the signal audit is a build output, not a separate exercise. All writes go to mocks. <strong>No LLM key exists</strong>, so the classifier ships behind a stub and vendor selection runs as its own track (§3). And the codebase is the <strong>production seed</strong>: migrations, transaction boundaries, package structure and tests are built to keep.</p>
+</div>
+
+<div class="note hazard">
+  <p><strong>Three inputs are not available, and the POC proceeds without them.</strong> Each has a workaround that keeps the work honest. What matters is that every substitution is <em>named, isolated to one place, and recorded as an assumption</em> — a guess written into a fact provider and forgotten is how a POC quietly stops meaning anything.</p>
+
+  <p><strong>1 · The Transport path selector is unknown → derive it, in one named place.</strong> The likely reading of the mapping is that the three paths are three <em>entitlement types</em>: Path 1 a customer transport charge that never reached the partner, Path 2 a cancellation, Path 3 travel beyond the hub radius. So the selector becomes a computed fact — <code>transportPath</code> — written by <code>TransportFactProvider</code> and fed into the decision table as an ordinary input column.<br>
+  <strong>Cost:</strong> the POC proves the three paths work; it does not prove a claim lands on the <em>right</em> one. The rule stays one method and one column, so the real answer is a small edit rather than a redesign.</p>
+
+  <p><strong>2 · No read replica → build against a seeded local database with the real schema shape.</strong> Ask for a <strong>schema-only dump</strong> rather than access: it is DDL with no rows, carries no data risk, and is a far smaller favour to ask. Seed it with synthetic partners, bookings, violations and wallet states. Fact providers then write real SQL against real column names, and switching to the replica later is a datasource change.<br>
+  <strong>Cost:</strong> the signal-availability register records signals as <span class="chip c-def">assumed</span> rather than <span class="chip c-ok">verified</span>. It still produces the exact list of questions for whoever owns the data — which is most of its value.</p>
+
+  <p><strong>3 · No historical ticket text → hand-write Hinglish fixtures, and accept that U-2 stays unanswered.</strong> The classifier sits behind a stub anyway because there is no LLM key, so this blocks <em>measurement</em>, not building. Twenty to thirty fixture strings exercise routing, the confidence threshold, the clarification loop and the degradation path. Base their phrasing on the concern names themselves — <em>"Transport amount nahi mila"</em>, <em>"Recharge kiya, pese cut gaye"</em>, <em>"Job pe nahi jana"</em> — which are real partner language.<br>
+  <strong>Cost, and it is the real one:</strong> <strong>no accuracy number.</strong> Fixtures written by the person building the classifier will always classify well. That is not evidence. U-2 must be reported as <em>not assessed</em>, never as passed.</p>
+
+  <p><strong>What this does not change:</strong> every architectural question the POC exists to answer — the transaction boundary, idempotency, the cap escalating rather than clamping, shared-service reuse, durable counters, the kill switch, degradation, pause-and-resume — is unaffected. Those were never waiting on these three inputs.</p>
+</div>
+
+<section id="s1">
+  <h2><span class="num">1</span>Scope — what the POC covers</h2><div class="rule"></div>
+  <p>Eight concerns chosen so that every tier, every outcome type and every architectural mechanism appears at least once, while keeping the rule count small enough that each one can be verified by hand.</p>
+
+  <div class="tw">
+    <table>
+      <caption>26 rules. Volume is June, where the mapping gives one.</caption>
+      <thead><tr><th>Concern</th><th>Rules</th><th>Volume</th><th>Why it is in the POC</th></tr></thead>
+      <tbody>
+        <tr><td><code>FORGET_MPIN</code><br><span class="chip c-t0">T0</span></td><td>1</td><td>738</td><td>The only pure deflection. One rule, no backend checks, <strong>no ticket created</strong> — proves Gate 1 actually gates</td></tr>
+        <tr><td><code>TRANSPORT_NOT_RECEIVED</code><br><span class="chip c-t1">T1</span> <span class="chip c-t2">T2</span> <span class="chip c-t3">T3</span></td><td>9</td><td>5,615</td><td><strong>The anchor.</strong> Three decision paths, money movement, a duplicate-credit guard, a hard cap that escalates rather than clamps, and the shared geo service. Needs no classifier — every condition is a backend fact</td></tr>
+        <tr><td><code>VIOL_R5_PERIODS</code><br><span class="chip c-t2">T2</span> <span class="chip c-t1">UPHOLD</span></td><td>2</td><td>—</td><td>State change without money. Introduces the <strong>UPHOLD</strong> outcome, a monthly counter the engine must own, and backend strike recalculation</td></tr>
+        <tr><td><code>VIOL_R4_OTHERS</code><br><span class="chip c-mu">REROUTE</span></td><td>2</td><td>—</td><td>Free text <em>inside</em> a known concern. The smallest possible REROUTE test — one flow ends by starting another</td></tr>
+        <tr><td><code>OTHER_FREETEXT_TRIAGE</code><br><span class="chip c-mu">REROUTE</span></td><td>2</td><td>—</td><td>Free text at the <strong>entry point</strong>, before any L1/L2 is known. A different and harder classification job than the one above</td></tr>
+        <tr><td><code>PROD_DELIVERY_DELAY</code><br><span class="chip c-t1">T1</span> <span class="chip c-t3">T3</span></td><td>2</td><td>2,306</td><td>Half of the shared-TAT proof</td></tr>
+        <tr><td><code>VIOL_R9_NO_PRODUCT</code><br><span class="chip c-t2">T2</span> <span class="chip c-t3">T3</span></td><td>4</td><td>—</td><td>The other half. <strong>One TAT function serving two different L1 domains</strong> — the architecture's reuse claim, tested. Also a second cycle-based counter</td></tr>
+        <tr><td><code>RECHARGE_DEBIT_NO_CREDIT</code><br><span class="chip c-t2">T2</span> <span class="chip c-t3">T3</span></td><td>4</td><td>883</td><td>An <strong>external dependency</strong> (PayU) on the decision path. Proves circuit-breaker degradation and idempotency keyed on a third-party transaction id</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <h3>Coverage matrix</h3>
+  <div class="tw">
+    <table>
+      <caption>Every case the POC must demonstrate, and where it is demonstrated.</caption>
+      <thead><tr><th>Case</th><th>Proven by</th></tr></thead>
+      <tbody>
+        <tr><td><span class="chip c-t0">T0</span> deflect, no ticket</td><td><code>FORGET_MPIN</code> — session created, deeplink returned, <strong>zero ticket rows</strong></td></tr>
+        <tr><td><span class="chip c-t1">T1</span> bot answers from data</td><td>Transport rules 1, 3, 5, 7 · Delivery rule 2</td></tr>
+        <tr><td><span class="chip c-t2">T2</span> money moves</td><td>Transport rules 2, 4, 8 · Recharge rule 2</td></tr>
+        <tr><td><span class="chip c-t2">T2</span> state changes, no money</td><td>R5 rule 1 · R9 rule 3 — violation removal</td></tr>
+        <tr><td><span class="chip c-t3">T3</span> ticket for a human</td><td>Transport rules 6, 9 · Recharge 1, 4 · R9 rule 2 · Delivery rule 1</td></tr>
+        <tr><td><strong>Agent connect</strong></td><td>Agent claims the Flowable User Task, reads context, completes it — <em>across a JVM restart</em></td></tr>
+        <tr><td><strong>Free text — entry point</strong></td><td><code>OTHER_FREETEXT_TRIAGE</code>: no L1/L2, raw text in, concern resolved, flow started</td></tr>
+        <tr><td><strong>Free text — in concern</strong></td><td><code>VIOL_R4_OTHERS</code>: concern known, text names a different reason, reroute</td></tr>
+        <tr><td><strong>UPHOLD</strong></td><td>R5 rule 2 · R9 rules 1, 4 — a challenge rejected with explanation</td></tr>
+        <tr><td><strong>REROUTE</strong></td><td>Both free-text concerns — ticket identity preserved across the handoff</td></tr>
+        <tr><td><strong>Idempotency</strong></td><td>Same transport credit fired twice — one ledger entry, second short-circuits</td></tr>
+        <tr><td><strong>Cap escalation</strong></td><td>Transport rule 9 — computed amount over Rs300 becomes a ticket, <em>not</em> a clamped payment</td></tr>
+        <tr><td><strong>Shared service reuse</strong></td><td>One TAT function called by <code>PROD_DELIVERY_DELAY</code> and <code>VIOL_R9</code>; one haversine called by Transport path 3 and (later) R1</td></tr>
+        <tr><td><strong>Durable counter state</strong></td><td>R5 monthly counter · R9 cycle allowance — state the engine owns, not a fact it reads</td></tr>
+        <tr><td><strong>External failure</strong></td><td>PayU killed mid-session — circuit opens, flow degrades to T3, no error surfaces</td></tr>
+        <tr><td><strong>CSAT captured</strong></td><td>Every T0/T1/T2 resolution ends on a satisfaction prompt</td></tr>
+        <tr><td><strong>Trigger A</strong> &mdash; dissatisfaction</td><td>CSAT = No on a resolved T2 offers an agent and queues the task</td></tr>
+        <tr><td><strong>The bounding rule</strong></td><td>CSAT = Yes on a T0&ndash;T2 case &mdash; agent option absent from the payload</td></tr>
+        <tr><td><strong>Kill switch</strong></td><td>Transport auto-credit flag flipped live — next request routes to T3 with no restart</td></tr>
+        <tr><td><strong>Rule change without deploy</strong></td><td>Rs300 cap edited in the DMN file, redeployed alone, behaviour changes</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="note hazard">
+    <p><strong>Deliberately excluded.</strong> No SP app, no agent UI, no telephony, no medal bands, no observability stack, no access control, and none of the other 30 concerns. Two exclusions are worth stating because they are easy to assume present: <strong>agent-connect triggers D and E are not built</strong>, and B only in its CSAT-exception form &mdash; A, the bounding rule and C's confidence threshold are in scope, and <strong>no production system is written to</strong> — every wallet credit, violation removal and strike recalculation goes to a mock.</p>
+  </div>
+
+  <div class="note">
+    <p><strong>One thing to confirm before step 1.</strong> Transport rules 2–8 are labelled Path 1, Path 2 and Path 3, but the mapping never says <em>what assigns a case to a path</em>. That selector is the first branch in the concern's decision table, so it has to come from whoever owns the mapping before the table can be authored.</p>
+  </div>
+</section>
+
+<section id="s2">
+  <h2><span class="num">2</span>Component R&amp;D ladder</h2><div class="rule"></div>
+  <p>Nothing goes into the build before it has been learned in isolation and proven with a throwaway spike that has a pass/fail outcome. Each spike answers one question and is discarded — the point is the understanding, not the code.</p>
+
+  <div class="tw">
+    <table>
+      <thead><tr><th>Component</th><th>What must be understood first</th><th>Spike passes when</th></tr></thead>
+      <tbody>
+        <tr><td><strong>Flowable process engine</strong><br><code>BPMN</code></td><td>What the Maven starter actually does on boot · the <code>ACT_RU_*</code> vs <code>ACT_HI_*</code> split · Service Task vs User Task vs Gateway · how <code>delegateExpression</code> resolves a Spring bean · what a process variable is and when it dies</td><td>A three-node process starts from a test, pauses on a User Task, survives a JVM kill, and completes after restart</td></tr>
+        <tr><td><strong>Flowable DMN engine</strong><br><code>DMN</code></td><td>Why it ships in the same dependency · input vs output columns · <code>FIRST</code> hit policy and why row order is logic · FEEL cell syntax · how a Business Rule Task binds a table by key</td><td>A table with five rows returns the expected <code>{tier, action}</code> for five hand-built fact maps, and a wrong row order provably changes the answer</td></tr>
+        <tr><td><strong>Spring transaction propagation</strong><br><code>REQUIRES_NEW</code></td><td>How a nested transaction suspends the outer one · what a Flowable rollback does to a delegate's writes · why the order of commit and external call matters</td><td>An outer transaction rolls back and the inner row is still there. Then the annotation is removed and the same test fails</td></tr>
+        <tr><td><strong>Togglz</strong><br><code>feature flags</code></td><td>Feature enum vs <code>NamedFeature</code> · <code>JDBCStateRepository</code> and where state lives · the console and what it does not record</td><td>A flag flipped in the console changes the next request's behaviour with no restart, and the flip is visible in the database</td></tr>
+        <tr><td><strong>Resilience4j</strong><br><code>circuit breaker</code></td><td>Closed / open / half-open · what counts as a failure · how the fallback is wired in Spring</td><td>A dead dependency opens the circuit after N failures and the fallback returns without waiting for the timeout</td></tr>
+        <tr><td><strong>FastAPI + Pydantic</strong><br><code>classifier service</code></td><td>Response model validation · what happens on a malformed model reply · container build and health check</td><td>A malformed response is rejected by the schema and surfaces as a typed error to the Java caller, not as a bad string</td></tr>
+        <tr><td><strong>LLM prompt for classification</strong></td><td>Closed-set classification vs open generation · how to force structured output · what a confidence score actually is and whether the vendor gives one · prompt versioning</td><td>Ten fixture Hinglish strings classify correctly against a stub, and the prompt is a versioned file rather than a string literal</td></tr>
+        <tr><td><strong>Flyway</strong></td><td>Baseline against a schema Flowable also writes to · what happens when both manage the same database</td><td>App boots on an empty database, Flowable's tables and ours both appear, and a second boot is a no-op</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <ul class="steps">
+    <li class="step"><label><input type="checkbox"><span class="num">1</span><span class="txt">Run the Flowable process-engine spike<span class="note2">Start here — it is the single dependency that could invalidate the architecture, and the one with the steepest learning curve.</span></span></label></li>
+    <li class="step"><label><input type="checkbox"><span class="num">2</span><span class="txt">Run the DMN spike, including the deliberately-wrong row order</span></label></li>
+    <li class="step"><label><input type="checkbox"><span class="num">3</span><span class="txt">Run the <code>REQUIRES_NEW</code> spike, both with and without the annotation<span class="note2">The negative case matters more than the positive one — it proves the test would catch a regression.</span></span></label></li>
+    <li class="step"><label><input type="checkbox"><span class="num">4</span><span class="txt">Run the Togglz, Resilience4j and Flyway spikes</span></label></li>
+    <li class="step"><label><input type="checkbox"><span class="num">5</span><span class="txt">Run the FastAPI + Pydantic spike against a stubbed model response</span></label></li>
+    <li class="step gate"><label><input type="checkbox"><span class="num">6</span><span class="txt"><span class="flag">Gate</span>Write one page per component: what it does, how it is wired, and what surprised you<span class="note2">If a component cannot be explained in a page, it is not understood well enough to build on. This page is also the seed of the production runbook.</span></span></label></li>
+  </ul>
+</section>
+
+<section id="s3">
+  <h2><span class="num">3</span>LLM selection and procurement</h2><div class="rule"></div>
+  <p>This track starts immediately and runs alongside everything else, because the decision has a lead time nothing else in the plan can absorb. The build does not wait for it — the classifier ships behind a stub from step one and the vendor becomes a configuration change.</p>
+
+  <div class="note">
+    <p><strong>Build the evaluation harness before shortlisting anything.</strong> A vendor-agnostic test set and scorer turns the choice into a measurement instead of a preference. Without it, selection collapses into whoever demos best.</p>
+  </div>
+
+  <h3><span class="tag">3a</span>Define what the model has to do</h3>
+  <ul class="steps">
+    <li class="step"><label><input type="checkbox"><span class="num">7</span><span class="txt">Write the task spec: <strong>closed-set classification of short Hinglish text</strong>, two variants — one concern's reason list, and the full L1/L2 taxonomy<span class="note2">This is a narrow, cheap task. Naming it precisely stops the conversation drifting toward general-purpose assistants, which is a different and far more expensive purchase.</span></span></label></li>
+    <li class="step"><label><input type="checkbox"><span class="num">8</span><span class="txt">Write the non-functional requirements<span class="note2">Structured output support · p95 latency inside the 3s timeout with headroom · cost per thousand classifications at projected volume · rate limits and burst behaviour · data residency · retention and whether a zero-retention mode exists · availability commitment · how hard it is to swap out later.</span></span></label></li>
+    <li class="step"><label><input type="checkbox"><span class="num">9</span><span class="txt">Decide the PII position before talking to any vendor<span class="note2">Partner free text can contain names, phone numbers and addresses. Decide whether text is redacted before it leaves the network, and whether that is a hard requirement or a preference — it eliminates some options outright.</span></span></label></li>
+  </ul>
+
+  <h3><span class="tag">3b</span>Build the harness</h3>
+  <ul class="steps">
+    <li class="step"><label><input type="checkbox"><span class="num">10</span><span class="txt"><s>Extract real free-text from historical tickets</s> — <strong>unavailable; write Hinglish fixtures instead</strong><span class="note2">20–30 strings, phrasing taken from the concern names themselves. Enough to exercise routing, the threshold, the clarification loop and degradation. <strong>Not</strong> enough to claim accuracy: fixtures written by the builder always classify well. Keep the real extract as a follow-up — the harness is built to accept it unchanged.</span></span></label></li>
+    <li class="step"><label><input type="checkbox"><span class="num">11</span><span class="txt">Label the fixtures into the mapping's own categories anyway<span class="note2">Categories come from the concern mapping, never invented. Labelling fixtures is still worth doing — it forces the category list to be exercised and surfaces overlaps between categories before a real test set exists.</span></span></label></li>
+    <li class="step"><label><input type="checkbox"><span class="num">12</span><span class="txt">Write the scorer: accuracy, per-class confusion matrix, p95 latency, cost per call<span class="note2">The confusion matrix matters more than the headline number — two categories bleeding into each other is fixable by merging them; uniform error is not.</span></span></label></li>
+    <li class="step"><label><input type="checkbox"><span class="num">13</span><span class="txt">Define one prompt, versioned as a file, used identically across every candidate<span class="note2">Tuning the prompt per vendor makes the comparison meaningless.</span></span></label></li>
+  </ul>
+
+  <h3><span class="tag">3c</span>Shortlist and decide</h3>
+  <ul class="steps">
+    <li class="step"><label><input type="checkbox"><span class="num">14</span><span class="txt">Shortlist across three categories, not three brands<span class="note2"><strong>Hosted frontier APIs</strong> — best accuracy, highest per-call cost, data leaves the network. <strong>Hosted small/cheap tiers</strong> — most vendors offer a smaller model that is usually sufficient for closed-set classification. <strong>Open-weight self-hosted</strong> — no per-call cost, no data egress, but infrastructure and ops become yours. Pricing and model lineups change constantly; pull current figures at decision time rather than trusting any written comparison.</span></span></label></li>
+    <li class="step"><label><input type="checkbox"><span class="num">15</span><span class="txt">Run every candidate through the harness on the same test set and the same prompt</span></label></li>
+    <li class="step"><label><input type="checkbox"><span class="num">16</span><span class="txt">Check the cheap tier first<span class="note2">This task is short-text classification into a fixed list. If a small model reaches the threshold, the frontier model's advantage is worth nothing here and costs several times more per call at 50,000 sessions a month.</span></span></label></li>
+    <li class="step gate"><label><input type="checkbox"><span class="num">17</span><span class="txt"><span class="flag">Decision</span>Record the choice with its numbers, and the runner-up with its numbers<span class="note2">The runner-up matters: it is the fallback if the first choice fails a security review, changes pricing, or degrades.</span></span></label></li>
+  </ul>
+
+  <h3><span class="tag">3d</span>Procure and secure the key</h3>
+  <ul class="steps">
+    <li class="step"><label><input type="checkbox"><span class="num">18</span><span class="txt">Identify the budget owner and get a spend ceiling approved against the measured cost-per-call<span class="note2">Bring a number from step 15, not an estimate.</span></span></label></li>
+    <li class="step"><label><input type="checkbox"><span class="num">19</span><span class="txt">Security review and data-processing agreement<span class="note2">Usually the longest single item. Start it the moment the shortlist exists — it can run against two candidates in parallel.</span></span></label></li>
+    <li class="step"><label><input type="checkbox"><span class="num">20</span><span class="txt">Billing account, then separate keys per environment</span></label></li>
+    <li class="step"><label><input type="checkbox"><span class="num">21</span><span class="txt">Keys into a secret manager with a rotation policy — never in the repo, never in a plain environment file<span class="note2">Decide rotation cadence and who holds the break-glass copy at the same time, not later.</span></span></label></li>
+    <li class="step"><label><input type="checkbox"><span class="num">22</span><span class="txt">Spend alerting on the billing account<span class="note2">A retry loop against a paid API is a financial incident, not just a bug.</span></span></label></li>
+  </ul>
+
+  <div class="note">
+    <p><strong>Until a key exists</strong>, <code>ClassifierClient</code> talks to a stub that returns a deterministic category for known fixture strings and a low confidence for anything else. Every free-text path, every confidence threshold and every degradation route is fully exercised. The only thing that stays unmeasured is accuracy — and that is a number, not a design risk.</p>
+  </div>
+</section>
+
+<section id="s4">
+  <h2><span class="num">4</span>Build phases</h2><div class="rule"></div>
+
+  <h3><span class="tag">Phase 1</span>Skeleton and data model</h3>
+  <ul class="steps">
+    <li class="step"><label><input type="checkbox"><span class="num">23</span><span class="txt">Spring Boot service, standalone, structured as the production package layout<span class="note2">Split by layer from day one: <code>api</code>, <code>session</code>, <code>catalogue</code>, <code>process</code>, <code>decision</code>, <code>facts</code>, <code>action</code>, <code>safety</code>, <code>agent</code>. Renaming packages later is cheap; discovering the boundaries later is not.</span></span></label></li>
+    <li class="step"><label><input type="checkbox"><span class="num">24</span><span class="txt">Dependencies: web, data-jpa, flyway, <code>flowable-spring-boot-starter</code>, togglz, resilience4j, driver, test containers</span></label></li>
+    <li class="step"><label><input type="checkbox"><span class="num">25</span><span class="txt">Two datasources: the service's own schema, and a second, <strong>read-only</strong> one<span class="note2">Points at a seeded local database for now, at the replica later — the code does not know the difference. Keep it read-only at the connection level from day one, so the substitution never quietly becomes a write path.</span></span></label></li>
+    <li class="step"><label><input type="checkbox"><span class="num">26</span><span class="txt">Flyway migrations for six tables: <code>concern_catalogue</code>, <code>help_session</code>, <code>ticket</code>, <code>ticket_action</code>, <code>conversation_message</code>, <code>escalation_context</code></span></label></li>
+    <li class="step"><label><input type="checkbox"><span class="num">27</span><span class="txt">Plus one the mapping forces: <code>sp_counter</code> — durable per-SP tallies with a reset boundary<span class="note2">The pooled emergency count, the monthly period-leave count and the 25-job cycle allowances are <strong>state this engine owns</strong>, not facts it reads. Nothing in the earlier design held them.</span></span></label></li>
+    <li class="step"><label><input type="checkbox"><span class="num">28</span><span class="txt">Unique constraint on <code>ticket_action.idempotency_key</code>; index <code>ticket(sp_id, l2_concern, created_at)</code></span></label></li>
+    <li class="step"><label><input type="checkbox"><span class="num">29</span><span class="txt">Entities, repositories, and <code>HelpSessionService</code> / <code>TicketService</code> / <code>TicketActionRecorder</code></span></label></li>
+    <li class="step gate"><label><input type="checkbox"><span class="num">30</span><span class="txt"><span class="flag">Critical</span><code>recordAttempt()</code> annotated <code>@Transactional(propagation = REQUIRES_NEW)</code>, with the paired test from spike 3 promoted into the real test suite</span></label></li>
+    <li class="step gate"><label><input type="checkbox"><span class="num">31</span><span class="txt"><span class="flag">Checkpoint</span>App boots on an empty database; our seven tables and ~25 <code>ACT_*</code> tables all appear</span></label></li>
+  </ul>
+
+  <h3><span class="tag">Phase 2</span>Catalogue and L1 → L2 routing</h3>
+  <ul class="steps">
+    <li class="step"><label><input type="checkbox"><span class="num">32</span><span class="txt">Seed <code>concern_catalogue</code> from the generated CSV — all 38 rows, 30 of them inactive<span class="note2">Seed the full taxonomy even though only 8 are built. It makes the L1 menu real, and an SP selecting an unbuilt concern must degrade gracefully rather than 500.</span></span></label></li>
+    <li class="step"><label><input type="checkbox"><span class="num">33</span><span class="txt">Add the columns this mapping needs beyond the original design: <code>mandatory_human</code>, <code>outcome_types</code>, <code>active</code></span></label></li>
+    <li class="step"><label><input type="checkbox"><span class="num">34</span><span class="txt"><code>GET /help/concerns</code> returns L1 paths; <code>GET /help/concerns/{l1}</code> returns active L2s<span class="note2">Driven entirely from the catalogue. No hard-coded list anywhere.</span></span></label></li>
+    <li class="step"><label><input type="checkbox"><span class="num">35</span><span class="txt"><code>POST /help/sessions</code> and <code>POST /help/sessions/{id}/input</code> with a <code>nextStep</code> descriptor<span class="note2">Types: <code>menu</code>, <code>dropdown</code>, <code>text</code>, <code>message</code>, <code>deeplink</code>, <code>closed</code>. The backend owns all flow logic; the client is a renderer.</span></span></label></li>
+    <li class="step"><label><input type="checkbox"><span class="num">36</span><span class="txt"><code>GET /help/sessions/{id}</code> for reconnect<span class="note2">Reads <code>nextStep</code> from the session row, never from process variables — those are deleted when an instance completes.</span></span></label></li>
+    <li class="step"><label><input type="checkbox"><span class="num">37</span><span class="txt">Selecting an inactive concern returns a defined "not available" step<span class="note2">30 of 38 rows are inactive. This path will be hit constantly.</span></span></label></li>
+  </ul>
+
+  <h3><span class="tag">Phase 3</span>First concern end to end — T0</h3>
+  <ul class="steps">
+    <li class="step"><label><input type="checkbox"><span class="num">38</span><span class="txt"><code>FORGET_MPIN</code>: BPMN with a start event, one Service Task, one end event</span></label></li>
+    <li class="step"><label><input type="checkbox"><span class="num">39</span><span class="txt">Returns a <code>deeplink</code> step and closes the session</span></label></li>
+    <li class="step gate"><label><input type="checkbox"><span class="num">40</span><span class="txt"><span class="flag">Checkpoint</span>Assert <strong>zero rows</strong> in <code>ticket</code> after the session closes<span class="note2">This is Gate 1 made testable. T0 creating a ticket is the most likely silent bug in the whole design, because everything downstream assumes a ticket exists.</span></span></label></li>
+  </ul>
+
+  <h3><span class="tag">Phase 4</span>Fact providers and shared services</h3>
+  <ul class="steps">
+    <li class="step"><label><input type="checkbox"><span class="num">41</span><span class="txt"><code>ConcernFactProvider</code> interface and the generic <code>fetchFactsDelegate</code> that resolves a bean by catalogue row</span></label></li>
+    <li class="step"><label><input type="checkbox"><span class="num">42</span><span class="txt">Shared service: <strong>haversine + hub radius</strong>, distance measured from the radius edge<span class="note2">Used by Transport path 3 now, R1 later. Build it as a service with its own tests, not a private method.</span></span></label></li>
+    <li class="step"><label><input type="checkbox"><span class="num">43</span><span class="txt">Shared service: <strong>Express/Standard delivery TAT</strong> with the 11 PM deadline<span class="note2">Used by <code>PROD_DELIVERY_DELAY</code> and <code>VIOL_R9</code>. The mapping explicitly flags that R9 previously used a flat 3 days — the drift already happened once.</span></span></label></li>
+    <li class="step"><label><input type="checkbox"><span class="num">44</span><span class="txt">Shared service: <strong>duplicate-credit guard</strong>, keyed per action type<span class="note2">Order ID for transport, PayU txn id for recharge. One service, two key strategies.</span></span></label></li>
+    <li class="step"><label><input type="checkbox"><span class="num">45</span><span class="txt">Shared service: <strong>counter service</strong> over <code>sp_counter</code>, with explicit reset boundaries<span class="note2">Calendar month for period leave, rolling 25-job cycle for allowances. The boundary definition is part of the contract.</span></span></label></li>
+    <li class="step"><label><input type="checkbox"><span class="num">46</span><span class="txt">Write the eight fact providers against the seeded schema, one signal at a time<span class="note2">Real SQL, real column names. Ask for a <strong>schema-only dump</strong> to shape it — DDL with no rows is a much smaller ask than access and carries no data risk. Where even the schema is guessed, say so in the register.</span></span></label></li>
+    <li class="step gate"><label><input type="checkbox"><span class="num">47</span><span class="txt"><span class="flag">Key output</span>Maintain a live signal-availability register as you go<span class="note2">Per signal: verified / assumed / not available / exists elsewhere — and where the schema itself was guessed, say so. This register <em>is</em> the answer to whether Layer 6 is an integration or a build, and it is the POC's most reusable artifact. A signal that cannot be read becomes a mock with a recorded reason — never a quietly invented value.</span></span></label></li>
+  </ul>
+
+  <h3><span class="tag">Phase 5</span>Decision tables</h3>
+  <ul class="steps">
+    <li class="step"><label><input type="checkbox"><span class="num">48</span><span class="txt">Author one <code>.dmn</code> per concern, hit policy <code>FIRST</code>, from the generated rule rows</span></label></li>
+    <li class="step"><label><input type="checkbox"><span class="num">49</span><span class="txt">Implement the derived Transport path selector as a single named fact<span class="note2"><code>transportPath</code>, computed by <code>TransportFactProvider</code>, fed to the table as an input column. Charge-not-credited → Path 1; cancelled → Path 2; outside hub radius → Path 3; otherwise no entitlement. <strong>Mark it as an assumption in code and in the register.</strong> When the real rule arrives it is one method and one column.</span></span></label></li>
+    <li class="step"><label><input type="checkbox"><span class="num">50</span><span class="txt">Add a terminal catch-all row to <strong>every</strong> table<span class="note2">Thirteen concerns in the mapping have no default branch. Under <code>FIRST</code>, a case matching no row returns nothing and the gateway has nowhere to go.</span></span></label></li>
+    <li class="step"><label><input type="checkbox"><span class="num">51</span><span class="txt">Move every threshold into the table: Rs300, Rs50/km, 11 PM, the cycle allowances<span class="note2">No numeric constant from the caps register belongs in Java.</span></span></label></li>
+    <li class="step gate"><label><input type="checkbox"><span class="num">52</span><span class="txt"><span class="flag">Checkpoint</span>A test per rule, feeding fact maps straight to <code>DmnDecisionService</code> — 26 rules, 26 assertions, plus one per catch-all</span></label></li>
+  </ul>
+
+  <h3><span class="tag">Phase 6</span>The anchor concern — Transport</h3>
+  <ul class="steps">
+    <li class="step"><label><input type="checkbox"><span class="num">53</span><span class="txt">BPMN: start → fetch facts → business rule → gateway on tier → gateway on flag → action → finalize</span></label></li>
+    <li class="step"><label><input type="checkbox"><span class="num">54</span><span class="txt">Order-ID capture step before facts are fetched</span></label></li>
+    <li class="step"><label><input type="checkbox"><span class="num">55</span><span class="txt">Mock <code>TransportCreditService</code> — writes to a mock ledger table, never to a real system</span></label></li>
+    <li class="step"><label><input type="checkbox"><span class="num">56</span><span class="txt">Response templates keyed by DMN action, one per outcome<span class="note2">Nine rules produce six distinct messages. Templates are files, not string literals, and no model writes any of them.</span></span></label></li>
+    <li class="step gate"><label><input type="checkbox"><span class="num">57</span><span class="txt"><span class="flag">Major checkpoint</span>All nine transport rules driven end to end by API call, each landing on its expected outcome</span></label></li>
+  </ul>
+
+  <h3><span class="tag">Phase 7</span>Money safety</h3>
+  <ul class="steps">
+    <li class="step gate"><label><input type="checkbox"><span class="num">58</span><span class="txt"><span class="flag">Test</span><strong>Rollback:</strong> record attempt → simulate a successful external call → throw from a later delegate → assert the Flowable transaction rolled back <em>and</em> the <code>ticket_action</code> row survived</span></label></li>
+    <li class="step gate"><label><input type="checkbox"><span class="num">59</span><span class="txt"><span class="flag">Test</span><strong>Idempotency:</strong> fire the identical credit twice → one ledger entry, second short-circuits on the unique key</span></label></li>
+    <li class="step gate"><label><input type="checkbox"><span class="num">60</span><span class="txt"><span class="flag">Test</span><strong>Cap:</strong> a case computing above Rs300 produces a ticket and <strong>moves no money at all</strong><span class="note2">The failure mode to rule out is a clamped Rs300 payment. The rule says escalate, not cap-and-pay.</span></span></label></li>
+    <li class="step"><label><input type="checkbox"><span class="num">61</span><span class="txt">Reconciliation job: sum <code>ticket_action</code> credits against the mock ledger, alert on any mismatch</span></label></li>
+  </ul>
+
+  <h3><span class="tag">Phase 8</span>Violations — state change without money</h3>
+  <ul class="steps">
+    <li class="step"><label><input type="checkbox"><span class="num">62</span><span class="txt"><code>VIOL_R5_PERIODS</code>: violation lookup, monthly counter, two outcomes</span></label></li>
+    <li class="step"><label><input type="checkbox"><span class="num">63</span><span class="txt">Mock <code>ViolationService.remove()</code><span class="note2"><strong>The bot removes a violation. It never removes a strike.</strong> The mock must model the backend recomputing the strike once no violations remain for that day — otherwise the POC teaches the wrong contract.</span></span></label></li>
+    <li class="step"><label><input type="checkbox"><span class="num">64</span><span class="txt">UPHOLD as a first-class outcome, with its own template class<span class="note2">Not a T1 answer. It is the rejection of an appeal — the case most likely to produce a dissatisfied partner.</span></span></label></li>
+    <li class="step"><label><input type="checkbox"><span class="num">65</span><span class="txt"><code>VIOL_R9_NO_PRODUCT</code>, reusing the TAT service from step 43</span></label></li>
+    <li class="step gate"><label><input type="checkbox"><span class="num">66</span><span class="txt"><span class="flag">Checkpoint</span>Change the TAT rule once; assert both <code>PROD_DELIVERY_DELAY</code> and <code>VIOL_R9</code> change together<span class="note2">This is the shared-service claim, tested rather than asserted.</span></span></label></li>
+    <li class="step"><label><input type="checkbox"><span class="num">67</span><span class="txt">Counter test: second period leave in a month upholds; the counter resets at the boundary</span></label></li>
+  </ul>
+
+  <h3><span class="tag">Phase 9</span>Agent connect</h3>
+  <ul class="steps">
+    <li class="step"><label><input type="checkbox"><span class="num">68</span><span class="txt">T3 branch ends on a User Task in a named queue</span></label></li>
+    <li class="step"><label><input type="checkbox"><span class="num">69</span><span class="txt"><code>escalationContextDelegate</code> writes the snapshot: concern, facts, which rule fired, prior actions</span></label></li>
+    <li class="step"><label><input type="checkbox"><span class="num">70</span><span class="txt">Agent API: <code>GET /agent/tasks</code>, <code>POST /agent/tasks/{id}/claim</code>, <code>GET /tickets/{id}/escalation-context</code>, <code>GET /tickets/{id}/conversation</code>, <code>POST /agent/tasks/{id}/complete</code><span class="note2">Chat handoff, not a call. The ticket waits in a queue; an agent picks it up. No telephony anywhere in the POC.</span></span></label></li>
+    <li class="step gate"><label><input type="checkbox"><span class="num">71</span><span class="txt"><span class="flag">The restart test</span>Reach a User Task → <strong>kill the JVM</strong> → restart → claim and complete → the process resumes and finishes<span class="note2">If this fails, stop. The entire reason for embedding a process engine collapses, and the design needs rethinking before anything else is built.</span></span></label></li>
+    <li class="step"><label><input type="checkbox"><span class="num">72</span><span class="txt">Agent completion writes back to the ticket and closes the session</span></label></li>
+  </ul>
+
+  <h3><span class="tag">Phase 10</span>CSAT and the bounding rule</h3>
+  <p>Every resolution ends with a satisfaction prompt, and two rules hang off the answer that pull in opposite directions. A <em>No</em> opens the door to an agent (trigger A). A <em>Yes</em> on a T0&ndash;T2 case must <strong>close</strong> it. The second one is what protects the agent-connect target, and it has no implementation anywhere in the design today.</p>
+  <ul class="steps">
+    <li class="step"><label><input type="checkbox"><span class="num">73</span><span class="txt">Add <code>csat</code> as a <code>nextStep</code> type, emitted after every T0, T1 and T2 resolution<span class="note2">T0 creates no ticket, so its answer lands on the session row. The PRD says CSAT closes "the ticket" in every case &mdash; for T0 there is no ticket. Store it on whichever row exists and flag the wording.</span></span></label></li>
+    <li class="step gate"><label><input type="checkbox"><span class="num">74</span><span class="txt"><span class="flag">Decision</span>Choose the mechanism and record why<span class="note2">The process currently ends before CSAT is answered &mdash; <code>finalizeDelegate</code> completes the instance and its runtime row is deleted, so there is nothing left to resume. Either keep the instance alive on a <strong>Receive Task</strong> waiting for a CSAT event, or have <strong>CSAT = No start a second short process</strong> against the same ticket. Parked instances versus a split audit trail. This is O-15 in the Engineering Design, and the POC is where it gets settled because this codebase is the production seed.</span></span></label></li>
+    <li class="step"><label><input type="checkbox"><span class="num">75</span><span class="txt">Implement it, with a boundary timer for "never answered"<span class="note2">Most partners will not answer. The no-answer path is the default case, not the exception &mdash; build it first and the happy path second.</span></span></label></li>
+    <li class="step"><label><input type="checkbox"><span class="num">76</span><span class="txt"><strong>Trigger A</strong> &mdash; CSAT = No offers an agent, creating a T3 escalation against the same ticket</span></label></li>
+    <li class="step"><label><input type="checkbox"><span class="num">77</span><span class="txt"><strong>The bounding rule</strong> &mdash; CSAT = Yes on a T0&ndash;T2 case suppresses the agent option entirely<span class="note2">Enforced in ticket-closure logic, never by the client choosing not to render a button. A suppression rule the client can ignore is not a suppression rule.</span></span></label></li>
+    <li class="step"><label><input type="checkbox"><span class="num">78</span><span class="txt"><strong>Trigger B exception</strong> &mdash; a concern flagged <code>mandatory_human</code> offers an agent regardless of the CSAT answer<span class="note2">Only the CSAT exception is in POC scope. B's full pre-flight gate &mdash; routing to an agent before any facts are fetched &mdash; is not built here.</span></span></label></li>
+    <li class="step gate"><label><input type="checkbox"><span class="num">79</span><span class="txt"><span class="flag">Test</span>A satisfied T2 case returns <strong>no agent affordance at all</strong> in the response payload<span class="note2">Assert on the payload, not the UI. If the field is present and merely false, a future client will render it.</span></span></label></li>
+    <li class="step gate"><label><input type="checkbox"><span class="num">80</span><span class="txt"><span class="flag">Test</span>A dissatisfied T2 case offers an agent, the task appears in the queue, and the context endpoint serves it</span></label></li>
+    <li class="step"><label><input type="checkbox"><span class="num">81</span><span class="txt">Record the CSAT response rate and the trigger-A rate from the demo run<span class="note2">These two numbers are what the bounding rule protects. Without them the 10&ndash;20% agent-connect ceiling cannot be verified even in principle.</span></span></label></li>
+  </ul>
+
+  <h3><span class="tag">Phase 11</span>Free text and reroute</h3>
+  <ul class="steps">
+    <li class="step"><label><input type="checkbox"><span class="num">82</span><span class="txt">Python service: <code>POST /classify</code> and <code>POST /classify-intent</code>, Pydantic-validated, no database credentials</span></label></li>
+    <li class="step"><label><input type="checkbox"><span class="num">83</span><span class="txt">Deterministic stub behind the real client interface, keyed on fixture strings</span></label></li>
+    <li class="step"><label><input type="checkbox"><span class="num">84</span><span class="txt"><code>ClassifierClient</code> with a 3s timeout and a circuit breaker; both failure modes set <code>tier = T3</code></span></label></li>
+    <li class="step"><label><input type="checkbox"><span class="num">85</span><span class="txt"><strong>Entry-point free text:</strong> <code>POST /help/sessions</code> with <code>freeText</code> and no L1/L2 → classify-intent → back-fill the session → start the matching process<span class="note2">Downstream is identical to a menu selection. The <code>escalation_context</code> must carry the original text, the matched concern and the confidence, so a reader can see how the system got there.</span></span></label></li>
+    <li class="step"><label><input type="checkbox"><span class="num">86</span><span class="txt"><strong>In-concern free text:</strong> <code>VIOL_R4_OTHERS</code> → text names a different reason → reroute to that flow<span class="note2">Reroute is a new mechanism. Decide and document whether it ends the process and starts another, or is a BPMN call activity — and what happens to the ticket id either way.</span></span></label></li>
+    <li class="step"><label><input type="checkbox"><span class="num">87</span><span class="txt">Clarification loop: <code>clarificationAttempts</code> variable, re-prompt, escalate on the third failure<span class="note2">The PRD requires two clarification attempts before an agent. Escalating on the first low-confidence result inflates the agent-connect rate directly.</span></span></label></li>
+    <li class="step gate"><label><input type="checkbox"><span class="num">88</span><span class="txt"><span class="flag">Checkpoint</span>Kill the Python service mid-session — the flow degrades to T3, no error reaches the caller</span></label></li>
+  </ul>
+
+  <h3><span class="tag">Phase 12</span>External dependency and kill switch</h3>
+  <ul class="steps">
+    <li class="step"><label><input type="checkbox"><span class="num">89</span><span class="txt"><code>RECHARGE_DEBIT_NO_CREDIT</code> against a mock PayU with switchable status and induced failures</span></label></li>
+    <li class="step"><label><input type="checkbox"><span class="num">90</span><span class="txt">Idempotency keyed on the <strong>third-party</strong> transaction id, not our own<span class="note2">A different key strategy from transport. Worth proving the guard handles both.</span></span></label></li>
+    <li class="step"><label><input type="checkbox"><span class="num">91</span><span class="txt"><code>BotinFeature</code> enum, <code>JDBCStateRepository</code>, console mounted and <strong>authenticated</strong><span class="note2">Even in a POC. An unauthenticated console that flips money-moving behaviour is a habit that survives into production.</span></span></label></li>
+    <li class="step gate"><label><input type="checkbox"><span class="num">92</span><span class="txt"><span class="flag">Checkpoint</span>Flip the transport flag while running — next request routes to T3, no restart, <strong>and the partner still gets served</strong></span></label></li>
+    <li class="step gate"><label><input type="checkbox"><span class="num">93</span><span class="txt"><span class="flag">Checkpoint</span>Edit the Rs300 cap in the <code>.dmn</code> file, redeploy that file alone, behaviour changes with no Java rebuild</span></label></li>
+  </ul>
+
+  <h3><span class="tag">Phase 13</span>Demo surface and assessment</h3>
+  <ul class="steps">
+    <li class="step"><label><input type="checkbox"><span class="num">94</span><span class="txt">OpenAPI spec published from the running service</span></label></li>
+    <li class="step"><label><input type="checkbox"><span class="num">95</span><span class="txt">A scripted run covering all seventeen cases in the coverage matrix, as a single executable file<span class="note2">Curl or a REST client collection. The demo is the script — reproducible, not a live improvisation.</span></span></label></li>
+    <li class="step"><label><input type="checkbox"><span class="num">96</span><span class="txt">A seed fixture set: SPs, bookings, violations, wallet states that exercise every rule</span></label></li>
+    <li class="step"><label><input type="checkbox"><span class="num">97</span><span class="txt">Write up the five answers, the signal-availability register, and the LLM decision record</span></label></li>
+    <li class="step gate"><label><input type="checkbox"><span class="num">98</span><span class="txt"><span class="flag">Verdict</span>Assess against the exit criteria in §6 and state the go / no-go plainly</span></label></li>
+  </ul>
+</section>
+
+<section id="s5">
+  <h2><span class="num">5</span>The API surface</h2><div class="rule"></div>
+  <p>Backend only. Every case in the coverage matrix is reachable through these.</p>
+<pre><span class="cm"># Partner-facing</span>
+<b>GET </b> /help/concerns                      <span class="cm">→ five L1 paths, from the catalogue</span>
+<b>GET </b> /help/concerns/{l1}                 <span class="cm">→ active L2s under that path</span>
+<b>POST</b> /help/sessions                      <span class="cm">→ {spId, l1?, l2?, freeText?}</span>
+<b>POST</b> /help/sessions/{id}/input           <span class="cm">→ {value} for the current nextStep</span>
+<b>GET </b> /help/sessions/{id}                 <span class="cm">→ current state + nextStep (reconnect)</span>
+
+<span class="cm"># Agent-facing — chat handoff, no telephony</span>
+<b>GET </b> /agent/tasks?queue=                 <span class="cm">→ waiting User Tasks</span>
+<b>POST</b> /agent/tasks/{id}/claim
+<b>GET </b> /tickets/{id}/escalation-context    <span class="cm">→ computed facts, loaded first</span>
+<b>GET </b> /tickets/{id}/conversation          <span class="cm">→ raw transcript, loaded lazily</span>
+<b>POST</b> /agent/tasks/{id}/complete          <span class="cm">→ resolution + resume the process</span>
+
+<span class="cm"># Operations</span>
+<b>GET </b> /togglz-console                      <span class="cm">→ authenticated, even in the POC</span>
+<b>GET </b> /actuator/health
+<b>GET </b> /internal/signals/register          <span class="cm">→ live signal-availability register</span>
+</pre>
+  <div class="note">
+    <p><code>/internal/signals/register</code> is not decoration. It reports, per signal, whether the fact providers are reading real data or a mock and why — which makes the most valuable POC output queryable instead of buried in a document that goes stale.</p>
+  </div>
+</section>
+
+<section id="s6">
+  <h2><span class="num">6</span>Exit criteria</h2><div class="rule"></div>
+  <div class="tw">
+    <table>
+      <thead><tr><th>Result</th><th>Verdict</th></tr></thead>
+      <tbody>
+        <tr><td><strong>Restart test fails</strong> (step 71)</td><td><strong>Stop.</strong> Re-evaluate the process engine before anything else</td></tr>
+        <tr><td><strong>Rollback test fails</strong> (step 58)</td><td><strong>Stop.</strong> The money-safety model needs redesign</td></tr>
+        <tr><td>All 26 rules reachable and correct through the API</td><td>The decision layer holds — proceed</td></tr>
+        <tr><td>Shared TAT change propagates to both concerns (step 66)</td><td>The reuse model holds</td></tr>
+        <tr><td>DMN edit changes behaviour with no rebuild (step 84)</td><td>Ops-editable rules are real, and the D-3 review gate becomes urgent</td></tr>
+        <tr><td>Signal register: most signals readable</td><td>Layer 6 is an integration. Estimate accordingly</td></tr>
+        <tr><td>Signal register: many signals missing</td><td>Layer 6 is a build. Not a blocker, but re-estimate before committing to a production date</td></tr>
+        <tr><td>Satisfied T2 case offers no agent path (step in Phase 10)</td><td>The bounding rule is enforced where it has to be &mdash; in closure logic</td></tr>
+        <tr><td>CSAT mechanism chosen and the no-answer path tested</td><td>O-15 closed with evidence rather than a preference</td></tr>
+        <tr><td>LLM decision recorded with measured numbers</td><td>Procurement can proceed on evidence</td></tr>
+        <tr><td>Classifier accuracy</td><td><strong>Not assessable in this POC.</strong> No key, so the harness output is the deliverable, not the score</td></tr>
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<section id="s7">
+  <h2><span class="num">7</span>Carrying it into production</h2><div class="rule"></div>
+  <p>Because the codebase is the seed, the question is not "what gets rewritten" but "what gets replaced or added".</p>
+  <div class="tw">
+    <table>
+      <thead><tr><th>Built in the POC</th><th>What changes for production</th></tr></thead>
+      <tbody>
+        <tr><td>Data model, migrations, transaction boundaries</td><td><span class="chip c-ok">Keep</span> Unchanged</td></tr>
+        <tr><td>BPMN and DMN files</td><td><span class="chip c-ok">Keep</span> Extended per concern, not rewritten</td></tr>
+        <tr><td>Shared services (geo, TAT, dup-guard, counters)</td><td><span class="chip c-ok">Keep</span> Already built as services with their own tests</td></tr>
+        <tr><td>Fact providers</td><td>Mocked signals swapped for real reads as they become available</td></tr>
+        <tr><td>Action executors</td><td><strong>Replaced.</strong> Mocks become real calls — the interface boundary is what makes this contained</td></tr>
+        <tr><td>Classifier stub</td><td><strong>Replaced</strong> by the selected vendor. Configuration change only</td></tr>
+        <tr><td>Agent API</td><td>Extended once the chat platform is chosen</td></tr>
+        <tr><td>CSAT gate, trigger A, the bounding rule</td><td><span class="chip c-ok">Keep</span> Built here because it is the hardest trigger and the one that protects the target</td></tr>
+        <tr><td>—</td><td><strong>Added:</strong> agent-connect triggers B (pre-flight), D and E, access control (Layer 11), guardrails (Layer 12), observability (Layer 9), the remaining 30 concerns</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <div class="note hazard">
+    <p><strong>The remaining gap is the rest of the trigger model.</strong> With CSAT, trigger A and the bounding rule built here, what is still missing is trigger B’s pre-flight gate, trigger D’s cross-concern repeat-contact check, and trigger E’s sentiment and risk detection. D in particular needs the shared trigger table specified in the Engineering Design — it cannot be a column bolted onto each concern’s own table without leaving silent holes in the ones that get missed.</p>
+  </div>
+</section>
+
+<footer>
+  BOTIn POC Build Plan · 98 steps · 8 concerns · 26 rules<br>
+  Companion documents — <a href="https://claude.ai/code/artifact/d4a03024-3700-4a37-b9ec-bb042060ff91">Decision Engine</a> · <a href="https://claude.ai/code/artifact/9b27bd5f-3e8e-407d-b9de-6bb5b0ca2c4f">Engineering Design</a> · <a href="https://claude.ai/code/artifact/1f3e4e0d-2f28-44a5-87a4-75e7eca100a7">Decision Brief</a><br>
+  Progress is saved in this browser only.<br>
+  Contains internal business rules, thresholds and repository detail. Private until deliberately shared.
+</footer>
+
+</div>
+
+<script>
+(function(){
+  var KEY='botin-poc-plan-v1';
+  var boxes=[].slice.call(document.querySelectorAll('li.step input'));
+  var bar=document.getElementById('bar'), count=document.getElementById('count');
+  function load(){ try{ var raw=localStorage.getItem(KEY); if(!raw) return;
+    var s=JSON.parse(raw); if(Object.prototype.toString.call(s)!=='[object Array]') return;
+    boxes.forEach(function(b,i){ b.checked=!!s[i]; }); }catch(e){} }
+  function save(){ try{ localStorage.setItem(KEY,JSON.stringify(boxes.map(function(b){return b.checked;}))); }catch(e){} }
+  function paint(){ var d=boxes.filter(function(b){return b.checked;}).length;
+    bar.style.width=(boxes.length?(d/boxes.length*100):0)+'%';
+    count.textContent=d+' of '+boxes.length+' done'; }
+  boxes.forEach(function(b){ b.addEventListener('change',function(){ save(); paint(); }); });
+  document.getElementById('reset').addEventListener('click',function(){
+    boxes.forEach(function(b){ b.checked=false; }); save(); paint(); });
+  load(); paint();
+})();
+</script>

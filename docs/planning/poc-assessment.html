@@ -1,0 +1,458 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>BOTIn POC — Findings and Verdict</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#F4F6F9; --surface:#FFFFFF; --panel:#EAEEF5; --line:#CDD5E1; --line-soft:#E0E6EF;
+    --ink:#161A21; --ink-2:#454E5D; --muted:#798393;
+    --accent:#2F4468; --accent-soft:#E6ECF7; --accent-line:#B7C4DC;
+    --ok:#1A7550; --warn:#9A560B; --stop:#A93A38;
+    --gate-bg:#FBF0E4; --mono-bg:#EBEFF5;
+    --font-sans:'IBM Plex Sans',system-ui,-apple-system,'Segoe UI',sans-serif;
+    --font-mono:'IBM Plex Mono',ui-monospace,SFMono-Regular,Menlo,monospace;
+  }
+  @media (prefers-color-scheme: dark){ :root:not([data-theme="light"]){
+    --bg:#0F1218; --surface:#151921; --panel:#1C222D; --line:#2C3340; --line-soft:#222833;
+    --ink:#E5E9F1; --ink-2:#B2BAC7; --muted:#6A7383;
+    --accent:#9DB3DE; --accent-soft:#19212F; --accent-line:#31405A;
+    --ok:#3EBC92; --warn:#DFA13B; --stop:#E0736E;
+    --gate-bg:#241E14; --mono-bg:#1A202A; } }
+  :root[data-theme="dark"]{
+    --bg:#0F1218; --surface:#151921; --panel:#1C222D; --line:#2C3340; --line-soft:#222833;
+    --ink:#E5E9F1; --ink-2:#B2BAC7; --muted:#6A7383;
+    --accent:#9DB3DE; --accent-soft:#19212F; --accent-line:#31405A;
+    --ok:#3EBC92; --warn:#DFA13B; --stop:#E0736E;
+    --gate-bg:#241E14; --mono-bg:#1A202A; }
+
+  *{box-sizing:border-box}
+  body{margin:0; background:var(--bg); color:var(--ink); font-family:var(--font-sans);
+       font-size:15px; line-height:1.62; -webkit-font-smoothing:antialiased}
+  .shell{max-width:1040px; margin:0 auto; padding-block:0 110px; padding-left:24px; padding-right:24px}
+  p{margin:0 0 14px; max-width:78ch}
+  strong{font-weight:600}
+  code{font-family:var(--font-mono); font-size:.88em; background:var(--mono-bg);
+       padding:1px 5px; border-radius:3px; color:var(--accent)}
+
+  header.mast{padding:46px 0 22px; border-bottom:2px solid var(--ink); margin-bottom:28px}
+  .kicker{font-family:var(--font-mono); font-size:11.5px; letter-spacing:.11em;
+          text-transform:uppercase; color:var(--muted); margin:0 0 12px}
+  h1{font-size:clamp(28px,4.4vw,42px); font-weight:600; letter-spacing:-.02em; margin:0 0 12px; line-height:1.12}
+  .sub{color:var(--ink-2); font-size:16.5px; margin:0; max-width:74ch}
+
+  section{margin:0 0 44px; scroll-margin-top:20px}
+  h2{font-size:12px; font-family:var(--font-mono); letter-spacing:.12em; text-transform:uppercase;
+     color:var(--muted); margin:0 0 6px; font-weight:500}
+  h2 + .h2sub{font-size:23px; font-weight:600; letter-spacing:-.01em; margin:0 0 18px; line-height:1.25}
+  h3{font-size:17px; font-weight:600; margin:26px 0 8px; letter-spacing:-.005em}
+
+  /* verdict */
+  .verdict{background:var(--surface); border:1px solid var(--line);
+           border-left:5px solid var(--ok); border-radius:6px; padding:26px 26px 20px; margin:0 0 26px}
+  .verdict .word{font-size:clamp(30px,5vw,44px); font-weight:600; letter-spacing:-.02em;
+                 color:var(--ok); line-height:1; margin:0 0 6px}
+  .verdict .qual{font-size:17px; color:var(--ink-2); margin:0 0 20px}
+  .cond{display:grid; gap:14px; grid-template-columns:repeat(auto-fit,minmax(260px,1fr)); margin-top:4px}
+  .cond > div{background:var(--panel); border-radius:5px; padding:14px 16px}
+  .cond h4{margin:0 0 6px; font-size:13px; font-family:var(--font-mono); letter-spacing:.05em;
+           text-transform:uppercase; color:var(--muted); font-weight:500}
+  .cond p{margin:0; font-size:14.5px}
+
+  .warnbox{background:var(--gate-bg); border:1px solid var(--warn); border-radius:5px;
+           padding:16px 18px; margin:22px 0}
+  .warnbox p:last-child{margin-bottom:0}
+  .warnbox .lbl{font-family:var(--font-mono); font-size:11px; letter-spacing:.1em;
+                text-transform:uppercase; color:var(--warn); display:block; margin-bottom:8px}
+
+  .stat{display:flex; align-items:baseline; gap:18px; flex-wrap:wrap;
+        background:var(--surface); border:1px solid var(--line); border-radius:6px; padding:22px 24px; margin:0 0 18px}
+  .stat .n{font-size:clamp(38px,7vw,58px); font-weight:600; letter-spacing:-.03em; color:var(--warn); line-height:1}
+  .stat .l{font-size:15px; color:var(--ink-2); max-width:56ch}
+
+  .tablewrap{overflow-x:auto; margin:0 0 18px; border:1px solid var(--line); border-radius:6px; background:var(--surface)}
+  table{border-collapse:collapse; width:100%; font-size:14px; min-width:520px}
+  th,td{text-align:left; padding:11px 14px; border-bottom:1px solid var(--line-soft); vertical-align:top}
+  th{font-family:var(--font-mono); font-size:11px; letter-spacing:.08em; text-transform:uppercase;
+     color:var(--muted); font-weight:500; background:var(--panel); border-bottom:1px solid var(--line)}
+  tr:last-child td{border-bottom:none}
+  td.q{width:34%}
+
+  .tag{font-family:var(--font-mono); font-size:11px; font-weight:500; letter-spacing:.04em;
+       padding:2px 8px; border-radius:3px; white-space:nowrap; display:inline-block}
+  .yes{background:var(--ok); color:#fff}
+  .no{background:var(--stop); color:#fff}
+  .part{background:var(--warn); color:#fff}
+  .na{background:var(--muted); color:#fff}
+
+  .card{background:var(--surface); border:1px solid var(--line); border-radius:6px;
+        padding:20px 22px; margin:0 0 16px}
+  .card h3{margin-top:0}
+  .card p:last-child{margin-bottom:0}
+
+  blockquote{margin:16px 0; padding:2px 0 2px 18px; border-left:3px solid var(--accent-line);
+             color:var(--ink-2); font-size:15.5px}
+  blockquote p:last-child{margin-bottom:0}
+
+  ol.next{counter-reset:s; list-style:none; padding:0; margin:0}
+  ol.next li{counter-increment:s; position:relative; padding:0 0 16px 46px; margin:0}
+  ol.next li::before{content:counter(s); position:absolute; left:0; top:1px;
+      font-family:var(--font-mono); font-size:12px; color:var(--accent);
+      background:var(--accent-soft); border:1px solid var(--accent-line);
+      width:28px; height:28px; border-radius:50%; display:grid; place-items:center}
+
+  footer{border-top:1px solid var(--line); padding-top:18px; color:var(--muted);
+         font-family:var(--font-mono); font-size:11.5px; letter-spacing:.04em}
+  @media (max-width:640px){ td.q{width:auto} }
+</style>
+</head>
+<body>
+<div class="shell">
+
+<header class="mast">
+  <p class="kicker">Yesmadam · Partner Experience · Proof of Concept</p>
+  <h1>BOTIn POC — findings and verdict</h1>
+  <p class="sub">The five questions the design named as expensive to get wrong, the signal-availability
+  position, where the LLM decision stands, and the go / no-go stated plainly.</p>
+</header>
+
+<section>
+  <div class="verdict">
+    <p class="word">GO</p>
+    <p class="qual">— with two conditions, and one number that must not be quoted.</p>
+    <p><strong>Neither stop condition triggered.</strong> The two unknowns whose failure would have
+    ended the project — process durability and money safety — both passed, each with its
+    <em>negative</em> case demonstrated: the annotation removed, the test failing. That is what
+    makes the passes mean something.</p>
+    <div class="cond">
+      <div>
+        <h4>Condition one</h4>
+        <p>The read grant. Today the service resolves <strong>7.7%</strong> of known monthly volume
+        without a human, because only one concern's facts are readable. The decision layer is
+        correct and largely idle.</p>
+      </div>
+      <div>
+        <h4>Condition two</h4>
+        <p>The classifier question is open. Free text is built end to end and degrades correctly,
+        but nobody knows whether a model is accurate enough on real Hinglish. That is a tuning
+        decision, not a rebuild — but it is unmade.</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="warnbox">
+    <span class="lbl">The number that must not be quoted</span>
+    <p><strong>There is no classifier accuracy figure.</strong> If this POC is summarised anywhere
+    as demonstrating that free text <em>works</em>, that summary is wrong. It demonstrates that
+    free text is <strong>wired</strong> correctly and <strong>fails</strong> correctly.</p>
+  </div>
+</section>
+
+<section>
+  <h2>Section 1</h2>
+  <p class="h2sub">The five answers</p>
+
+  <div class="tablewrap">
+  <table>
+    <thead><tr><th>#</th><th class="q">Question</th><th>Answer</th><th>Basis</th></tr></thead>
+    <tbody>
+      <tr><td><code>U-1</code></td><td class="q">Does Flowable really pause at a User Task, survive a JVM restart, and resume?</td>
+          <td><span class="tag yes">YES</span></td><td>Demonstrated, including the negative case</td></tr>
+      <tr><td><code>U-2</code></td><td class="q">Does the model reach usable accuracy on real Hinglish?</td>
+          <td><span class="tag na">NOT ASSESSED</span></td><td>No key, no real ticket text. <strong>Not a pass</strong></td></tr>
+      <tr><td><code>U-3</code></td><td class="q">Does <code>REQUIRES_NEW</code> really protect the action record through a rollback?</td>
+          <td><span class="tag yes">YES</span></td><td>Demonstrated, and sharper than expected</td></tr>
+      <tr><td><code>U-4</code></td><td class="q">Do the capabilities the violation concerns need exist?</td>
+          <td><span class="tag no">NO</span></td><td>And not for the reason anticipated</td></tr>
+      <tr><td><code>U-5</code></td><td class="q">Can a DMN edit change behaviour with no redeploy?</td>
+          <td><span class="tag yes">YES</span></td><td>Demonstrated against a running engine</td></tr>
+    </tbody>
+  </table>
+  </div>
+
+  <div class="card">
+    <h3>U-1 — a paused conversation survives the server dying</h3>
+    <p>A process was started, parked on a User Task, and the JVM destroyed without a graceful
+    shutdown. A new JVM — one that never saw the process start — found the same task waiting and
+    ran it to completion.</p>
+    <p>This is the load-bearing answer. The architecture embeds a process engine precisely so that
+    persisting a half-finished conversation, reloading it and working out which step it reached is
+    code nobody writes. That choice is worth nothing if the engine does not behave this way, and
+    <em>the documentation says so</em> is not the same claim.</p>
+    <p><strong>One consequence was not in the design and changes it.</strong> Runtime rows are
+    deleted the moment a process completes, so anything the client needs after the conversation
+    ends cannot live in a process variable. The next step is therefore persisted on the session
+    row. Without that, a resolved partner who reconnects would be shown nothing at all — and
+    nothing would have errored.</p>
+  </div>
+
+  <div class="card">
+    <h3>U-2 — classifier accuracy. <span class="tag na">NOT ASSESSED</span></h3>
+    <p>There is no API key and no historical ticket text, so there is no number. The fixtures that
+    exercise routing were written by the same hand that wrote the classifier, and fixtures written
+    that way always classify well. <strong>That is not evidence; it is a mirror.</strong></p>
+    <p>What <em>is</em> built and demonstrable: the model boundary, the hallucination guard, the
+    confidence floor, the clarification loop, the reroute mechanism and the degradation path. A
+    real model is a configuration change rather than a build.</p>
+    <p><strong>The guard that matters most is not in Java.</strong> A category counts only if it
+    names a concern that is active right now, checked against the catalogue on every call —
+    correct by construction as concerns are switched on, and a model trained on the old taxonomy
+    cannot route a partner into a concern nobody has built. The Python service checks the same
+    thing independently, so the guarantee does not leave if that process is swapped for a
+    vendor's.</p>
+    <p><strong>What the absence costs:</strong> the agent-connect ceiling cannot be verified even
+    in principle.</p>
+  </div>
+
+  <div class="card">
+    <h3>U-3 — the payment record survives a rollback, and the real finding is larger</h3>
+    <p>An outer transaction was rolled back and the attempt row was still there. The annotation was
+    then removed and the same test failed — which is what makes the first result mean something.</p>
+    <p><strong>The larger finding, which the original spike could not have seen:</strong> the
+    isolation runs in <em>both</em> directions. A separate transaction also cannot see rows the
+    outer one has only flushed. The spike passed because its test committed a ticket first and then
+    exercised the recorder; in the real flow both happen in one request, and the attempt insert
+    failed on a foreign key to a ticket that, as far as its own transaction was concerned, did not
+    exist.</p>
+    <blockquote><p>If we are about to call an external system on behalf of a row, that row and
+    everything it references must be <strong>as durable as the call</strong>.</p></blockquote>
+    <p>An attempt row pointing at a ticket that was rolled away is a dangling audit record. A
+    foreign key turned that into a loud failure here; in a schema without one it is a quiet
+    corruption of the only evidence we keep that we contacted a payment gateway on someone's
+    behalf.</p>
+    <p><strong>A second finding.</strong> The idempotency key must be the third party's reference,
+    not ours. A partner who opens a second conversation about the same failed recharge correctly
+    gets a second ticket — it is a second complaint — and a ticket-scoped key would have paid them
+    twice.</p>
+  </div>
+
+  <div class="card">
+    <h3>U-4 — the answer is a third state the design did not anticipate</h3>
+    <p>The design expected a binary: either the capability exists as a callable method and that
+    layer is an integration, or it does not and the layer is a build. The audit found neither.</p>
+    <p><strong>The concepts do not exist in the data at all.</strong> The violation master table
+    holds exactly seven rows, and none of them is a period-leave violation or a missing-product
+    violation. The R1–R13 numbering used throughout the concern mapping appears nowhere in the live
+    system. Separately, the system records leave <em>duration</em>, not leave <em>reason</em> —
+    "period leave" is a category the data cannot currently express.</p>
+    <p><strong>Both concerns are parked, and parking them was the safe choice rather than the tidy
+    one.</strong> A query for a violation code that does not exist returns zero rows, and zero prior
+    removals matches the <em>remove</em> row. Left active, the concern would have auto-removed
+    violations it never actually checked.</p>
+    <blockquote><p>An empty result is not a neutral value. It is a specific answer — and here it was
+    the generous one.</p></blockquote>
+    <p><strong>What is unaffected:</strong> the read side for every concern that does have data is
+    mapped against the real source, and every column a provider reads is checked at startup.
+    <strong>No production system is written to anywhere in this POC</strong> — every wallet credit,
+    violation removal and strike recalculation goes to a mock, by design.</p>
+  </div>
+
+  <div class="card">
+    <h3>U-5 — a rule change with no rebuild, and what follows from it</h3>
+    <p>A claim for ₹250 is paid under the ₹300 cap. The cap is edited to ₹200 in the decision table,
+    that one file is redeployed into the already-running engine, and the same claim with the same
+    facts is refused and sent to a person. Nothing was recompiled and nothing was restarted.</p>
+    <p>A companion check asserts the cap value appears in <strong>no Java source anywhere</strong>.
+    That is what makes the answer worth anything: a constant that agrees with the table today turns
+    tomorrow's redeploy into a silent disagreement, where the table says one number, the code says
+    another, and which wins depends on which is consulted first. That is worse than having no table
+    at all.</p>
+    <p><strong>The consequence is a governance requirement, not a celebration.</strong> If a
+    business owner can change a payment threshold without an engineer, the review gate on who may
+    do that — and what is recorded when they do — becomes urgent rather than theoretical.</p>
+  </div>
+</section>
+
+<section>
+  <h2>Section 2</h2>
+  <p class="h2sub">Exit criteria, one at a time</p>
+  <p>These were agreed before the numbers were known, which is the only way a threshold means
+  anything.</p>
+  <div class="tablewrap">
+  <table>
+    <thead><tr><th class="q">Criterion</th><th>Result</th><th>What it means</th></tr></thead>
+    <tbody>
+      <tr><td class="q">Restart test fails → <strong>stop</strong></td><td><span class="tag yes">PASSED</span></td>
+          <td>The engine behaves as the architecture assumes</td></tr>
+      <tr><td class="q">Rollback test fails → <strong>stop</strong></td><td><span class="tag yes">PASSED</span></td>
+          <td>The money-safety model holds, and is better understood than when it was written</td></tr>
+      <tr><td class="q">All 26 rules reachable and correct through the API</td><td><span class="tag part">15 OF 26</span></td>
+          <td>The decision layer is correct. 11 rules are unreachable because a <em>signal</em> is missing, not because a rule is wrong</td></tr>
+      <tr><td class="q">Shared TAT change propagates to both concerns</td><td><span class="tag part">HALF</span></td>
+          <td>One TAT service, built and tested, read by one live concern. Its second consumer is parked</td></tr>
+      <tr><td class="q">DMN edit changes behaviour with no rebuild</td><td><span class="tag yes">PASSED</span></td>
+          <td>Ops-editable rules are real. <strong>The review gate is now urgent</strong></td></tr>
+      <tr><td class="q">Signal register: most signals readable</td><td><span class="tag no">NOT MET</span></td>
+          <td>Closer to a build than an integration for several concerns</td></tr>
+      <tr><td class="q">Satisfied case offers no agent path</td><td><span class="tag yes">PASSED</span></td>
+          <td>Enforced in closure logic, on a field the client cannot override</td></tr>
+      <tr><td class="q">CSAT mechanism chosen, no-answer path tested</td><td><span class="tag yes">PASSED</span></td>
+          <td>Settled with evidence rather than preference</td></tr>
+      <tr><td class="q">LLM decision recorded with measured numbers</td><td><span class="tag no">NOT MET</span></td>
+          <td>No key, no numbers. Procurement cannot proceed on evidence from this POC</td></tr>
+    </tbody>
+  </table>
+  </div>
+</section>
+
+<section>
+  <h2>Section 3</h2>
+  <p class="h2sub">The signal position, in one number</p>
+
+  <div class="stat">
+    <span class="n">7.7%</span>
+    <span class="l">of known monthly volume resolves without a human as the service actually runs
+    today — 738 of 9,542 cases. Only one concern's facts are readable.</span>
+  </div>
+
+  <p>Across the six active concerns the decision tables hold <strong>26 rules. 15 can fire. 11
+  cannot</strong>, because a fact they read is never populated. Every other concern's facts come
+  back all-null and land on its catch-all.</p>
+
+  <p><strong>Nothing here is broken.</strong> Every one of the 11 dead rules is dead because a
+  signal is missing, and in every case the fallback is a human rather than a wrong answer. That is
+  the design working as intended. The register exists so this is a number rather than a surprise
+  during a demo.</p>
+
+  <div class="warnbox">
+    <span class="lbl">One finding that changes a rule, not a number</span>
+    <p>The Recharge table reads a "partner is satisfied" fact that was expected to arrive with CSAT.
+    <strong>It cannot.</strong> CSAT is answered <em>after</em> a resolution; the decision reads that
+    fact <em>during</em> it, when the partner has not rated anything. That rule is permanently
+    unreachable as written, and what "SP not satisfied" means in that context is a question for the
+    concern owner — not a build task.</p>
+  </div>
+</section>
+
+<section>
+  <h2>Section 4</h2>
+  <p class="h2sub">Two answers the POC settled that were not on the list</p>
+
+  <div class="card">
+    <h3>The CSAT mechanism</h3>
+    <p>The obvious design holds every resolved session open waiting for a rating — one live process
+    per resolved conversation, indefinitely, for an answer that may never come. And a partner handed
+    a self-serve link has to go and use it before they can say whether it helped. The process
+    completes instead, and CSAT arrives on its own endpoint against the closed session. Nothing is
+    held open, so there is no timer and no state waiting. This also deleted a planned timeout step
+    entirely.</p>
+  </div>
+
+  <div class="card">
+    <h3>The bounding rule lives in closure logic, not in the UI</h3>
+    <p>Whether "Talk to an Agent" may be shown is decided by the backend and carried on the
+    response. A suppression rule the client owns is one an old app version can ignore — and this is
+    the rule that protects the entire agent-connect target.</p>
+  </div>
+</section>
+
+<section>
+  <h2>Section 5</h2>
+  <p class="h2sub">Where the LLM decision stands</p>
+  <p><strong>It cannot be recorded, and that is not a shrug.</strong> The exit criterion was that a
+  decision be recorded with measured numbers so procurement could proceed on evidence. There is no
+  key and no labelled real text, so there are no numbers.</p>
+  <p>What exists instead: a task specification that needs nobody, a harness where the <em>scoring
+  shape</em> is the deliverable rather than the score, a versioned prompt, and a boundary that
+  distrusts whatever a model returns. A candidate can be measured the day a key exists. The contract
+  is two endpoints with no database credentials and no identifiers, so swapping vendors is a
+  configuration change.</p>
+  <blockquote><p>This POC de-risked everything about using a model <em>except whether a model is
+  good enough</em>. That question is unanswered and cannot be answered without the two inputs that
+  were unavailable.</p></blockquote>
+</section>
+
+<section>
+  <h2>Section 6</h2>
+  <p class="h2sub">What was built, and what was not</p>
+  <p>Six concerns active, one generic process serving all of them, eight decision tables. Every tier
+  is demonstrated end to end: deflect with no ticket, answer from data, move money, hand to a person.
+  Free text works at the entry point and inside a concern. An agent claims a task, reads the facts
+  gathered before the handover, and completes it.</p>
+  <p><strong>Five guards exist, and each one exists because something already went wrong in exactly
+  that way</strong> — an unknown feature flag reading as false in silence, a decision table re-saved
+  in a namespace the engine cannot parse, a fact name spelled differently on the two sides of a
+  contract, a catalogue row pointing at a process file nobody wrote, and a rollback erasing the
+  evidence of an external call.</p>
+  <p><strong>The demo is a script, not a performance</strong>, and it asserts every case rather than
+  printing them. A live demo is edited by the performer, and the cases that get skipped when a room
+  is watching are exactly the ones worth seeing.</p>
+  <p><strong>The demo has been run, not just written: 27 of 27 checks pass against a live
+  service.</strong> It took three rounds of red to get there, and one of those failures was not
+  in the script.</p>
+
+  <div class="card">
+    <h3>A feature was built, tested, documented as done — and unreachable</h3>
+    <p>In-concern free text — the partner picks "Other", types a reason naming a different
+    concern, and is rerouted — had its decision table, its delegate and both its guards written
+    and green. <strong>Through the API it did nothing:</strong> the selection was taken and the
+    text discarded, so the concern ran with nothing to classify. No exception, no log line, no
+    failing test. Every test drove reroute from the entry point, which is a real path that
+    works; nobody had ever driven the path the requirement describes.</p>
+    <blockquote><p>A test suite proves the components work. Only something driving the real API
+    proves they are <strong>wired</strong> — and "built, green, documented, dead" leaves no
+    trace anywhere else.</p></blockquote>
+    <p>It is fixed and now has the test that would have caught it. It is recorded here rather
+    than quietly closed because it is the clearest argument in this POC for what the demo is
+    <em>for</em>.</p>
+  </div>
+
+
+  <div class="tablewrap">
+  <table>
+    <thead><tr><th class="q">Not built</th><th>Why</th><th>What unparks it</th></tr></thead>
+    <tbody>
+      <tr><td class="q">The two violation concerns</td><td>No violation code exists for either, and an empty result matched the <em>remove</em> row</td><td>A decision on whether those violation types should exist</td></tr>
+      <tr><td class="q">Transport <strong>payment</strong></td><td>The rate question is unanswered, so the computed amount is null on every real read</td><td>₹50/km, or the hub slabs — one answer</td></tr>
+      <tr><td class="q">The reconciliation job</td><td>Not reached</td><td>Buildable now</td></tr>
+      <tr><td class="q">Classifier accuracy</td><td>No key, no real ticket text</td><td>Both inputs</td></tr>
+      <tr><td class="q">Agent-connect triggers B, D, E</td><td>Out of POC scope by the plan</td><td>Production. Trigger D needs the shared trigger table — a column per concern leaves silent holes in the ones that get missed</td></tr>
+    </tbody>
+  </table>
+  </div>
+  <p>Three coverage cases cannot be demonstrated at all — a challenge upheld, a state change without
+  money, and the concern-level durable counter. All three come only from the two parked concerns.
+  The counter mechanism itself is built and tested; what is missing is a concern to attach it to.</p>
+</section>
+
+<section>
+  <h2>Section 7</h2>
+  <p class="h2sub">What follows from a GO</p>
+  <ol class="next">
+    <li><strong>Get the read grant and the four schema answers.</strong> The single highest-value
+    action available, and it is not engineering work. It moves 11 rules from dead to live.</li>
+    <li><strong>Settle the transport rate and the path selector.</strong> Both are one-line changes
+    behind named methods, and both gate the highest-volume concern in the build.</li>
+    <li><strong>Decide whether the two violation types should exist.</strong> If yes, unparking is
+    data and one query — the tables, rules and tests are written and green.</li>
+    <li><strong>Put the review gate on decision-table edits in place before Wave 1.</strong> A person
+    who can change a payment threshold without an engineer can change it without a reviewer too.</li>
+    <li><strong>Replace the console gate with the real thing.</strong> The kill-switch console cannot
+    currently be mounted without a credential, which is the right failure direction, but the gate in
+    front of it is a POC filter and is meant to be deleted.</li>
+    <li><strong>Treat the signal register as a live document.</strong> It is the most valuable output
+    of this POC after the two safety answers, and the one most likely to go stale quietly.</li>
+  </ol>
+
+  <div class="card">
+    <h3>What a bad outcome would have looked like</h3>
+    <p>Worth stating, because a GO reads differently next to it. Had the restart test failed, the
+    justification for embedding a process engine would have collapsed and the whole persistence
+    model would need redesigning. Had the rollback test failed, the money-safety model would need
+    redesigning before a single rupee could move. Neither happened — and both were tested with the
+    protection removed as well as present, so the passes mean something.</p>
+  </div>
+</section>
+
+<footer>
+  BOTIn POC · findings and verdict · companion to the Build Plan, the Signal Availability Register and the Code Map<br>
+  Contains internal business rules, thresholds and repository detail. Private until deliberately shared.
+</footer>
+
+</div>
+</body>
+</html>

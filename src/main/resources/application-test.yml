@@ -1,0 +1,33 @@
+# Tests run on H2 in its NATIVE mode. MODE=PostgreSQL cannot be used here:
+# Flowable detects H2 and emits H2 DDL containing the IDENTITY type, which
+# H2 rejects while in PostgreSQL mode. The core schema is therefore written
+# in types both engines accept, so no compatibility mode is needed.
+# The UAT datasource is switched off entirely — a test must never depend on
+# a shared environment being reachable.
+spring:
+  datasource:
+    url: jdbc:h2:mem:botin;DB_CLOSE_DELAY=-1
+    username: sa
+    password: ""
+    driver-class-name: org.h2.Driver
+  flyway:
+    enabled: true
+  jpa:
+    hibernate:
+      ddl-auto: validate
+botin:
+  uat:
+    enabled: false
+
+# One test — nothingKnownNeverPays — deliberately hands every decision table an
+# EMPTY fact map to prove that knowing nothing never moves money. Strict mode
+# treats an absent variable as an evaluation error, so Flowable logs a full stack
+# trace per table. The test catches it and passes; the traces are noise that make
+# a green run look broken. Silenced HERE ONLY, in the test profile.
+#
+# Nothing is hidden by this: DecisionService still throws, and a real failure
+# still fails the test with its own message.
+logging:
+  level:
+    org.flowable.dmn.engine.impl.RuleEngineExecutorImpl: OFF
+    org.flowable.dmn.engine.impl.el.ELExpressionExecutor: OFF
