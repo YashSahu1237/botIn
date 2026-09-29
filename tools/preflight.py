@@ -249,7 +249,9 @@ def catalogue_final_state() -> dict[str, dict]:
                 elif column == "process_key":
                     state[code]["process"] = value.strip("'")
                 elif column == "dmn_key":
-                    state[code]["dmn"] = value.strip("'")
+                    # NULL is a real value here: FORGET_MPIN has no decision to make, and a
+                    # dmn_key pointing at a table nothing evaluates is worse than none.
+                    state[code]["dmn"] = None if value.upper() == "NULL" else value.strip("'")
     return state
 
 
@@ -279,6 +281,14 @@ def check_catalogue_pointers() -> None:
         if row["dmn"] and row["dmn"] not in decisions:
             fail("catalogue-pointers",
                  f"{code} points at decision '{row['dmn']}', which is not a file in dmn/")
+
+        # A NULL dmn_key is legitimate ONLY for a concern whose process never decides.
+        # concern-generic ALWAYS reaches DecideDelegate, which reads getDmnKey() — a null
+        # there is a NullPointerException on a live partner, not a configuration choice.
+        if not row["dmn"] and row["process"] == "concern-generic":
+            fail("catalogue-pointers",
+                 f"{code} runs concern-generic, which always decides, but has no dmn_key — "
+                 f"DecideDelegate would dereference null on a real session")
 
 
 # ---------------------------------------------------------- delegates actually exist
@@ -452,7 +462,7 @@ def check_catch_all(tables: dict[str, dict]) -> None:
 
 
 # ------------------------------------------------- 2. every ending has words to say
-def check_response_templates(tables: dict[str, dict]) -> None:
+def check_response_templates(tables: dict[str, dict]) -> set[str]:
     """An action the bot RESOLVES on must have a partner-facing sentence.
 
     Scoped deliberately, so the guard cannot cry wolf:
@@ -490,7 +500,7 @@ def check_response_templates(tables: dict[str, dict]) -> None:
         fail("response-templates",
              f"no templates.properties found under src/main/resources — every bot resolution "
              f"would reach the partner as 'nothing prepared'")
-        return
+        return templates
 
     state = catalogue_final_state()
     generic = {row["dmn"] for row in state.values()
@@ -504,6 +514,7 @@ def check_response_templates(tables: dict[str, dict]) -> None:
                 fail("response-templates",
                      f"{key} rule {i} resolves with action '{r['action']}', which has no "
                      f"template — the partner would get an ending nobody wrote")
+    return templates
 
 
 # ------------------------------------------- 3. an action nothing can perform
@@ -597,6 +608,36 @@ def check_concern_folders(catalogue: dict) -> None:
 
 
 
+# ------------------------------------- 6. a template a delegate asks for BY NAME must exist
+def check_named_templates(templates: set[str]) -> None:
+    """Every promptFor("CODE") in Java resolves to a line in some templates.properties.
+
+    check_response_templates covers codes that come from a DECISION TABLE. It cannot see a
+    code a delegate emits directly, and there are two: AGENT_CONNECTING, which every T3 ends
+    with, and FORGET_MPIN_DEFLECT, whose concern makes no decision at all. Both are the only
+    sentence their path ever produces, so a typo in either is a partner reading the
+    'nothing prepared' fallback — logged, but only after it has already been sent.
+
+    Handles the constant form too (`private static final String X = "CODE"` then
+    promptFor(X)), because writing the literal inline is not the house style.
+    """
+    for f in glob.glob(str(ROOT / "src/main/java/**/*.java"), recursive=True):
+        src = read(f)
+        if "promptFor(" not in src:
+            continue
+        constants = dict(re.findall(
+            r'static\s+final\s+String\s+(\w+)\s*=\s*"([A-Z0-9_]+)"', src))
+        for arg in re.findall(r"promptFor\(\s*([\w\"]+)\s*\)", src):
+            code = arg.strip('"') if arg.startswith('"') else constants.get(arg)
+            if code is None:
+                continue                      # a variable: the decision-table guard covers it
+            if code not in templates:
+                fail("named-template",
+                     f"{Path(f).name} asks for the template '{code}', which no "
+                     f"templates.properties defines — that path has no other sentence")
+
+
+
 def main() -> int:
     fact_keys = declared_fact_keys()
 
@@ -611,7 +652,7 @@ def main() -> int:
 
     tables = decision_tables()
     check_catch_all(tables)
-    check_response_templates(tables)
+    check_named_templates(check_response_templates(tables))
     check_actions_performable(tables)
     check_every_concern_tested(tables)
     check_concern_folders(catalogue_final_state())

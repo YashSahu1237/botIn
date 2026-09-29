@@ -98,3 +98,73 @@ person with database access and two commands.
 
 `tools/uat-probe-2.sql` and `tools/uat-probe-3.sql` answer all five. They are read-only and
 already written.
+
+---
+
+## Flowable resources under one root (PARKED — attempted, reverted)
+
+**Decided:** `.dmn` and `.bpmn20.xml` should live beside the concerns that own them, under a
+common `resources/flowable/` root, so resources mirror `src/main/java`. **Not done:** attempted
+2026-09-29 and reverted the same day.
+
+**What happened.** `flowable.process-definition-location-prefix: classpath*:/flowable/` worked
+immediately — BPMN deployed from the nested tree. The DMN engine's equivalent,
+`flowable.dmn.resource-location`, did not: nothing deployed, nothing complained at startup, and
+the first symptom was `No decision found for key: ...` at runtime, 29 tests deep. Setting
+`flowable.dmn.resource-suffixes` to `**.dmn` explicitly changed nothing. Two attempts, two
+identical red builds, so it was reverted to the last green commit rather than guessed at again.
+
+**What was missing, and it is one command:**
+
+```
+unzip -p ~/.m2/repository/org/flowable/flowable-spring-boot-autoconfigure/7.0.1/\
+flowable-spring-boot-autoconfigure-7.0.1.jar META-INF/spring-configuration-metadata.json \
+ | python3 -c "
+import json,sys
+for p in json.load(sys.stdin).get('properties',[]):
+    if p.get('name','').startswith('flowable.dmn'): print(p['name'],'=',repr(p.get('defaultValue')))
+"
+```
+
+The defaults settle whether `resource-location` is a prefix that takes suffixes (as the process
+one is, and its name says so — `...-location-prefix`) or a complete pattern, and whether a
+separate deploy flag exists. **Start there, not with another attempt.**
+
+**If the property cannot express it**, the alternative is a small `@Configuration` that scans
+`classpath*:/flowable/**/*.dmn` and deploys each through `DmnRepositoryService` with duplicate
+filtering — about thirty lines, no dependence on property semantics, and it can assert that
+tables deployed equals tables found. That assertion is worth having regardless: a Flowable
+deployment that deploys nothing looks exactly like one with nothing to deploy.
+
+**Cost of staying as-is:** response templates mirror the concern tree, Flowable XML does not.
+Two conventions, which `CHECKLIST.md` currently has to explain.
+
+**Work already done and recoverable from this session:** the file moves, the `Files.list` to
+`Files.walk` changes in three tests, `DecisionTableReader` resolving a table by key instead of
+by path, and pre-flight's `flowable_files()` helper. Roughly twenty minutes to redo.
+
+---
+
+## A kill switch for a DEFLECTION (open — agreed, not built)
+
+**Wanted:** turn FORGET_MPIN off without a migration and a deploy.
+
+**Why it is not a one-liner.** `togglz_flag` today means *automation allowed* —
+`KillSwitch.isAutomationAllowed` is consulted by `DecideDelegate` before a T2 moves money, and
+turning `TRANSPORT_AUTO_CREDIT` off correctly leaves Transport AVAILABLE, it just escalates
+instead. A deflection has no automation to disable. What we want for FORGET_MPIN is a different
+operation: *concern unavailable*, so partners stop being offered it.
+
+**Two operations, so probably two flags.** Reusing one field for both would mean turning off
+Transport's payments also hid Transport from the menu.
+
+**The likely shape:** filter the L2 menu in `CatalogueService.activeConcernsIn` by an
+availability flag, which reuses the path an inactive concern already takes — the option simply
+is not offered, and those partners free-text instead, reaching triage and then a person.
+
+**What to settle first:** is "available" a second Togglz flag, a second catalogue column, or a
+reinterpretation of `active`? And what should a partner mid-session see if the concern is turned
+off between their selecting it and the process starting?
+
+**Note this is not FORGET_MPIN-specific.** Every T0 deflection will want it, and the PRD's
+rollout section implies a per-concern on/off that is not automation.

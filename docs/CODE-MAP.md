@@ -80,9 +80,38 @@ exist to convert one of those silences into a loud failure. Section 3 lists them
 
 ---
 
-## 2. Every package and file
+## 2. The four areas
 
-### `api/` — the edge, and the only thing the app sees
+Before the per-package detail: everything lives in one of five places, and which one a file
+is in tells you what it is allowed to know.
+
+| | What it is | Rule |
+|---|---|---|
+| `platform/` | the engine — API, session, process, decision, catalogue, safety, the fact and action SPIs | knows nothing about any individual concern |
+| `concern/<l1>/<l2>/` | one concern's own fact provider, its selector, its action service | knows only itself |
+| `shared/` | computations more than one L1 needs — tat, geo, ledger, counter, classification | knows no concern |
+| `surface/` | console, demo, reconcile — they observe the system | not on the decision path; removable from a production image |
+| `integration/` | an external system (PayU) | not a concern |
+
+**The one rule for where a helper belongs.** Written for one concern, it stays in that
+concern's folder. Needed by a second concern in the SAME L1, it rises to
+`concern/<l1>/_shared/`. Needed across L1s, it rises to the global `shared/`. It moves when the
+second caller appears, not in anticipation of one.
+
+**The folder is documentation; the catalogue row is identity.** `concern_catalogue.l2_code` is
+what the code actually keys on — the process, the decision table and the provider are all found
+through it. A folder is how a human finds the code. `check_concern_folders` in
+`tools/preflight.py` keeps the two honest by failing if one L1 ends up spread across two folders.
+
+**Resources do NOT mirror this yet.** `resources/dmn/` and `resources/processes/` are still flat.
+That is an open item, not an oversight — see `DISCUSSION-POINTERS.md`. Response templates DO
+mirror it: `resources/concern/<l1>/<l2>/templates.properties`.
+
+---
+
+## 3. Every package and file
+
+### `platform/api/` — the edge, and the only thing the app sees
 
 | File | What it is |
 |---|---|
@@ -94,7 +123,7 @@ exist to convert one of those silences into a loud failure. Section 3 lists them
 | `dto/Option`, `dto/L1Group` | menu entries |
 | `dto/StartSessionRequest`, `dto/InputRequest`, `dto/SessionView` | request/response shapes |
 
-### `session/` — the state machine
+### `platform/session/` — the state machine
 
 | File | What it is |
 |---|---|
@@ -120,7 +149,7 @@ reference chain. The corollary is the trap: those methods also cannot READ
 anything the caller has only flushed, which is why they take fields rather than
 ids to look up.
 
-### `catalogue/` — the taxonomy, and the four pointers
+### `platform/catalogue/` — the taxonomy, and the four pointers
 
 | File | What it is |
 |---|---|
@@ -148,7 +177,7 @@ in a report).
 provider, the table and the flag all exist. The catalogue removes duplication;
 it does not remove the build.
 
-### `process/` — Flowable, and the one rule about it
+### `platform/process/` — Flowable, and the one rule about it
 
 | File | What it is |
 |---|---|
@@ -188,7 +217,7 @@ elements is that the *next* concerns add a gateway on tier, a gateway on the
 kill switch, and a User Task for agent connect — additions to a file, not
 rewrites of a service class.
 
-### `facts/` — read UAT, conclude nothing
+### `platform/facts/` and `concern/<l1>/<l2>/` — read UAT, conclude nothing
 
 | File | What it is |
 |---|---|
@@ -213,7 +242,7 @@ present-but-null value evaluates fine and reaches the catch-all, which is a
 human. Start from `emptyFacts()` and overwrite what you learn — then the map is
 complete by construction rather than by remembering.
 
-#### `facts/shared/` — computations more than one concern needs
+#### `shared/` — computations more than one concern needs
 
 | File | What it is |
 |---|---|
@@ -232,7 +261,7 @@ computed it separately, the same partner could be told their order is on time
 don't know.** Unknown hub geometry is not 0 km. An undated order is not "on
 time". An unrecognised ledger action contributes nothing.
 
-### `decision/` — conclude, look nothing up
+### `platform/decision/` — conclude, look nothing up
 
 | File | What it is |
 |---|---|
@@ -242,7 +271,7 @@ time". An unrecognised ledger action contributes nothing.
 `action` is a **stable code**, not a label — the response template and the
 action service are both keyed on it, so it is a contract.
 
-### `safety/` — the things that stop a quiet mistake
+### `platform/safety/` — the things that stop a quiet mistake
 
 | File | What it is |
 |---|---|
@@ -279,7 +308,7 @@ external call happens. If the surrounding transaction then rolls back — or the
 service dies mid-call — the row survives, `idempotency_key` is taken, and a
 retry short-circuits instead of paying twice.
 
-### `action/` — the only code that moves money or state
+### `platform/action/` and the concern that owns each action — the only code that moves money or state
 
 | File | What it is |
 |---|---|
@@ -301,7 +330,7 @@ nothing. The second check is not redundant: the first can only be true at decisi
 time, and these two drifting apart is precisely the failure that would otherwise
 look like a successful resolution that did nothing.
 
-### `payu/` — the gateway, mocked
+### `integration/payu/` — the gateway, mocked
 
 | File | What it is |
 |---|---|
@@ -314,7 +343,7 @@ failure are all exercised for real; only the HTTP call at the end is not. `failN
 exists so the FAILURE path is demonstrable on demand rather than only in theory —
 a gateway that always succeeds tests half of what matters.
 
-### `classifier/` — the model boundary
+### `platform/classifier/` — the model boundary
 
 | File | What it is |
 |---|---|
@@ -330,7 +359,7 @@ a gateway that always succeeds tests half of what matters.
 database and no identifiers. No model is wired in; `classify_text` is a placeholder and
 the contract around it is what the Java client is built against.
 
-### `csat/` — satisfaction, trigger A, and the bounding rule
+### `platform/csat/` — satisfaction, trigger A, and the bounding rule
 
 | File | What it is |
 |---|---|
@@ -341,7 +370,7 @@ to go and use an answer before they can rate it — and because holding every re
 session open would charge runtime state to the whole T0 volume to serve the unhappy few.
 There is no timer anywhere: nothing is held, so nothing can get stuck.
 
-### `escalation/` — what the agent opens first
+### `platform/escalation/` — what the agent opens first
 
 | File | What it is |
 |---|---|
@@ -354,7 +383,7 @@ in, and then "why did the bot do that" stops being answerable. `trigger_reason` 
 A–E for the five cross-cutting triggers, or **`CONCERN`** when the concern's own
 table returned T3 — which is not one of the five and does not pretend to be.
 
-### `agent/` — the queue side of the handover
+### `platform/agent/` — the queue side of the handover
 
 | File | What it is |
 |---|---|
@@ -366,7 +395,7 @@ table returned T3 — which is not one of the five and does not pretend to be.
 the process waiting on it are then the same object and cannot drift apart. Not
 authenticated yet — same decision as the Togglz console (D-7).
 
-### `counter/` — caps that reset without a job
+### `shared/counter/` — caps that reset without a job
 
 | File | What it is |
 |---|---|
@@ -378,7 +407,7 @@ authenticated yet — same decision as the Togglz console (D-7).
 a new key, which starts at zero on its own. Nothing resets anything; there is no
 scheduled job to fail silently at a month boundary.
 
-### `demo/` — the synthetic world, and the wall around it
+### `surface/demo/` — the synthetic world, and the wall around it
 
 | File | What it is |
 |---|---|
@@ -403,7 +432,7 @@ without the RATE being right. Those are two different questions.
 **Times are relative** — "placed six days ago", never a date. A fixed timestamp
 means one thing this week and another next month, silently.
 
-### `console/` — making the backend visible
+### `surface/console/` — making the backend visible
 
 | File | What it is |
 |---|---|
@@ -430,7 +459,7 @@ real UAT datasource, so a console living inside it could never show real data.
 `console` alone runs against whatever the service is really reading; `demo,console`
 adds the synthetic world. The banner comes from `/console/state`, not from the page.
 
-### `config/` — the two datasources
+### `platform/config/` — the two datasources
 
 | File | What it is |
 |---|---|
@@ -472,7 +501,7 @@ connecting somewhere unintended. `.gitignore` excludes `env/*.env`, `*.env`,
 
 ---
 
-## 3. The five guards, and the incident behind each
+## 4. The guards, and the incident behind each
 
 Each of these exists because something already went wrong in exactly this way.
 None of them is defensive tidiness.
@@ -498,7 +527,12 @@ Two details in `ProviderContractTest` that look like mistakes and are not:
 
 ---
 
-## 4. How to add a concern
+## 5. How to add a concern
+
+> **The step-by-step is `CHECKLIST.md`, with templates in `concern-template/`.** What follows
+> is the same ground in prose, for understanding rather than for following. If the two ever
+> disagree, the checklist is the one kept in step with the guards.
+
 
 Do these in order. The order matters: it puts the startup validators in front of
 the mistakes they can catch, so a wrong name fails at boot instead of in front of
@@ -584,7 +618,7 @@ rule, including the catch-all and the all-nulls case.
 
 ---
 
-## 5. How to change a rule in a DMN file
+## 6. How to change a rule in a DMN file
 
 ### Anatomy
 

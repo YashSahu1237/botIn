@@ -98,6 +98,10 @@ class ProviderContractTest {
             Map<String, Object> facts = registry.require(c.getFactProvider()).fetchFacts(
                     new FactRequest(UUID.randomUUID(), "SP-CONTRACT", c.getL2Code(), null, null));
 
+            // A concern that decides nothing has no table to hand these facts to. It also
+            // cannot move money, which is what this test is really protecting.
+            if (c.getDmnKey() == null) return;
+
             Decision d = decisions.decide(c.getDmnKey(), facts);
             assertNotNull(d.tier(), c.getL2Code() + " produced no tier");
             assertFalse(d.movesMoney(),

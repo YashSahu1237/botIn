@@ -272,6 +272,70 @@ partners deserve a more specific sentence when the duplicate guard fires.
 
 ---
 
+## D-9 — the add-a-concern path, and the Flowable move that was reverted
+
+**Step 4 of BLUEPRINT §8 is done.** `CHECKLIST.md` states the seven obligations, each paired
+with the guard that catches you if you skip it; `concern-template/` holds the four files to copy;
+`src/main/java/in/yesmadam/botin/concern/README.md` points a developer at both from inside the
+tree. `CODE-MAP.md` was updated rather than rewritten — its prose was still accurate, its paths
+and grouping were not — and it now defers to the checklist for the procedure so the two cannot
+drift.
+
+**Templates are `.txt` on purpose.** A template that compiles registers a bean for a concern with
+no catalogue row, and `check_concern_folders` would fail the build on the template itself.
+
+**The Flowable resource move was attempted and reverted.** `classpath*:/flowable/` worked for
+BPMN; the DMN engine deployed nothing from it and said nothing about it — the first symptom was
+`No decision found for key` at runtime. Two attempts at the property semantics, two identical red
+builds, then a revert to the last green commit. Parked with the one command that would have
+answered it, in `DISCUSSION-POINTERS.md`.
+
+**Worth naming plainly: I guessed twice at a framework default instead of reading it, and cost
+two build cycles.** The checklist now tells the next person the opposite — run the guard, read
+the metadata, do not infer behaviour from a property's name.
+
+**Consequence for the checklist:** response templates live beside their concern,
+`resources/dmn/` and `resources/processes/` stay flat. Two conventions, documented as such
+rather than smoothed over.
+
+---
+
+## D-10 — FORGET_MPIN, and what the first concern taught the checklist
+
+FORGET_MPIN passed all seven obligations and all guards. The audit still found five things,
+which is the useful result: **the guards check that pieces exist, not that they do anything.**
+
+**Its decision table was deployed, pointed at, and never evaluated.** Its process is
+`startEvent -> finaliseStep -> endEvent` — no decide step. Editing the tier or action in that
+file changed nothing at all. **Decided: the table is deleted and `dmn_key` set to NULL** (V8).
+A concern that makes no decision should not claim to. Pre-flight now fails if a concern running
+`concern-generic` has a null `dmn_key`, because that process always reaches `DecideDelegate`.
+
+**Its fact provider is never invoked either** — same missing step. Left in place: the registry
+requires one for every active concern, and exempting a concern from that rule is a hole in it.
+Recorded here so the next reader is not misled into thinking it does something.
+
+**Its partner-facing sentence was hardcoded in the delegate** — the last one still living in
+Java after D-8. **Decided: moved** to `concern/amount/forgetmpin/templates.properties`. A new
+guard, `check_named_templates`, now fails when any `promptFor("CODE")` in Java — literal or via
+a constant — resolves to no template. It covers the two codes no decision table emits:
+`AGENT_CONNECTING` and `FORGET_MPIN_DEFLECT`, each the only sentence its path ever produces.
+Both were confirmed by deliberately deleting them.
+
+**Open — the kill switch.** Agreed, not built: turning a T0 deflection off is not the same
+operation as turning automation off, and the existing `togglz_flag` means the latter. See
+`DISCUSSION-POINTERS.md`.
+
+**Open — the deeplink.** `${DEEPLINK_FORGET_MPIN:yesmadam://account/security/reset-mpin}` is an
+unconfirmed default, and this repo has no per-environment config yet. 738 partners a month
+follow it. CSAT plus Trigger A means a wrong link is recoverable rather than silent, which is
+the design working — but it is not a substitute for the app team confirming the value.
+
+**The readiness bar in `CHECKLIST.md` was written from this concern.** Four of its eight items
+came from gaps here.
+
+---
+
 ## Earlier decisions, recorded elsewhere
 
 | | Where |

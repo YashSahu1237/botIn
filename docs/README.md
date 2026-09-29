@@ -9,6 +9,16 @@ The HTML documents open in any browser. Double-click them.
 
 ---
 
+## CHECKLIST.md — start here to ADD something
+
+**`CHECKLIST.md`** is the seven obligations for adding a concern, each paired with the guard
+that catches you if you skip it. Files to copy are in `concern-template/`. If you are adding an
+L2, you should not need to ask anyone anything: read the checklist, copy the templates, and run
+`python3 tools/preflight.py` after each step.
+
+**`BLUEPRINT.md`** is why the tree is shaped the way it is. Read it if you disagree with the
+shape, not to use it.
+
 ## CODE-MAP.md — start here for the codebase
 
 **`CODE-MAP.md`** is the orientation document for the service itself: the one-page mental

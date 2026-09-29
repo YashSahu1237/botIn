@@ -39,7 +39,21 @@ class DecisionTableTest {
     @DisplayName("every active concern's dmn_key resolves to a deployed decision")
     void noDanglingDecisionKeys() {
         catalogue.findByActiveTrueOrderByL1CodeAscDisplayOrderAsc().forEach(c -> {
-            assertNotNull(c.getDmnKey(), "active concern with no dmn_key: " + c.getL2Code());
+            // A NULL dmn_key is legitimate for a concern that DECIDES NOTHING. FORGET_MPIN is
+            // one: its process is startEvent -> finaliseStep -> endEvent, with no decide step,
+            // so a table there would be deployed, pointed at, and never evaluated — which it
+            // was, until V8. The invariant that matters is narrower than "everything has one":
+            //
+            //   concern-generic ALWAYS reaches DecideDelegate, so it MUST have a dmn_key.
+            //   A concern with its own process may legitimately have none.
+            //
+            // tools/preflight.py check_catalogue_pointers asserts the same thing without a JVM.
+            if (c.getDmnKey() == null) {
+                assertNotEquals("concern-generic", c.getProcessKey(),
+                        c.getL2Code() + " runs concern-generic, which always decides, but has "
+                        + "no dmn_key — DecideDelegate would dereference null on a real session");
+                return;
+            }
             long deployed = dmnRepositoryService.createDecisionQuery()
                     .decisionKey(c.getDmnKey()).count();
             assertEquals(1, deployed,
@@ -59,6 +73,9 @@ class DecisionTableTest {
         // So the requirement this test encodes is not "always returns a row". It is the
         // one that actually matters: NOTHING KNOWN NEVER MOVES MONEY.
         catalogue.findByActiveTrueOrderByL1CodeAscDisplayOrderAsc().forEach(c -> {
+            // A concern that decides nothing has no table to sweep. See noDanglingDecisionKeys
+            // for the invariant that still holds: concern-generic MUST have a dmn_key.
+            if (c.getDmnKey() == null) return;
             try {
                 Decision d = decisions.decide(c.getDmnKey(), new HashMap<>());
                 assertNotNull(d.outcomeType(), "no outcomeType from " + c.getDmnKey());
@@ -87,7 +104,6 @@ class DecisionTableTest {
             "cancellationStatus", "lastMinCashbackCredited", "distanceBeyondRadiusKm"),
         "recharge-debit-no-credit-decision", List.of(
             "payuStatus", "alreadyCredited", "amountPaise"),
-        "forget-mpin-decision", List.of("l2Concern"),
         "viol-r4-others-decision", List.of("classificationMatched", "classifierConfidence",
                                            "rerouteTarget", "riskFlagged"),
         "viol-r5-periods-decision", List.of("priorPeriodLeavesThisMonth"),
@@ -104,6 +120,9 @@ class DecisionTableTest {
         // What a real fact provider produces: every key PRESENT, values null where the
         // lookup found nothing. This is the case the catch-all exists for.
         catalogue.findByActiveTrueOrderByL1CodeAscDisplayOrderAsc().forEach(c -> {
+            // A concern that decides nothing has no table to sweep. See noDanglingDecisionKeys
+            // for the invariant that still holds: concern-generic MUST have a dmn_key.
+            if (c.getDmnKey() == null) return;
             List<String> inputs = TABLE_INPUTS.get(c.getDmnKey());
             assertNotNull(inputs, "no declared fact contract for " + c.getDmnKey());
 
@@ -119,9 +138,11 @@ class DecisionTableTest {
     @Test
     @DisplayName("the fact contract covers every active concern, with no table left out")
     void everyActiveConcernHasADeclaredFactContract() {
-        catalogue.findByActiveTrueOrderByL1CodeAscDisplayOrderAsc().forEach(c ->
-                assertTrue(TABLE_INPUTS.containsKey(c.getDmnKey()),
-                        "a table was added without declaring what facts it reads: " + c.getDmnKey()));
+        catalogue.findByActiveTrueOrderByL1CodeAscDisplayOrderAsc().forEach(c -> {
+            if (c.getDmnKey() == null) return;      // decides nothing, so reads no facts
+            assertTrue(TABLE_INPUTS.containsKey(c.getDmnKey()),
+                    "a table was added without declaring what facts it reads: " + c.getDmnKey());
+        });
     }
 
     // ------------------------------------------------------- TRANSPORT, 10 rules
@@ -357,17 +378,19 @@ class DecisionTableTest {
         }
     }
 
-    // ----------------------------------------------------------- FORGET_MPIN, 1
+    // ----------------------------------------------------------- FORGET_MPIN, 0
 
-    @Test
-    @DisplayName("FORGET_MPIN — every case deflects, and the single row is the catch-all")
-    void forgetMpinAlwaysDeflects() {
-        Decision d = decisions.decide("forget-mpin-decision", new HashMap<>());
-        assertEquals("T0", d.tier());
-        assertEquals("SHOW_RESET_DEEPLINK", d.action());
-        assertEquals("SELF-SERVE", d.outcomeType());
-        assertFalse(d.needsTicket(), "a T0 must never ask for a ticket");
-    }
+    // THE TABLE IS GONE, AND SO IS THE TEST THAT READ IT (V8).
+    //
+    // This asserted T0 / SHOW_RESET_DEEPLINK / SELF-SERVE out of forget-mpin-decision. All
+    // three values were real, and none of them reached a partner: the concern's process is
+    // startEvent -> finaliseStep -> endEvent, with no decide step, so the table was never
+    // evaluated in production. The test passed by calling a table nothing else called —
+    // which made an inert file look load-bearing and kept it alive.
+    //
+    // FORGET_MPIN's actual behaviour is asserted where it actually happens:
+    //   ForgetMpinT0Test — the process shape contains no ticket, action or escalation step
+    //   DemoScenarios "T0" — a real session ends CLOSED_DEFLECTED and creates no ticket
 
     // ------------------------------------------------------ VIOL_R5_PERIODS, 3
 

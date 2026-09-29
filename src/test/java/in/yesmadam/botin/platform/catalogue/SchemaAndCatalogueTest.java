@@ -108,10 +108,12 @@ class SchemaAndCatalogueTest {
     @Test
     @DisplayName("and every dmn_key names a decision table that is deployed")
     void everyDmnKeyPointsAtSomethingThatExists() {
-        catalogue.findByActiveTrueOrderByL1CodeAscDisplayOrderAsc().forEach(c ->
-                assertEquals(1, dmnRepository.createDecisionQuery()
-                                .decisionKey(c.getDmnKey()).latestVersion().count(),
-                        "concern " + c.getL2Code() + " points at decision table '"
-                        + c.getDmnKey() + "', which is not deployed"));
+        catalogue.findByActiveTrueOrderByL1CodeAscDisplayOrderAsc().forEach(c -> {
+            if (c.getDmnKey() == null) return;      // decides nothing — see DecisionTableTest
+            assertEquals(1, dmnRepository.createDecisionQuery()
+                            .decisionKey(c.getDmnKey()).latestVersion().count(),
+                    "concern " + c.getL2Code() + " points at decision table '"
+                    + c.getDmnKey() + "', which is not deployed");
+        });
     }
 }

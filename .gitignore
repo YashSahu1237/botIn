@@ -16,3 +16,7 @@ uat-probe-output.txt
 
 # One-shot scripts from the restructure; safe to delete
 tools/_scratch/
+
+# Python bytecode from the tools/ scripts
+__pycache__/
+*.pyc
