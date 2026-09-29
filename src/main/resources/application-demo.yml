@@ -70,5 +70,5 @@ logging:
     # Every fixture read announces itself at WARN. During a demo, a sceptical reviewer
     # should be able to see which answers came from where — that is exactly the question
     # they ought to be asking.
-    in.yesmadam.botin.demo: WARN
+    in.yesmadam.botin.surface.demo: WARN
     in.yesmadam.botin: INFO

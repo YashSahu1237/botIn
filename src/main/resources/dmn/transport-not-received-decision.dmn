@@ -65,8 +65,28 @@
         <outputEntry id="t1o4"><text>0</text></outputEntry>
       </rule>
 
-      <!-- 3. PATH 1 — customer paid transport, it never reached the SP wallet. -->
+      <!-- 2. THE CAP. Rs300 = 30000 paise. Mapping rule 9.
+
+           MUST STAY ABOVE EVERY PAYING ROW. Under FIRST the catch-all at the
+           bottom matches everything, so a cap placed below it can never fire and
+           a Rs450 claim falls through to PATH 1 and is paid in full. Only rule 1
+           (already paid) belongs above this one. -->
       <rule id="t2">
+        <inputEntry id="t2i1"><text></text></inputEntry>
+        <inputEntry id="t2i2"><text>&gt; 30000</text></inputEntry>
+        <inputEntry id="t2i3"><text></text></inputEntry>
+        <inputEntry id="t2i4"><text></text></inputEntry>
+        <inputEntry id="t2i5"><text></text></inputEntry>
+        <inputEntry id="t2i6"><text></text></inputEntry>
+        <inputEntry id="t2i7"><text></text></inputEntry>
+        <outputEntry id="t2o1"><text>"T3"</text></outputEntry>
+        <outputEntry id="t2o2"><text>"TICKET_EXCEEDS_CAP"</text></outputEntry>
+        <outputEntry id="t2o3"><text>"TICKET"</text></outputEntry>
+        <outputEntry id="t2o4"><text>0</text></outputEntry>
+      </rule>
+
+      <!-- 3. PATH 1 — customer paid transport, it never reached the SP wallet. -->
+      <rule id="t3">
         <inputEntry id="t3i1"><text></text></inputEntry>
         <inputEntry id="t3i2"><text></text></inputEntry>
         <inputEntry id="t3i3"><text>"PATH_1"</text></inputEntry>
@@ -81,7 +101,7 @@
       </rule>
 
       <!-- 4. PATH 2 — the SP never got there. -->
-      <rule id="t3">
+      <rule id="t4">
         <inputEntry id="t4i1"><text></text></inputEntry>
         <inputEntry id="t4i2"><text></text></inputEntry>
         <inputEntry id="t4i3"><text>"PATH_2"</text></inputEntry>
@@ -209,23 +229,6 @@
         <outputEntry id="t10o2"><text>"AGENT_UNMATCHED"</text></outputEntry>
         <outputEntry id="t10o3"><text>"TICKET"</text></outputEntry>
         <outputEntry id="t10o4"><text>0</text></outputEntry>
-      </rule>
-
-
-<!-- 2. THE CAP. Rs300 = 30000 paise. Mapping rule 9, moved above every
-           paying row because FIRST would otherwise never reach it. -->
-      <rule id="t11">
-        <inputEntry id="t2i1"><text></text></inputEntry>
-        <inputEntry id="t2i2"><text>&gt; 30000</text></inputEntry>
-        <inputEntry id="t2i3"><text></text></inputEntry>
-        <inputEntry id="t2i4"><text></text></inputEntry>
-        <inputEntry id="t2i5"><text></text></inputEntry>
-        <inputEntry id="t2i6"><text></text></inputEntry>
-        <inputEntry id="t2i7"><text></text></inputEntry>
-        <outputEntry id="t2o1"><text>"T3"</text></outputEntry>
-        <outputEntry id="t2o2"><text>"TICKET_EXCEEDS_CAP"</text></outputEntry>
-        <outputEntry id="t2o3"><text>"TICKET"</text></outputEntry>
-        <outputEntry id="t2o4"><text>0</text></outputEntry>
       </rule>
 
     </decisionTable>

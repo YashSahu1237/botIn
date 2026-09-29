@@ -145,7 +145,7 @@ flowable:
 
 togglz:
   enabled: true
-  feature-enums: in.yesmadam.botin.safety.BotinFeature
+  feature-enums: in.yesmadam.botin.platform.safety.BotinFeature
 
   # WHERE A FLAG'S POSITION IS KEPT: the primary database, via TogglzStateConfig. Not in
   # memory — a switch turned off during an incident must not be turned back on by the next

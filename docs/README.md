@@ -101,3 +101,13 @@ first made.
 | `DMN-IMPLEMENTATION.md` | The decision tables: anatomy, how a row is checked, FIRST hit policy, the three scars, derived facts, seeing and changing tables, and what is currently unreachable |
 | `DATABASE-ACCESS.md` | **How to see the data live.** The H2 browser console for the demo, psql for Postgres, what each of the 7 tables and the Flowable `ACT_*` tables hold, and six queries that show something |
 
+## Added 28 September — the road to production
+
+| File | What it is |
+|---|---|
+| `PRODUCTION-PLAN.md` | **The plan to production.** Built on the PRD (*PX — Outbound Model — BOT Intervention*), the POC assessment, and the platform conventions read out of `empapi`. Opens with three findings that change the shape of the work — the POC built PRD Phase 2 while the PRD launches Phase 1, NFR-01 makes Phase 1 a complete front door, and the PRD's concern taxonomy is not the one the catalogue was built from. Then Gate 0, seven workstreams, and what blocks what. |
+
+| `DECISIONS.md` | **The decision log.** One line per decision with what it closes and what it costs — D-1 new service, D-2 MySQL, D-3 read replica, D-4 the reversible window. |
+| `DISCUSSION-POINTERS.md` | What needs an answer from somebody other than engineering, with enough context that the conversation can happen without re-deriving anything. |
+
+**Settled:** BOTIn ships as a **new standalone service**, closing open question D-1.

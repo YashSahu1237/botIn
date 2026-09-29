@@ -1,4 +1,0 @@
--------------------------------------------------------------------------------
-Test set: in.yesmadam.botin.demo.DemoFixturesTest
--------------------------------------------------------------------------------
-Tests run: 8, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 1.640 s -- in in.yesmadam.botin.demo.DemoFixturesTest

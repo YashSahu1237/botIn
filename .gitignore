@@ -1,0 +1,18 @@
+# Build output. 295 files under target/ are currently TRACKED — committed by the initial
+# commit before this file existed. They include target/classes/**, which after the L1/L2
+# restructure holds a full copy of the OLD package tree: compiled classes and resources at
+# paths that no longer exist in src/. Anything grepping the repo finds both and cannot tell
+# which is real.
+target/
+
+# IDE and OS
+.idea/
+*.iml
+.DS_Store
+
+# Local probe tooling (venv + captured UAT output; the output can contain real SP data)
+.venv-probe/
+uat-probe-output.txt
+
+# One-shot scripts from the restructure; safe to delete
+tools/_scratch/
