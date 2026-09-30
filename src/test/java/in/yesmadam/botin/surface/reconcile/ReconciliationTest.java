@@ -1,5 +1,7 @@
 package in.yesmadam.botin.surface.reconcile;
 
+import java.math.BigDecimal;
+import in.yesmadam.botin.platform.money.Rupees;
 import in.yesmadam.botin.integration.payu.MockPayUGateway;
 import in.yesmadam.botin.platform.safety.BotinFeature;
 import in.yesmadam.botin.platform.safety.TicketAction;
@@ -78,11 +80,11 @@ class ReconciliationTest {
     @DisplayName("A real credit reconciles — and the ROW KNOWS HOW MUCH, which it did not before")
     void aRealPaymentAgreesWithTheGateway() throws Exception {
         String order = "ORD-RECON-1";
-        gateway.setRecharge(order, MockPayUGateway.SUCCESS, 25_000L);
+        gateway.setRecharge(order, MockPayUGateway.SUCCESS, Rupees.of(250));
 
         raiseRecharge("SP-RECON-1", order);
 
-        // THE BUG THIS STEP FOUND. `amount_paise` existed on this row from the first
+        // THE BUG THIS STEP FOUND. `amount_rupees` (then `amount_paise`) existed on this row from the first
         // migration and nothing ever wrote it — every ledger row said a credit succeeded and
         // none said how much. Invisible until something tried to add them up, and then total:
         // you cannot sum a column of nulls.
@@ -91,14 +93,14 @@ class ReconciliationTest {
                 .filter(a -> TicketAction.SUCCEEDED.equals(a.getStatus()))
                 .findFirst().orElseThrow(() -> new AssertionError("no successful credit was recorded"));
 
-        assertEquals(25_000L, credit.getAmountPaise(),
+        assertEquals(0, Rupees.of(250).compareTo(credit.getAmountRupees()),
                 "a payment log that records the fact of a payment but not its size is a "
               + "receipt with the number torn off");
 
         ReconciliationService.Report report = reconciliation.reconcile();
         assertTrue(report.clean(), "a straightforward credit must reconcile: " + report);
         assertEquals(1, report.creditsChecked());
-        assertEquals(25_000L, report.believedPaise());
+        assertEquals(0, Rupees.of(250).compareTo(report.believedRupees()));
     }
 
     @Test
@@ -107,15 +109,15 @@ class ReconciliationTest {
         // Nobody complains about money they received. There is no partner to raise it, no
         // ticket to look at, and no amount of reading our own tables would ever show it —
         // the evidence is entirely on the other side. This is the case the job exists for.
-        gateway.creditWallet("SP-GHOST", "ORD-GHOST", 40_000L);
+        gateway.creditWallet("SP-GHOST", "ORD-GHOST", Rupees.of(400));
 
         ReconciliationService.Report report = reconciliation.reconcile();
 
         assertFalse(report.clean());
         assertEquals(1, report.unrecorded().size());
         assertEquals("ORD-GHOST", report.unrecorded().get(0).externalReference());
-        assertEquals(40_000L, report.unrecorded().get(0).gatewaySaysPaise());
-        assertEquals(0L, report.unrecorded().get(0).weBelievePaise(), "we believe nothing — that is the point");
+        assertEquals(0, Rupees.of(400).compareTo(report.unrecorded().get(0).gatewaySaysRupees()));
+        assertEquals(0, Rupees.ZERO.compareTo(report.unrecorded().get(0).weBelieveRupees()), "we believe nothing — that is the point");
     }
 
     @Test
@@ -125,16 +127,16 @@ class ReconciliationTest {
 
         TicketAction attempt = recorder.recordAttempt(
                 ticketId, "AUTO_CREDIT_WALLET", "ORD-SHORT", null, "{}").orElseThrow();
-        recorder.recordOutcome(attempt.getId(), true, "{}", 25_000L);
+        recorder.recordOutcome(attempt.getId(), true, "{}", Rupees.of(250));
 
-        gateway.creditWallet("SP-RECON-2", "ORD-SHORT", 10_000L);   // short-paid
+        gateway.creditWallet("SP-RECON-2", "ORD-SHORT", Rupees.of(100));   // short-paid
 
         ReconciliationService.Report report = reconciliation.reconcile();
 
         assertFalse(report.clean());
         assertEquals(1, report.mismatched().size());
-        assertEquals(25_000L, report.mismatched().get(0).weBelievePaise());
-        assertEquals(10_000L, report.mismatched().get(0).gatewaySaysPaise());
+        assertEquals(0, Rupees.of(250).compareTo(report.mismatched().get(0).weBelieveRupees()));
+        assertEquals(0, Rupees.of(100).compareTo(report.mismatched().get(0).gatewaySaysRupees()));
     }
 
     @Test
@@ -157,7 +159,7 @@ class ReconciliationTest {
     @Test
     @DisplayName("It REPORTS and corrects nothing")
     void itNeverFixesWhatItFinds() {
-        gateway.creditWallet("SP-GHOST", "ORD-GHOST-2", 40_000L);
+        gateway.creditWallet("SP-GHOST", "ORD-GHOST-2", Rupees.of(400));
 
         reconciliation.reconcile();
         reconciliation.reconcile();
@@ -165,7 +167,7 @@ class ReconciliationTest {
         // A reconciliation job that corrects what it finds is a second, unsupervised payment
         // path — running without anybody watching, on exactly the cases nobody understood the
         // first time. Twice through must change nothing.
-        assertEquals(40_000L, gateway.creditedFor("ORD-GHOST-2"));
+        assertEquals(0, Rupees.of(400).compareTo(gateway.creditedFor("ORD-GHOST-2")));
         assertEquals(0, actions.count(), "it must not write rows to make its own output tidy");
     }
 

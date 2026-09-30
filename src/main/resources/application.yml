@@ -64,6 +64,25 @@ botin:
     # Tests always run with this false, so no test can need a credential.
     enabled: ${UAT_ENABLED:true}
 
+  # ===========================================================================
+  # EXTERNAL SERVICES — shape-C facts (BLUEPRINT.md section 4, Obligation 2a).
+  #
+  # ONE timeout policy for every external call made while answering a partner,
+  # the way uatJdbcTemplate carries setQueryTimeout(5) once for every database
+  # fact. No provider sets its own.
+  #
+  # NO RETRY, anywhere, deliberately. This runs inside a live chat turn and the
+  # degraded answer -- null fact, catch-all, a human -- is already correct.
+  #
+  # Base URLs are NOT here: each dependency names its own property, and the
+  # value is an environment variable with no fallback, exactly as above.
+  # ===========================================================================
+  external:
+    connect-timeout: 500ms
+    # A dependency declaring more than this fails at STARTUP. Raising it is a
+    # deliberate change with a line in DECISIONS.md, not a config tweak.
+    max-timeout: 1500ms
+
   # Where a self-serve deflection sends the partner. These belong to the app team:
   # they change without any BOTIn code changing, which is the whole reason they are
   # configuration rather than string literals inside a delegate.
@@ -106,7 +125,8 @@ botin:
   # forced to agree is the same pattern ProviderContractTest uses; sharing one constant
   # would let them drift together and still look consistent.
   transport:
-    rate-per-km-paise: ${TRANSPORT_RATE_PER_KM_PAISE:5000}
+    # RUPEES since V9. Was 5000 paise; a five-figure value here again means a unit slipped.
+    rate-per-km-rupees: ${TRANSPORT_RATE_PER_KM_RUPEES:50}
 
   # CONFIRMED BY THE DECISION MATRIX: "Express: same day if before 3PM, next day if after.
   # Standard: ~3 days. Deadline 11 PM."

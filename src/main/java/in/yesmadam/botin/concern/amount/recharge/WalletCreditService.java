@@ -1,6 +1,8 @@
 package in.yesmadam.botin.concern.amount.recharge;
 
-import in.yesmadam.botin.integration.payu.MockPayUGateway;
+import java.math.BigDecimal;
+import in.yesmadam.botin.platform.money.Rupees;
+import in.yesmadam.botin.integration.payu.PayUGateway;
 import in.yesmadam.botin.platform.action.ActionRequest;
 import in.yesmadam.botin.platform.action.ActionResult;
 import in.yesmadam.botin.platform.action.ActionService;
@@ -32,9 +34,9 @@ public class WalletCreditService implements ActionService {
 
     private static final Logger log = LoggerFactory.getLogger(WalletCreditService.class);
 
-    private final MockPayUGateway gateway;
+    private final PayUGateway gateway;
 
-    public WalletCreditService(MockPayUGateway gateway) {
+    public WalletCreditService(PayUGateway gateway) {
         this.gateway = gateway;
     }
 
@@ -55,20 +57,21 @@ public class WalletCreditService implements ActionService {
 
     @Override
     public ActionResult execute(ActionRequest request) {
-        long amountPaise = request.numericFact("amountPaise");
+        BigDecimal amountRupees = request.amountFact("amountRupees");
 
-        if (amountPaise <= 0) {
+        if (!Rupees.isPositive(amountRupees)) {
             // A credit of zero is not a credit, and a credit of a negative number is a
             // debit. Either means the facts and the table disagree about what happened,
             // and the honest response is to refuse and let the attempt row show why.
             throw new IllegalStateException(
-                    "refusing to credit " + amountPaise + " paise for order "
+                    "refusing to credit " + Rupees.format(amountRupees) + " for order "
                     + request.reference() + " — the decision produced no usable amount");
         }
 
-        String reference = gateway.creditWallet(request.spId(), request.reference(), amountPaise);
-        log.info("credited {} paise to {} for order {}", amountPaise, request.spId(), request.reference());
+        String reference = gateway.creditWallet(request.spId(), request.reference(), amountRupees);
+        log.info("credited {} to {} for order {}",
+                Rupees.format(amountRupees), request.spId(), request.reference());
 
-        return ActionResult.of(reference, amountPaise);
+        return ActionResult.of(reference, amountRupees);
     }
 }

@@ -1,16 +1,18 @@
 package in.yesmadam.botin.platform.action;
+import java.math.BigDecimal;
+import in.yesmadam.botin.platform.money.Rupees;
 /**
  * What an action did, in the words the audit row needs.
  *
  * @param externalReference the third party's own reference for the movement — the
  *                          receipt. Without it "we credited them" is our claim and
  *                          nothing more, and a dispute has nowhere to go.
- * @param amountPaise       what moved, so reconciliation can sum it
+ * @param amountRupees     what moved, so reconciliation can sum it
  */
-public record ActionResult(String externalReference, long amountPaise, String detail) {
+public record ActionResult(String externalReference, BigDecimal amountRupees, String detail) {
 
-    public static ActionResult of(String externalReference, long amountPaise) {
-        return new ActionResult(externalReference, amountPaise, null);
+    public static ActionResult of(String externalReference, BigDecimal amountRupees) {
+        return new ActionResult(externalReference, Rupees.scaled(amountRupees), null);
     }
 
     /**
@@ -22,6 +24,6 @@ public record ActionResult(String externalReference, long amountPaise, String de
      * either alarm somebody who has their money or hide a payment that never happened.
      */
     public static ActionResult alreadyDone(String detail) {
-        return new ActionResult(null, 0L, detail);
+        return new ActionResult(null, Rupees.ZERO, detail);
     }
 }

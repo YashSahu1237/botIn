@@ -256,7 +256,7 @@ class JourneyTest {
 
         // The seven Transport facts, by name. A blob that parses but holds something else
         // would satisfy a looser assertion and prove nothing.
-        for (String name : List.of("alreadyCredited", "computedAmountPaise", "transportPath",
+        for (String name : List.of("alreadyCredited", "computedAmountRupees", "transportPath",
                                    "arrivedAt300metre", "cancellationStatus",
                                    "lastMinCashbackCredited", "distanceBeyondRadiusKm")) {
             assertTrue(facts.has(name), "the stored facts are missing " + name);

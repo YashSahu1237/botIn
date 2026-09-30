@@ -1,5 +1,6 @@
 package in.yesmadam.botin.surface.console;
 
+import in.yesmadam.botin.platform.money.Rupees;
 import in.yesmadam.botin.platform.escalation.EscalationContext;
 import in.yesmadam.botin.platform.escalation.EscalationContextRepository;
 import in.yesmadam.botin.platform.process.ProcessVariables;
@@ -491,7 +492,7 @@ public class JourneyService {
                 for (TicketAction row : rows) {
                     add(facts, row.getActionType(),
                             row.getStatus()
-                          + (row.getAmountPaise() == null ? "" : " · " + row.getAmountPaise() + " paise")
+                          + (row.getAmountRupees() == null ? "" : " · " + Rupees.format(row.getAmountRupees()))
                           + (row.getExternalReference() == null ? "" : " · ref " + row.getExternalReference()));
                 }
             }

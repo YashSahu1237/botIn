@@ -1,6 +1,8 @@
 package in.yesmadam.botin.surface.reconcile;
 
-import in.yesmadam.botin.integration.payu.MockPayUGateway;
+import java.math.BigDecimal;
+import in.yesmadam.botin.platform.money.Rupees;
+import in.yesmadam.botin.integration.payu.PayUGateway;
 import in.yesmadam.botin.platform.safety.TicketAction;
 import in.yesmadam.botin.platform.safety.TicketActionRepository;
 import org.slf4j.Logger;
@@ -57,18 +59,18 @@ public class ReconciliationService {
             "AUTO_CREDIT_WALLET", "AUTO_CREDIT_TRANSPORT", "AUTO_CREDIT_DISTANCE");
 
     private final TicketActionRepository actions;
-    private final MockPayUGateway gateway;
+    private final PayUGateway gateway;
 
-    public ReconciliationService(TicketActionRepository actions, MockPayUGateway gateway) {
+    public ReconciliationService(TicketActionRepository actions, PayUGateway gateway) {
         this.actions = actions;
         this.gateway = gateway;
     }
 
     public Report reconcile() {
-        Map<String, Long> ourLedger = new LinkedHashMap<>();
+        Map<String, BigDecimal> ourLedger = new LinkedHashMap<>();
         List<Discrepancy> unrecorded = new ArrayList<>();
 
-        long believedPaise = 0;
+        BigDecimal believedRupees = Rupees.ZERO;
         int noAmount = 0;
 
         for (TicketAction a : actions.findByStatus(TicketAction.SUCCEEDED)) {
@@ -76,34 +78,36 @@ public class ReconciliationService {
 
             // A SUCCEEDED credit with no amount is its own finding. It means something paid a
             // partner and did not write down how much, which makes this job blind to it.
-            if (a.getAmountPaise() == null) { noAmount++; continue; }
+            if (a.getAmountRupees() == null) { noAmount++; continue; }
             if (a.getExternalReference() == null) { noAmount++; continue; }
 
-            ourLedger.merge(a.getExternalReference(), a.getAmountPaise(), Long::sum);
-            believedPaise += a.getAmountPaise();
+            ourLedger.merge(a.getExternalReference(), a.getAmountRupees(), BigDecimal::add);
+            believedRupees = believedRupees.add(a.getAmountRupees());
         }
 
-        Map<String, Long> theirLedger = gateway.allCredits();
+        Map<String, BigDecimal> theirLedger = gateway.allCredits();
         List<Discrepancy> mismatched = new ArrayList<>();
 
-        for (Map.Entry<String, Long> ours : ourLedger.entrySet()) {
-            long theirs = theirLedger.getOrDefault(ours.getKey(), 0L);
-            if (theirs != ours.getValue()) {
+        for (Map.Entry<String, BigDecimal> ours : ourLedger.entrySet()) {
+            BigDecimal theirs = theirLedger.getOrDefault(ours.getKey(), Rupees.ZERO);
+            // compareTo, NOT equals: BigDecimal.equals is false for 250.0 vs 250.00, which
+            // would report every credit as a mismatch on a difference of nothing.
+            if (theirs.compareTo(ours.getValue()) != 0) {
                 mismatched.add(new Discrepancy(ours.getKey(), ours.getValue(), theirs));
             }
         }
 
         // THE SILENT DIRECTION. Money the gateway moved that we have no row for.
-        for (Map.Entry<String, Long> theirs : theirLedger.entrySet()) {
-            if (theirs.getValue() != 0 && !ourLedger.containsKey(theirs.getKey())) {
-                unrecorded.add(new Discrepancy(theirs.getKey(), 0L, theirs.getValue()));
+        for (Map.Entry<String, BigDecimal> theirs : theirLedger.entrySet()) {
+            if (theirs.getValue().signum() != 0 && !ourLedger.containsKey(theirs.getKey())) {
+                unrecorded.add(new Discrepancy(theirs.getKey(), Rupees.ZERO, theirs.getValue()));
             }
         }
 
-        Report report = new Report(ourLedger.size(), believedPaise, mismatched, unrecorded, noAmount);
+        Report report = new Report(ourLedger.size(), believedRupees, mismatched, unrecorded, noAmount);
         if (report.clean()) {
-            log.info("reconciliation clean — {} credit(s), {} paise, both ledgers agree",
-                    report.creditsChecked(), report.believedPaise());
+            log.info("reconciliation clean — {} credit(s), {}, both ledgers agree",
+                    report.creditsChecked(), Rupees.format(report.believedRupees()));
         } else {
             log.error("RECONCILIATION FOUND A GAP — {} mismatched, {} unrecorded by us, "
                     + "{} credit(s) with no amount recorded", mismatched.size(), unrecorded.size(), noAmount);
@@ -116,7 +120,7 @@ public class ReconciliationService {
      * @param unrecorded  THE GATEWAY MOVED MONEY WE HAVE NO ROW FOR. The silent direction
      * @param creditsWithNoAmount a succeeded credit that never recorded its size — invisible here
      */
-    public record Report(int creditsChecked, long believedPaise,
+    public record Report(int creditsChecked, BigDecimal believedRupees,
                          List<Discrepancy> mismatched, List<Discrepancy> unrecorded,
                          int creditsWithNoAmount) {
 
@@ -125,5 +129,6 @@ public class ReconciliationService {
         }
     }
 
-    public record Discrepancy(String externalReference, long weBelievePaise, long gatewaySaysPaise) { }
+    public record Discrepancy(String externalReference, BigDecimal weBelieveRupees,
+                              BigDecimal gatewaySaysRupees) { }
 }

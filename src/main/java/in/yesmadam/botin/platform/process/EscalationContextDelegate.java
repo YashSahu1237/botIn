@@ -136,7 +136,7 @@ public class EscalationContextDelegate implements JavaDelegate {
                     m.put("ticketId", String.valueOf(a.getTicketId()));
                     m.put("action", a.getActionType());
                     m.put("status", a.getStatus());
-                    m.put("amountPaise", a.getAmountPaise());
+                    m.put("amountRupees", a.getAmountRupees());
                     m.put("attemptedAt", String.valueOf(a.getAttemptedAt()));
                     return m;
                 })

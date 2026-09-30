@@ -1,5 +1,7 @@
 package in.yesmadam.botin.platform.safety;
 
+import java.math.BigDecimal;
+import in.yesmadam.botin.platform.money.Rupees;
 import in.yesmadam.botin.platform.session.HelpSession;
 import in.yesmadam.botin.platform.session.HelpSessionRepository;
 import in.yesmadam.botin.platform.session.Ticket;
@@ -47,7 +49,7 @@ class TicketActionRecorderTest {
         UUID ticketId = aTicket();
 
         assertThrows(RuntimeException.class, () -> txTemplate.execute(status -> {
-            recorder.recordAttempt(ticketId, "TRANSPORT_CREDIT", 25000L, "{}");
+            recorder.recordAttempt(ticketId, "TRANSPORT_CREDIT", Rupees.of(250), "{}");
             throw new IllegalStateException("simulated failure AFTER the external call");
         }));
 
@@ -67,8 +69,8 @@ class TicketActionRecorderTest {
     void secondAttemptShortCircuits() {
         UUID ticketId = aTicket();
 
-        Optional<TicketAction> first  = recorder.recordAttempt(ticketId, "TRANSPORT_CREDIT", 25000L, "{}");
-        Optional<TicketAction> second = recorder.recordAttempt(ticketId, "TRANSPORT_CREDIT", 25000L, "{}");
+        Optional<TicketAction> first  = recorder.recordAttempt(ticketId, "TRANSPORT_CREDIT", Rupees.of(250), "{}");
+        Optional<TicketAction> second = recorder.recordAttempt(ticketId, "TRANSPORT_CREDIT", Rupees.of(250), "{}");
 
         assertTrue(first.isPresent(), "first attempt proceeds");
         assertTrue(second.isEmpty(),
@@ -89,7 +91,7 @@ class TicketActionRecorderTest {
     @DisplayName("the outcome write lands on the same row")
     void outcomeUpdatesTheAttempt() {
         UUID ticketId = aTicket();
-        TicketAction a = recorder.recordAttempt(ticketId, "TRANSPORT_CREDIT", 25000L, "{}").orElseThrow();
+        TicketAction a = recorder.recordAttempt(ticketId, "TRANSPORT_CREDIT", Rupees.of(250), "{}").orElseThrow();
 
         recorder.recordOutcome(a.getId(), true, "{\"ref\":\"TXN-1\"}");
 

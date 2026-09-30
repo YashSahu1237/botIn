@@ -63,8 +63,8 @@
            branches on the amount: what to pay is a FACT the gateway reports, not a
            decision this table makes. The cap that WOULD be a decision lives in the
            transport table, where there is one. -->
-      <input id="i4" label="amountPaise">
-        <inputExpression id="ie4" typeRef="number"><text>amountPaise</text></inputExpression>
+      <input id="i4" label="amountRupees">
+        <inputExpression id="ie4" typeRef="number"><text>amountRupees</text></inputExpression>
       </input>
 
       <output id="o1" label="tier" name="tier" typeRef="string"/>

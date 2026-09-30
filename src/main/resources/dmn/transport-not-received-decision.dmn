@@ -26,8 +26,8 @@
       <input id="i-credited" label="alreadyCredited">
         <inputExpression id="ie-credited" typeRef="boolean"><text>alreadyCredited</text></inputExpression>
       </input>
-      <input id="i-amount" label="computedAmountPaise">
-        <inputExpression id="ie-amount" typeRef="number"><text>computedAmountPaise</text></inputExpression>
+      <input id="i-amount" label="computedAmountRupees">
+        <inputExpression id="ie-amount" typeRef="number"><text>computedAmountRupees</text></inputExpression>
       </input>
       <input id="i-path" label="transportPath">
         <inputExpression id="ie-path" typeRef="string"><text>transportPath</text></inputExpression>
@@ -48,7 +48,7 @@
       <output id="o-tier"    label="tier"        name="tier"        typeRef="string"/>
       <output id="o-action"  label="action"      name="action"      typeRef="string"/>
       <output id="o-type"    label="outcomeType" name="outcomeType" typeRef="string"/>
-      <output id="o-rate"    label="ratePerKmPaise" name="ratePerKmPaise" typeRef="number"/>
+      <output id="o-rate"    label="ratePerKmRupees" name="ratePerKmRupees" typeRef="number"/>
 
       <!-- 1. Already paid for this order. Beats everything. -->
       <rule id="t1">
@@ -65,7 +65,12 @@
         <outputEntry id="t1o4"><text>0</text></outputEntry>
       </rule>
 
-      <!-- 2. THE CAP. Rs300 = 30000 paise. Mapping rule 9.
+      <!-- 2. THE CAP. Rs300. Mapping rule 9.
+
+           AMOUNTS HERE ARE RUPEES, not paise. The threshold read > 30000 until money moved
+           to rupees; a business owner editing this row now writes what they would say out
+           loud. If you ever see a four- or five-figure threshold here again, it is a unit
+           that was not converted.
 
            MUST STAY ABOVE EVERY PAYING ROW. Under FIRST the catch-all at the
            bottom matches everything, so a cap placed below it can never fire and
@@ -73,7 +78,7 @@
            (already paid) belongs above this one. -->
       <rule id="t2">
         <inputEntry id="t2i1"><text></text></inputEntry>
-        <inputEntry id="t2i2"><text>&gt; 30000</text></inputEntry>
+        <inputEntry id="t2i2"><text>&gt; 300</text></inputEntry>
         <inputEntry id="t2i3"><text></text></inputEntry>
         <inputEntry id="t2i4"><text></text></inputEntry>
         <inputEntry id="t2i5"><text></text></inputEntry>
@@ -198,7 +203,7 @@
         <outputEntry id="t8o4"><text>0</text></outputEntry>
       </rule>
 
-      <!-- 9. PATH 3 — beyond the radius. Rs50/km = 5000 paise, and the rate lives
+      <!-- 9. PATH 3 — beyond the radius. Rs50/km, and the rate lives
            HERE rather than in Java, so changing it is a redeploy of one file. -->
       <rule id="t9">
         <inputEntry id="t9i1"><text></text></inputEntry>
@@ -211,7 +216,7 @@
         <outputEntry id="t9o1"><text>"T2"</text></outputEntry>
         <outputEntry id="t9o2"><text>"AUTO_CREDIT_DISTANCE"</text></outputEntry>
         <outputEntry id="t9o3"><text>"BOT"</text></outputEntry>
-        <outputEntry id="t9o4"><text>5000</text></outputEntry>
+        <outputEntry id="t9o4"><text>50</text></outputEntry>
       </rule>
 
       <!-- 10. CATCH-ALL. Must stay last. Without it a case matching nothing returns

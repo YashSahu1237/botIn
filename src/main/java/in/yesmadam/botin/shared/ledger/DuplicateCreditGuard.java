@@ -1,4 +1,6 @@
 package in.yesmadam.botin.shared.ledger;
+import java.math.BigDecimal;
+import in.yesmadam.botin.platform.money.Rupees;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -24,17 +26,17 @@ import java.util.List;
 public class DuplicateCreditGuard {
 
     /**
-     * Net paise credited under one sub-action. Credits add, debits subtract.
+     * Net RUPEES credited under one sub-action. Credits add, debits subtract.
      * Rows with a different sub-action are ignored entirely.
      */
-    public long netPaise(List<LedgerEntry> ledger, String subaction) {
-        if (ledger == null || subaction == null) return 0L;
-        return ledger.stream()
+    public BigDecimal netRupees(List<LedgerEntry> ledger, String subaction) {
+        if (ledger == null || subaction == null) return Rupees.ZERO;
+        return Rupees.scaled(ledger.stream()
                 .filter(e -> subaction.equalsIgnoreCase(e.subaction()))
-                .mapToLong(e -> e.isCredit() ?  e.amountPaise()
-                              : e.isDebit()  ? -e.amountPaise()
-                              : 0L)
-                .sum();
+                .map(e -> e.isCredit() ? e.amountRupees()
+                        : e.isDebit()  ? e.amountRupees().negate()
+                        : BigDecimal.ZERO)
+                .reduce(BigDecimal.ZERO, BigDecimal::add));
     }
 
     /**
@@ -44,6 +46,6 @@ public class DuplicateCreditGuard {
      * because from the partner's side the money is not there.
      */
     public boolean alreadyCredited(List<LedgerEntry> ledger, String subaction) {
-        return netPaise(ledger, subaction) > 0L;
+        return Rupees.isPositive(netRupees(ledger, subaction));
     }
 }

@@ -1,4 +1,6 @@
 package in.yesmadam.botin.platform.action;
+import java.math.BigDecimal;
+import in.yesmadam.botin.platform.money.Rupees;
 import java.util.Map;
 import java.util.UUID;
 
@@ -20,9 +22,17 @@ public record ActionRequest(
         String reference,
         Map<String, Object> facts) {
 
-    /** A number the decision table produced, in paise. Zero when it produced none. */
-    public long numericFact(String key) {
+    /**
+     * AN AMOUNT the decision table produced, in RUPEES. Zero when it produced none.
+     *
+     * Widened from long to BigDecimal with the move off paise: the table can now emit
+     * 68.50, and reading that as a long would silently truncate it to 68 — a partner
+     * short-changed by half a rupee per claim, with nothing reporting it.
+     */
+    public BigDecimal amountFact(String key) {
         Object value = facts == null ? null : facts.get(key);
-        return value instanceof Number n ? n.longValue() : 0L;
+        if (value instanceof BigDecimal b) return Rupees.scaled(b);
+        if (value instanceof Number n)     return Rupees.scaled(new BigDecimal(n.toString()));
+        return Rupees.ZERO;
     }
 }

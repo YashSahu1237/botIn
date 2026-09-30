@@ -1,5 +1,7 @@
 package in.yesmadam.botin.surface.demo;
 
+import java.math.BigDecimal;
+import in.yesmadam.botin.platform.money.Rupees;
 import in.yesmadam.botin.concern.amount.transport.TransportFactProvider;
 import in.yesmadam.botin.concern.product.deliverydelay.ProductDeliveryFactProvider;
 import in.yesmadam.botin.integration.payu.MockPayUGateway;
@@ -62,7 +64,7 @@ class DemoFixturesTest {
     @DisplayName("The gateway is seeded from the SAME file — one description of the world")
     void theGatewayAgreesWithTheFixtureFile() {
         assertEquals(MockPayUGateway.SUCCESS, gateway.statusOf("DEMO-RCH-PAID"));
-        assertEquals(25_000L, gateway.amountFor("DEMO-RCH-PAID"));
+        assertEquals(0, Rupees.of(250).compareTo(gateway.amountFor("DEMO-RCH-PAID")));
         assertEquals(MockPayUGateway.FAILURE, gateway.statusOf("DEMO-RCH-FAILED"));
 
         // Three fixture sources describing the same synthetic world would drift, and the

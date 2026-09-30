@@ -1,4 +1,6 @@
 package in.yesmadam.botin.platform.decision;
+import java.math.BigDecimal;
+import in.yesmadam.botin.platform.money.Rupees;
 import org.flowable.dmn.api.DmnRepositoryService;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.DisplayName;
@@ -8,6 +10,7 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.ActiveProfiles;
 
 import java.nio.charset.StandardCharsets;
+import java.util.regex.Pattern;
 import java.nio.file.*;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -47,10 +50,10 @@ class DmnHotRedeployTest {
     private static final String RESOURCE = "transport-not-received-decision.dmn";
     private static final String KEY = "transport-not-received-decision";
 
-    /** Rs300 in paise, as the cap row reads today. */
-    private static final String CAP_NOW = "&gt; 30000";
+    /** Rs300, as the cap row reads today. */
+    private static final String CAP_NOW = "&gt; 300";
     /** Rs200. Below the claim below, which is the whole mechanism of the test. */
-    private static final String CAP_LOWERED = "&gt; 20000";
+    private static final String CAP_LOWERED = "&gt; 200";
 
     @Autowired DecisionService decisions;
     @Autowired DmnRepositoryService dmnRepository;
@@ -63,7 +66,7 @@ class DmnHotRedeployTest {
     @Test
     @DisplayName("THE CHECKPOINT — editing the cap in the .dmn changes the next decision, no restart")
     void aThresholdChangesWithoutARebuild() throws Exception {
-        Map<String, Object> claim = aTransportClaimFor(25_000L);   // Rs250
+        Map<String, Object> claim = aTransportClaimFor(250L);   // between the lowered Rs200 cap and the real Rs300 one
 
         // ---- before: Rs250 is under the Rs300 cap, so the bot pays -------------------
         Decision before = decisions.decide(KEY, claim);
@@ -95,11 +98,11 @@ class DmnHotRedeployTest {
     void theOriginalComesBack() throws Exception {
         deploy("lower-the-transport-cap", Files.readString(FILE, StandardCharsets.UTF_8)
                 .replace(CAP_NOW, CAP_LOWERED));
-        assertEquals("TICKET_EXCEEDS_CAP", decisions.decide(KEY, aTransportClaimFor(25_000L)).action());
+        assertEquals("TICKET_EXCEEDS_CAP", decisions.decide(KEY, aTransportClaimFor(250L)).action());
 
         putTheRealTableBack();
 
-        assertEquals("AUTO_CREDIT_TRANSPORT", decisions.decide(KEY, aTransportClaimFor(25_000L)).action(),
+        assertEquals("AUTO_CREDIT_TRANSPORT", decisions.decide(KEY, aTransportClaimFor(250L)).action(),
                 "a redeploy that cannot be undone is a one-way door, and the next test class "
               + "would inherit a cap nobody set");
     }
@@ -120,8 +123,13 @@ class DmnHotRedeployTest {
             offenders = files.filter(p -> p.toString().endsWith(".java"))
                     .filter(p -> {
                         try {
-                            return Files.readString(p, StandardCharsets.UTF_8).contains("30000")
-                                || Files.readString(p, StandardCharsets.UTF_8).contains("30_000");
+                            // A BARE 300, not a substring of one. The cap reads Rs300 since the
+                            // move to rupees, and "300" also sits inside arrivedAt300metre and
+                            // arrived_at300_m — matching those would fail this test on two
+                            // identifiers that have nothing to do with money. The lookarounds
+                            // require the digits to stand alone.
+                            return Pattern.compile("(?<![\\w.])300(?![\\w.])")
+                                    .matcher(Files.readString(p, StandardCharsets.UTF_8)).find();
                         } catch (Exception e) {
                             return false;
                         }
@@ -151,10 +159,10 @@ class DmnHotRedeployTest {
      * key would not fall through to row 10; it would return nothing at all, and the failure
      * would look like the redeploy did not work.
      */
-    private static Map<String, Object> aTransportClaimFor(long amountPaise) {
+    private static Map<String, Object> aTransportClaimFor(long amountRupees) {
         Map<String, Object> facts = new LinkedHashMap<>();
         facts.put("alreadyCredited", false);
-        facts.put("computedAmountPaise", amountPaise);
+        facts.put("computedAmountRupees", Rupees.of(amountRupees));
         facts.put("transportPath", "PATH_1");     // customer paid, the SP never got it
         facts.put("arrivedAt300metre", true);
         facts.put("cancellationStatus", "NONE");

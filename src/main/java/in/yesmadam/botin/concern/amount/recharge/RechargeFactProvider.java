@@ -1,6 +1,8 @@
 package in.yesmadam.botin.concern.amount.recharge;
 
-import in.yesmadam.botin.integration.payu.MockPayUGateway;
+import java.math.BigDecimal;
+import in.yesmadam.botin.platform.money.Rupees;
+import in.yesmadam.botin.integration.payu.PayUGateway;
 import in.yesmadam.botin.platform.facts.ConcernFactProvider;
 import in.yesmadam.botin.platform.facts.FactRequest;
 import in.yesmadam.botin.platform.facts.UatColumn;
@@ -35,11 +37,11 @@ public class RechargeFactProvider implements ConcernFactProvider {
 
     private final JdbcTemplate uat;
     private final PayuStatusNormaliser statuses;
-    private final MockPayUGateway mockGateway;
+    private final PayUGateway mockGateway;
 
     public RechargeFactProvider(@Autowired(required = false) @Qualifier("uatJdbcTemplate") JdbcTemplate uat,
                                 PayuStatusNormaliser statuses,
-                                MockPayUGateway mockGateway) {
+                                PayUGateway mockGateway) {
         this.uat = uat;
         this.statuses = statuses;
         this.mockGateway = mockGateway;
@@ -48,7 +50,7 @@ public class RechargeFactProvider implements ConcernFactProvider {
     @Override public String concernCode() { return "RECHARGE_DEBIT_NO_CREDIT"; }
 
     @Override public Set<String> factKeys() {
-        return Set.of("payuStatus", "alreadyCredited", "amountPaise");
+        return Set.of("payuStatus", "alreadyCredited", "amountRupees");
     }
 
     @Override public List<UatColumn> requiredColumns() {
@@ -83,8 +85,8 @@ public class RechargeFactProvider implements ConcernFactProvider {
             String orderId = request.selectedReference();
             log.warn("UAT IS OFF — recharge facts for order {} come from the MOCK gateway", orderId);
             facts.put("payuStatus", statuses.normalise(mockGateway.statusOf(orderId)));
-            facts.put("alreadyCredited", mockGateway.creditedFor(orderId) > 0);
-            facts.put("amountPaise", mockGateway.amountFor(orderId));
+            facts.put("alreadyCredited", Rupees.isPositive(mockGateway.creditedFor(orderId)));
+            facts.put("amountRupees", mockGateway.amountFor(orderId));
             return facts;
         }
 

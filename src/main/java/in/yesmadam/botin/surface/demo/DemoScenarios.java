@@ -158,7 +158,7 @@ public class DemoScenarios implements ApplicationListener<WebServerInitializedEv
             "The call may have succeeded and failed to tell us. So: record, escalate, and NEVER "
           + "retry. A retry on an unknown outcome is a second payment.",
             r -> {
-                r.post("/demo/gateway/DEMO-RCH-FAILOVER", "{\"status\":\"success\",\"amountPaise\":25000}");
+                r.post("/demo/gateway/DEMO-RCH-FAILOVER", "{\"status\":\"success\",\"amountRupees\":250.00}");
                 r.post("/demo/gateway/fail-next/1", "{}");
                 String first = r.raise("SP-DEMO-06", "AMOUNT_RELATED", "RECHARGE_DEBIT_NO_CREDIT", "DEMO-RCH-FAILOVER");
                 r.expect("goes to a person", text(r.view(first), "nextStep", "code"), "AGENT_CONNECTING");
@@ -306,7 +306,7 @@ public class DemoScenarios implements ApplicationListener<WebServerInitializedEv
                 // SEEDED FIRST. A rule about resolved cases needs a resolved case — an unknown
                 // order reaches a human, and a satisfaction answer on an unresolved case is
                 // refused, which reads as null rather than false.
-                r.post("/demo/gateway/DEMO-RCH-BOUNDING", "{\"status\":\"failure\",\"amountPaise\":25000}");
+                r.post("/demo/gateway/DEMO-RCH-BOUNDING", "{\"status\":\"failure\",\"amountRupees\":250.00}");
                 String sid = r.raise("SP-DEMO-41", "AMOUNT_RELATED", "RECHARGE_DEBIT_NO_CREDIT", "DEMO-RCH-BOUNDING");
                 r.expect("resolved by the bot", text(r.view(sid), "csatExpected"), "true");
                 JsonNode after = r.post("/help/sessions/" + sid + "/csat", "{\"satisfied\":true}");

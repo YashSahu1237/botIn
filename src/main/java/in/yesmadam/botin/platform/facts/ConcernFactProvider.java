@@ -45,10 +45,28 @@ public interface ConcernFactProvider {
     Set<String> factKeys();
 
     /**
-     * Every UAT column this provider queries, declared so UatSchemaProbe can check it at
-     * startup rather than at a partner's expense.
+     * Every UAT column this provider queries (fact shapes A and B), declared so UatSchemaProbe
+     * can check it at startup rather than at a partner's expense.
      */
     default List<UatColumn> requiredColumns() { return List.of(); }
+
+    /**
+     * Every external service this provider calls (fact shape C), declared so
+     * ExternalDependencyProbe can check it at startup for exactly the reason above.
+     *
+     * A shape-C fact is one whose answer another team COMPUTES rather than stores — stock
+     * availability from a reservation engine, a payment's status, an eligibility another
+     * service owns. Reading their tables instead would re-implement their business logic
+     * inside BOTIn and then diverge from it silently.
+     *
+     * The call goes through an interface in integration/, built by ExternalServiceClientFactory,
+     * which carries the one timeout policy and the no-retry rule. A provider must not hold an
+     * HTTP client of its own: the first one to do so sets the conventions for every provider
+     * after it, and that is how three money columns ended up with inconsistent units.
+     *
+     * Returns empty today for every provider — every current fact is read from the database.
+     */
+    default List<ExternalDependency> requiredServices() { return List.of(); }
 
     /**
      * @return facts keyed exactly as the decision table's inputExpressions name them.

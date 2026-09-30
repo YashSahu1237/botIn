@@ -37,9 +37,9 @@ class ProviderContractTest {
     /** Same list as TABLE_INPUTS in DecisionTableTest. Duplicated ON PURPOSE — see below. */
     private static final Map<String, Set<String>> TABLE_INPUTS = Map.of(
         "TRANSPORT_NOT_RECEIVED", Set.of(
-            "alreadyCredited", "computedAmountPaise", "transportPath", "arrivedAt300metre",
+            "alreadyCredited", "computedAmountRupees", "transportPath", "arrivedAt300metre",
             "cancellationStatus", "lastMinCashbackCredited", "distanceBeyondRadiusKm"),
-        "RECHARGE_DEBIT_NO_CREDIT", Set.of("payuStatus", "alreadyCredited", "amountPaise"),
+        "RECHARGE_DEBIT_NO_CREDIT", Set.of("payuStatus", "alreadyCredited", "amountRupees"),
         "FORGET_MPIN", Set.of("l2Concern"),
         "VIOL_R4_OTHERS", Set.of("classificationMatched", "classifierConfidence",
                                  "rerouteTarget", "riskFlagged"),

@@ -1,5 +1,7 @@
 package in.yesmadam.botin.platform.decision;
 
+import java.math.BigDecimal;
+import in.yesmadam.botin.platform.money.Rupees;
 import in.yesmadam.botin.surface.console.DecisionTrace;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -118,7 +120,7 @@ class DecisionExplainedTest {
         // panel cannot name the row that fired, the most common decision in the system is the
         // one it cannot explain, and a reviewer sees a grid with nothing highlighted.
         Map<String, Object> nothing = new LinkedHashMap<>();
-        for (String key : List.of("alreadyCredited", "computedAmountPaise", "transportPath",
+        for (String key : List.of("alreadyCredited", "computedAmountRupees", "transportPath",
                                   "arrivedAt300metre", "cancellationStatus",
                                   "lastMinCashbackCredited", "distanceBeyondRadiusKm")) {
             nothing.put(key, null);          // PRESENT and null — absent would be an error
@@ -150,7 +152,7 @@ class DecisionExplainedTest {
                                                  boolean cashback, double beyondKm) {
         Map<String, Object> f = new LinkedHashMap<>();
         f.put("alreadyCredited", credited);
-        f.put("computedAmountPaise", amount);
+        f.put("computedAmountRupees", amount);
         f.put("transportPath", path);
         f.put("arrivedAt300metre", arrived);
         f.put("cancellationStatus", cancellation);

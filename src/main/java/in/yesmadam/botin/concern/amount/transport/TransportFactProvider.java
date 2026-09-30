@@ -1,5 +1,7 @@
 package in.yesmadam.botin.concern.amount.transport;
 
+import java.math.BigDecimal;
+import in.yesmadam.botin.platform.money.Rupees;
 import in.yesmadam.botin.platform.facts.ConcernFactProvider;
 import in.yesmadam.botin.platform.facts.FactRequest;
 import in.yesmadam.botin.platform.facts.UatColumn;
@@ -58,16 +60,16 @@ public class TransportFactProvider implements ConcernFactProvider {
     private final GeoService geo;
     /** Present only under the `demo` profile. Null everywhere else. */
     private final DemoFixtures demo;
-    /** Rs50 per km beyond the radius, in paise. Confirmed by the Decision Matrix. */
-    private final long ratePerKmPaise;
+    /** Rs50 per km beyond the radius. Confirmed by the Decision Matrix. */
+    private final BigDecimal ratePerKmRupees;
 
     public TransportFactProvider(@Autowired(required = false) @Qualifier("uatJdbcTemplate") JdbcTemplate uat,
                                  TransportPathSelector pathSelector,
                                  DuplicateCreditGuard creditGuard,
                                  GeoService geo,
                                  @Autowired(required = false) DemoFixtures demo,
-                                 @Value("${botin.transport.rate-per-km-paise:5000}") long ratePerKmPaise) {
-        this.ratePerKmPaise = ratePerKmPaise;
+                                 @Value("${botin.transport.rate-per-km-rupees:50}") long ratePerKmRupees) {
+        this.ratePerKmRupees = Rupees.of(ratePerKmRupees);
         this.demo = demo;
         this.uat = uat;
         this.pathSelector = pathSelector;
@@ -78,7 +80,7 @@ public class TransportFactProvider implements ConcernFactProvider {
     @Override public String concernCode() { return "TRANSPORT_NOT_RECEIVED"; }
 
     @Override public Set<String> factKeys() {
-        return Set.of("alreadyCredited", "computedAmountPaise", "transportPath",
+        return Set.of("alreadyCredited", "computedAmountRupees", "transportPath",
                       "arrivedAt300metre", "cancellationStatus",
                       "lastMinCashbackCredited", "distanceBeyondRadiusKm");
     }
@@ -129,7 +131,7 @@ public class TransportFactProvider implements ConcernFactProvider {
                             cancellationOf(order.unassignCode()),
                             order.cashbackPaise() > 0,
                             order.distanceBeyondRadiusKm(),
-                            order.computedAmountPaise()))
+                            order.computedAmountRupees()))
                     .orElse(facts);
         }
 
@@ -148,9 +150,14 @@ public class TransportFactProvider implements ConcernFactProvider {
 
         // Net position, never EXISTS(CREDIT): DEBIT/TRANSPORT is real, so a reversed
         // credit must not read as paid. See DuplicateCreditGuard.
+        // tbl_sp_tranactions.amount IS READ AS PAISE, which is what this code has always
+        // assumed — the same unconfirmed assumption as transport_charges, and settled by the
+        // same probe. Faithful conversion here rather than a reinterpretation: if the column
+        // turns out to hold rupees, this call goes and the duplicate guard has been comparing
+        // figures 100x apart, which would have read as "never credited" on every claim.
         List<LedgerEntry> ledger = uat.query(LEDGER_SQL,
                 (rs, i) -> new LedgerEntry(rs.getString("action"), rs.getString("subaction"),
-                        rs.getLong("amount")), orderId);
+                        Rupees.fromPaise(rs.getLong("amount"))), orderId);
         boolean alreadyCredited = creditGuard.alreadyCredited(ledger, "TRANSPORT");
 
         String cancellationStatus = cancellationOf((Integer) order.get("unassignCode"));
@@ -192,14 +199,22 @@ public class TransportFactProvider implements ConcernFactProvider {
      * only one of the three that invents nothing. If the answer is rounding, it is a change
      * to `kilometresCharged` and nowhere else.
      */
-    private Long amountFor(String path, Integer transportChargesPaise, Double beyondRadiusKm) {
+    private BigDecimal amountFor(String path, Integer transportChargesPaise, Double beyondRadiusKm) {
         if (TransportPathSelector.PATH_3.equals(path)) {
             if (beyondRadiusKm == null || beyondRadiusKm <= 0) return null;
-            return Math.round(kilometresCharged(beyondRadiusKm) * ratePerKmPaise);
+            // Rs50 x a FRACTIONAL distance: 1.37 km is Rs68.50. Exact at scale 2, where
+            // Math.round(km * 5000) used to round to the nearest paise — the same answer,
+            // now without the unit in the name of every variable that carries it.
+            return Rupees.times(ratePerKmRupees, kilometresCharged(beyondRadiusKm));
         }
         // Paths 1 and 2 pay what the customer was charged. Null when we cannot read it —
         // never zero, because zero is an amount and null is an admission.
-        return transportChargesPaise == null ? null : transportChargesPaise.longValue();
+        // READ AS PAISE, WHICH IS WHAT THIS CODE HAS ALWAYS ASSUMED — and the assumption is
+        // NOT CONFIRMED. Probe 1 found no order with transport_charges > 30000, weak evidence
+        // the column may already hold rupees. Converting here preserves today's behaviour
+        // rather than changing it on a guess; if probe 2 says rupees, this one call goes and
+        // every credit computed until then was 100x too small. See Rupees.fromPaise.
+        return transportChargesPaise == null ? null : Rupees.fromPaise(transportChargesPaise);
     }
 
     /** OPEN: prorate / round up / round down. Prorating is the only option that assumes nothing. */
@@ -214,7 +229,7 @@ public class TransportFactProvider implements ConcernFactProvider {
     private Map<String, Object> derive(boolean customerCharged, boolean alreadyCredited,
                                        Boolean arrivedAt300m, String cancellationStatus,
                                        boolean cashbackCredited, Double beyondRadiusKm,
-                                       Long computedAmountPaise) {
+                                       BigDecimal computedAmountRupees) {
         Map<String, Object> facts = emptyFacts();
         facts.put("alreadyCredited", alreadyCredited);
         facts.put("arrivedAt300metre", arrivedAt300m);
@@ -222,7 +237,7 @@ public class TransportFactProvider implements ConcernFactProvider {
         facts.put("lastMinCashbackCredited", cashbackCredited);
         facts.put("transportPath", pathSelector.select(customerCharged, alreadyCredited, cancellationStatus));
         facts.put("distanceBeyondRadiusKm", beyondRadiusKm);
-        facts.put("computedAmountPaise", computedAmountPaise);
+        facts.put("computedAmountRupees", computedAmountRupees);
         return facts;
     }
 

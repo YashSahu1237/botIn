@@ -1,4 +1,6 @@
 package in.yesmadam.botin.platform.safety;
+import java.math.BigDecimal;
+import in.yesmadam.botin.platform.money.Rupees;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
@@ -54,8 +56,8 @@ public class TicketActionRecorder {
      */
     @Transactional(propagation = Propagation.REQUIRES_NEW)
     public Optional<TicketAction> recordAttempt(UUID ticketId, String actionType,
-                                                Long amountPaise, String requestPayload) {
-        return recordAttempt(ticketId, actionType, null, amountPaise, requestPayload);
+                                                BigDecimal amountRupees, String requestPayload) {
+        return recordAttempt(ticketId, actionType, null, amountRupees, requestPayload);
     }
 
     /**
@@ -69,7 +71,7 @@ public class TicketActionRecorder {
      */
     @Transactional(propagation = Propagation.REQUIRES_NEW)
     public Optional<TicketAction> recordAttempt(UUID ticketId, String actionType, String externalReference,
-                                                Long amountPaise, String requestPayload) {
+                                                BigDecimal amountRupees, String requestPayload) {
         String key = TicketAction.idempotencyKey(ticketId, actionType, externalReference);
 
         Optional<TicketAction> existing = repository.findByIdempotencyKey(key);
@@ -80,7 +82,7 @@ public class TicketActionRecorder {
         }
 
         TicketAction attempt = repository.saveAndFlush(
-                TicketAction.attempt(ticketId, actionType, externalReference, amountPaise, requestPayload));
+                TicketAction.attempt(ticketId, actionType, externalReference, amountRupees, requestPayload));
         log.info("recorded ATTEMPTED in its own transaction key={}", key);
         return Optional.of(attempt);
     }
@@ -90,7 +92,7 @@ public class TicketActionRecorder {
     /**
      * WHAT ACTUALLY MOVED, recorded with the outcome.
      *
-     * `amount_paise` has existed on this row since the first migration and NOTHING EVER WROTE
+     * `amount_rupees` (was `amount_paise` until V9) has existed since the first migration and NOTHING EVER WROTE
      * IT on a real attempt — the delegate passed null. Every ledger row said that a credit
      * succeeded and none said how much.
      *
@@ -103,8 +105,8 @@ public class TicketActionRecorder {
      * know what we intend to pay, and if the process dies mid-call an amount on the row would
      * assert a movement nobody can confirm. Null on an ATTEMPTED row is the honest state.
      */
-    public void recordOutcome(UUID actionId, boolean success, String responsePayload, Long amountPaise) {
-        recordOutcomeInternal(actionId, success, responsePayload, amountPaise);
+    public void recordOutcome(UUID actionId, boolean success, String responsePayload, BigDecimal amountRupees) {
+        recordOutcomeInternal(actionId, success, responsePayload, amountRupees);
     }
 
     public void recordOutcome(UUID actionId, boolean success, String responsePayload) {
@@ -112,10 +114,10 @@ public class TicketActionRecorder {
     }
 
     private void recordOutcomeInternal(UUID actionId, boolean success,
-                                       String responsePayload, Long amountPaise) {
+                                       String responsePayload, BigDecimal amountRupees) {
         repository.findById(actionId).ifPresent(a -> {
             if (success) a.succeeded(responsePayload); else a.failed(responsePayload);
-            if (amountPaise != null) a.recordAmount(amountPaise);
+            if (amountRupees != null) a.recordAmount(amountRupees);
             repository.saveAndFlush(a);
         });
     }

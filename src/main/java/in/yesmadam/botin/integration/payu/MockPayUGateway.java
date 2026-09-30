@@ -1,4 +1,6 @@
 package in.yesmadam.botin.integration.payu;
+import java.math.BigDecimal;
+import in.yesmadam.botin.platform.money.Rupees;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
@@ -31,7 +33,7 @@ import java.util.concurrent.atomic.AtomicInteger;
  * that cannot pay anybody.
  */
 @Component
-public class MockPayUGateway {
+public class MockPayUGateway implements PayUGateway {
 
     private static final Logger log = LoggerFactory.getLogger(MockPayUGateway.class);
 
@@ -41,8 +43,8 @@ public class MockPayUGateway {
     public static final String NOT_FOUND = "Not Found";
 
     private final Map<String, String> statuses = new ConcurrentHashMap<>();
-    private final Map<String, Long> amounts = new ConcurrentHashMap<>();
-    private final Map<String, Long> credited = new ConcurrentHashMap<>();
+    private final Map<String, BigDecimal> amounts = new ConcurrentHashMap<>();
+    private final Map<String, BigDecimal> credited = new ConcurrentHashMap<>();
     private final AtomicInteger failNextCalls = new AtomicInteger(0);
 
     /**
@@ -57,9 +59,9 @@ public class MockPayUGateway {
     }
 
     /** A recharge as the gateway knows it: what happened, and for how much. */
-    public void setRecharge(String orderId, String rawStatus, long amountPaise) {
+    public void setRecharge(String orderId, String rawStatus, BigDecimal amountRupees) {
         setStatus(orderId, rawStatus);
-        amounts.put(orderId, amountPaise);
+        amounts.put(orderId, Rupees.scaled(amountRupees));
     }
 
     public String statusOf(String orderId) {
@@ -67,14 +69,14 @@ public class MockPayUGateway {
     }
 
     /**
-     * What the partner actually paid, in paise.
+     * What the partner actually paid, in rupees.
      *
      * ZERO WHEN UNKNOWN, and zero is refused by the credit service rather than treated
      * as "nothing to pay". An amount we cannot establish is a case for a person: paying
      * zero silently would close the ticket having done nothing.
      */
-    public long amountFor(String orderId) {
-        return amounts.getOrDefault(orderId, 0L);
+    public BigDecimal amountFor(String orderId) {
+        return amounts.getOrDefault(orderId, Rupees.ZERO);
     }
 
     /** Make the next n credit attempts throw, as a dead or angry gateway would. */
@@ -89,16 +91,16 @@ public class MockPayUGateway {
      *         and caught by the action layer, which is the point: the caller must decide
      *         what a failed payment means, and it must not be this class's opinion.
      */
-    public String creditWallet(String spId, String orderId, long amountPaise) {
+    public String creditWallet(String spId, String orderId, BigDecimal amountRupees) {
         if (failNextCalls.getAndUpdate(n -> Math.max(0, n - 1)) > 0) {
             log.warn("MOCK PAYU: induced failure crediting {} for order {}", spId, orderId);
             throw new PayUUnavailableException("induced failure for order " + orderId);
         }
 
-        credited.merge(orderId, amountPaise, Long::sum);
+        credited.merge(orderId, Rupees.scaled(amountRupees), BigDecimal::add);
         String reference = "MOCKPAYU-" + orderId;
-        log.info("MOCK PAYU: credited {} paise to {} for order {} -> {}",
-                amountPaise, spId, orderId, reference);
+        log.info("MOCK PAYU: credited {} to {} for order {} -> {}",
+                Rupees.format(amountRupees), spId, orderId, reference);
         return reference;
     }
 
@@ -111,12 +113,12 @@ public class MockPayUGateway {
      * moved with nothing on our side explaining why, and no amount of reading our own tables
      * would ever reveal it.
      */
-    public Map<String, Long> allCredits() {
+    public Map<String, BigDecimal> allCredits() {
         return Map.copyOf(credited);
     }
 
-    public long creditedFor(String orderId) {
-        return credited.getOrDefault(orderId, 0L);
+    public BigDecimal creditedFor(String orderId) {
+        return credited.getOrDefault(orderId, Rupees.ZERO);
     }
 
     public void reset() {
@@ -126,7 +128,4 @@ public class MockPayUGateway {
         failNextCalls.set(0);
     }
 
-    public static class PayUUnavailableException extends RuntimeException {
-        public PayUUnavailableException(String message) { super(message); }
-    }
 }

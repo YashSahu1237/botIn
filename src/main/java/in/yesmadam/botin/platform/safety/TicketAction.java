@@ -1,5 +1,7 @@
 package in.yesmadam.botin.platform.safety;
 
+import java.math.BigDecimal;
+import in.yesmadam.botin.platform.money.Rupees;
 import jakarta.persistence.*;
 import java.time.Instant;
 import java.util.UUID;
@@ -24,7 +26,7 @@ public class TicketAction {
     /** The third party's own id for what was acted on. The receipt, and the dedupe key. */
     @Column(name = "external_reference", length = 128)          private String externalReference;
     @Column(nullable = false, length = 24)                      private String status;
-    @Column(name = "amount_paise")                              private Long amountPaise;
+    @Column(name = "amount_rupees", precision = 12, scale = 2)  private BigDecimal amountRupees;
     @Column(name = "request_payload", length = 4000)  private String requestPayload;
     @Column(name = "response_payload", length = 4000) private String responsePayload;
     @Column(name = "attempted_at", nullable = false)            private Instant attemptedAt;
@@ -32,12 +34,12 @@ public class TicketAction {
 
     protected TicketAction() { }
 
-    public static TicketAction attempt(UUID ticketId, String actionType, Long amountPaise, String requestPayload) {
-        return attempt(ticketId, actionType, null, amountPaise, requestPayload);
+    public static TicketAction attempt(UUID ticketId, String actionType, BigDecimal amountRupees, String requestPayload) {
+        return attempt(ticketId, actionType, null, amountRupees, requestPayload);
     }
 
     public static TicketAction attempt(UUID ticketId, String actionType, String externalReference,
-                                       Long amountPaise, String requestPayload) {
+                                       BigDecimal amountRupees, String requestPayload) {
         TicketAction a = new TicketAction();
         a.id = UUID.randomUUID();
         a.ticketId = ticketId;
@@ -45,7 +47,7 @@ public class TicketAction {
         a.externalReference = externalReference;
         a.idempotencyKey = idempotencyKey(ticketId, actionType, externalReference);
         a.status = ATTEMPTED;
-        a.amountPaise = amountPaise;
+        a.amountRupees = Rupees.scaled(amountRupees);
         a.requestPayload = requestPayload;
         a.attemptedAt = Instant.now();
         return a;
@@ -81,8 +83,8 @@ public class TicketAction {
     }
 
     /** What actually moved. Set with the outcome, never before it — see TicketActionRecorder. */
-    public void recordAmount(long amountPaise) {
-        this.amountPaise = amountPaise;
+    public void recordAmount(BigDecimal amountRupees) {
+        this.amountRupees = Rupees.scaled(amountRupees);
     }
 
     public void succeeded(String responsePayload) {
@@ -98,7 +100,7 @@ public class TicketAction {
     public String getIdempotencyKey() { return idempotencyKey; }
     public String getExternalReference() { return externalReference; }
     public String getStatus() { return status; }
-    public Long getAmountPaise() { return amountPaise; }
+    public BigDecimal getAmountRupees() { return amountRupees; }
     public Instant getAttemptedAt() { return attemptedAt; }
     public Instant getCompletedAt() { return completedAt; }
 }

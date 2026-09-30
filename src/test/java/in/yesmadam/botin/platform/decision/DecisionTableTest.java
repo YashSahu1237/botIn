@@ -1,5 +1,7 @@
 package in.yesmadam.botin.platform.decision;
 
+import java.math.BigDecimal;
+import in.yesmadam.botin.platform.money.Rupees;
 import in.yesmadam.botin.platform.catalogue.ConcernCatalogueRepository;
 import org.flowable.dmn.api.DmnRepositoryService;
 import org.junit.jupiter.api.DisplayName;
@@ -100,10 +102,10 @@ class DecisionTableTest {
      */
     private static final Map<String, List<String>> TABLE_INPUTS = Map.of(
         "transport-not-received-decision", List.of(
-            "alreadyCredited", "computedAmountPaise", "transportPath", "arrivedAt300metre",
+            "alreadyCredited", "computedAmountRupees", "transportPath", "arrivedAt300metre",
             "cancellationStatus", "lastMinCashbackCredited", "distanceBeyondRadiusKm"),
         "recharge-debit-no-credit-decision", List.of(
-            "payuStatus", "alreadyCredited", "amountPaise"),
+            "payuStatus", "alreadyCredited", "amountRupees"),
         "viol-r4-others-decision", List.of("classificationMatched", "classifierConfidence",
                                            "rerouteTarget", "riskFlagged"),
         "viol-r5-periods-decision", List.of("priorPeriodLeavesThisMonth"),
@@ -156,7 +158,7 @@ class DecisionTableTest {
         private Map<String, Object> facts() {
             Map<String, Object> f = new HashMap<>();
             f.put("alreadyCredited", false);
-            f.put("computedAmountPaise", 10000L);     // Rs100, comfortably under the cap
+            f.put("computedAmountRupees", Rupees.of(100));   // comfortably under the cap
             f.put("transportPath", "PATH_3");
             f.put("arrivedAt300metre", true);
             f.put("cancellationStatus", null);
@@ -181,7 +183,7 @@ class DecisionTableTest {
                 Map<String, Object> f = facts();
                 f.put("transportPath", path);
                 f.put("distanceBeyondRadiusKm", 9);
-                f.put("computedAmountPaise", 45000L);  // Rs450
+                f.put("computedAmountRupees", Rupees.of(450));
                 Decision d = decisions.decide(KEY, f);
                 assertEquals("TICKET_EXCEEDS_CAP", d.action(),
                         "the cap did not hold on " + path);
@@ -197,7 +199,7 @@ class DecisionTableTest {
             Map<String, Object> f = facts();
             f.put("transportPath", "PATH_3");
             f.put("distanceBeyondRadiusKm", 9);
-            f.put("computedAmountPaise", 45000L);
+            f.put("computedAmountRupees", Rupees.of(450));
             assertEquals("TICKET_EXCEEDS_CAP", decisions.decide(KEY, f).action());
         }
 
@@ -267,7 +269,7 @@ class DecisionTableTest {
             Decision d = decisions.decide(KEY, f);
             assertEquals("AUTO_CREDIT_DISTANCE", d.action());
             assertTrue(d.movesMoney());
-            assertEquals(5000L, d.numeric("ratePerKmPaise"),
+            assertEquals(50L, d.numeric("ratePerKmRupees"),
                     "Rs50/km must come from the decision table, not from Java");
         }
 
@@ -298,7 +300,7 @@ class DecisionTableTest {
             // the gateway reports, not a decision this table makes. Present because
             // strict mode treats an ABSENT variable as an evaluation error — which
             // would take the whole table down, catch-all included.
-            f.put("amountPaise", 25000L);
+            f.put("amountRupees", Rupees.of(250));
             return f;
         }
 

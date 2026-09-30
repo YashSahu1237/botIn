@@ -1,5 +1,7 @@
 package in.yesmadam.botin.surface.demo;
 
+import java.math.BigDecimal;
+import in.yesmadam.botin.platform.money.Rupees;
 import in.yesmadam.botin.integration.payu.MockPayUGateway;
 import in.yesmadam.botin.platform.escalation.EscalationContextRepository;
 import in.yesmadam.botin.platform.safety.TicketActionRepository;
@@ -105,7 +107,8 @@ public class DemoControlController {
     @PostMapping("/gateway/{orderId}")
     public Map<String, Object> setGatewayStatus(@PathVariable String orderId,
                                                 @RequestBody GatewayState state) {
-        gateway.setRecharge(orderId, state.status(), state.amountPaise() == null ? 0 : state.amountPaise());
+        gateway.setRecharge(orderId, state.status(),
+                state.amountRupees() == null ? Rupees.ZERO : Rupees.scaled(state.amountRupees()));
         log.warn("DEMO CONTROL — gateway for {} now reports {}", orderId, state.status());
         return Map.of("orderId", orderId, "status", String.valueOf(gateway.statusOf(orderId)));
     }
@@ -228,6 +231,6 @@ public class DemoControlController {
         return out;
     }
 
-    public record GatewayState(String status, Long amountPaise) { }
+    public record GatewayState(String status, BigDecimal amountRupees) { }
     public record FlagState(boolean enabled) { }
 }

@@ -55,7 +55,7 @@ The highest-volume concern in the build, and the one with the largest gap.
 | `transportPath` | derived — `TransportPathSelector` | **DERIVED** | rules 3, 4, 5a, 5b, 6, 7, 8, 9 | never null, which is the risk: it always routes, so a wrong rule is invisible. **The selector is an assumption, not a documented rule** (DEFERRED D-C) |
 | `cancellationStatus` | `ysmdm_users.tbl_order.unassign_status_code` (confirmed) | **PARTIAL** | rules 5a, 5b, 6, 7 | only codes 3 and 4 map, both to `CANCELLED_BY_AGENT`. **`CANCELLED_NR` and `CANCELLED_CR` are never produced** — 3 rules unreachable |
 | `distanceBeyondRadiusKm` | hub geometry resolves; **the job's own lat/lng does not exist on `tbl_order`** | **ABSENT** | rules 8, 9 | **the entire Path 3 pair is unreachable** — and Path 3 is the selector's fall-through, so most claims land there and reach an agent |
-| `computedAmountPaise` | **DERIVED, and the rate is settled.** Paths 1/2 use the customer's transport charge from the order; Path 3 is `(distance − radius) × ₹50`, confirmed by the Decision Matrix. DEFERRED D-B is closed | **DERIVED** | rule 2 (the cap) and every paying row | **the ₹300 cap is live.** One assumption remains, isolated in `kilometresCharged`: partial kilometres are prorated, because the matrix marks rounding as OPEN and prorating invents nothing |
+| `computedAmountRupees` | **DERIVED, and the rate is settled.** Paths 1/2 use the customer's transport charge from the order; Path 3 is `(distance − radius) × ₹50`, confirmed by the Decision Matrix. DEFERRED D-B is closed | **DERIVED** | rule 2 (the cap) and every paying row | **the ₹300 cap is live.** One assumption remains, isolated in `kilometresCharged`: partial kilometres are prorated, because the matrix marks rounding as OPEN and prorating invents nothing |
 
 **Dead rules:** 2 (the cap) · 5a (NR) · 6 and 7 (both CR rows) · 8 and 9 (both Path 3 rows).
 
@@ -63,7 +63,7 @@ The highest-volume concern in the build, and the one with the largest gap.
 that never arrived → credited. Agent-cancelled → credited or denied correctly. **Everything
 else → an agent**, including every ordinary-travel claim, because Path 3 cannot be measured.
 
-> **This concern must not be switched on for auto-credit while `computedAmountPaise` is
+> **This concern must not be switched on for auto-credit while `computedAmountRupees` is
 > absent.** The cap is the only row protecting the paying rows, and it cannot fire. This is
 > a gate on Phase 6, not a note.
 
@@ -75,7 +75,7 @@ else → an agent**, including every ordinary-travel claim, because Path 3 canno
 |---|---|---|---|---|
 | `payuStatus` | `ysmdm_employees.tbl_payu_transaction_details_for_sp.status` (confirmed), normalised by `PayuStatusNormaliser` | **LIVE (link names inferred)** | rules 1, 2, 3, 5, 6 | the two lookup columns (`sp_id`, `order_id`) were inferred from camelCase fields. The probe checks them |
 | `alreadyCredited` | **no confirmed column links a wallet credit to a PayU transaction**, and the recharge sub-action value has never been observed | **ABSENT** | rules 4, 5 | **the only money-moving row in this concern is unreachable**, and so is its duplicate guard |
-| `amountPaise` | the gateway — `tbl_payu...` when UAT is on, the **mock gateway** when it is off | **PARTIAL** — real only with UAT; the mock supplies it for the money-path tests | declared by the table, branched on by no rule; read by `WalletCreditService` | a credit of zero is REFUSED rather than treated as nothing to pay, and the case goes to a person. Paying zero silently would close the ticket having done nothing |
+| `amountRupees` | the gateway — `tbl_payu...` when UAT is on, the **mock gateway** when it is off | **PARTIAL** — real only with UAT; the mock supplies it for the money-path tests | declared by the table, branched on by no rule; read by `WalletCreditService` | a credit of zero is REFUSED rather than treated as nothing to pay, and the case goes to a person. Paying zero silently would close the ticket having done nothing |
 | ~~`spSatisfied`~~ | **REMOVED, with the rule that read it.** The Decision Matrix confirms the behaviour — *"PayU = Failed and SP not satisfied → create ticket on SP request"* — and the system already delivers it through CSAT and trigger A. A table row as well would be two mechanisms for one behaviour, and it could only ever have read null: the table is evaluated *before* satisfaction is asked | — | nothing. The partner who says the answer did not help still gets a person, on the same ticket |
 
 **Dead rules:** 3 (failed + dissatisfied) · 4 (already credited) · 5 (**auto-credit wallet**).

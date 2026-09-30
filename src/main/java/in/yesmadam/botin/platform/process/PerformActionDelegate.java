@@ -117,7 +117,7 @@ public class PerformActionDelegate implements JavaDelegate {
             // THE AMOUNT GOES ON THE ROW. Without it the ledger says a credit succeeded and
             // not how much, and nothing can be reconciled against the gateway.
             recorder.recordOutcome(attempt.get().getId(), true, describeResult(result),
-                    result.amountPaise());
+                    result.amountRupees());
             execution.setVariable(ProcessVariables.ACTION_REFERENCE, result.externalReference());
             log.info("{} succeeded for {} -> {}", actionCode, externalReference, result.externalReference());
 

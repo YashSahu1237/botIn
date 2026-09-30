@@ -1,5 +1,7 @@
 package in.yesmadam.botin.platform.action;
 
+import java.math.BigDecimal;
+import in.yesmadam.botin.platform.money.Rupees;
 import in.yesmadam.botin.integration.payu.MockPayUGateway;
 import in.yesmadam.botin.platform.safety.BotinFeature;
 import in.yesmadam.botin.platform.safety.TicketAction;
@@ -38,7 +40,8 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @ActiveProfiles("test")
 class MoneyPathTest {
 
-    private static final long AMOUNT = 25_000L;   // ₹250
+    /** Rs250. Was 25_000 paise until money moved to rupees — the same amount. */
+    private static final BigDecimal AMOUNT = Rupees.of(250);
 
     /**
      * A FRESH ORDER ID PER TEST, and the reason is the thing under test.
@@ -82,7 +85,7 @@ class MoneyPathTest {
         JsonNode view = raise("SP-MP-01", ORDER);
 
         assertEquals("CLOSED_RESOLVED", view.get("status").asText());
-        assertEquals(AMOUNT, gateway.creditedFor(ORDER), "the money moved, once");
+        assertEquals(0, AMOUNT.compareTo(gateway.creditedFor(ORDER)), "the money moved, once");
 
         TicketAction action = onlyActionFor("SP-MP-01");
         assertEquals("AUTO_CREDIT_WALLET", action.getActionType());
@@ -99,7 +102,8 @@ class MoneyPathTest {
         JsonNode view = raise("SP-MP-02", ORDER);
 
         assertEquals("AGENT_CONNECTING", view.at("/nextStep/code").asText());
-        assertEquals(0, gateway.creditedFor(ORDER), "nothing may move on a state we cannot read");
+        assertEquals(0, Rupees.ZERO.compareTo(gateway.creditedFor(ORDER)),
+                "nothing may move on a state we cannot read");
         assertEquals(0, actions.count() - actionsBefore, "and nothing should even be attempted");
     }
 
@@ -111,7 +115,7 @@ class MoneyPathTest {
         JsonNode view = raise("SP-MP-03", ORDER);
 
         assertEquals("ASK_RECHARGE_AGAIN", view.at("/nextStep/code").asText());
-        assertEquals(0, gateway.creditedFor(ORDER));
+        assertEquals(0, Rupees.ZERO.compareTo(gateway.creditedFor(ORDER)));
     }
 
     // ------------------------------------------- 90: idempotency on the third-party id
@@ -122,14 +126,14 @@ class MoneyPathTest {
         gateway.setRecharge(ORDER, MockPayUGateway.SUCCESS, AMOUNT);
 
         raise("SP-MP-04", ORDER);
-        assertEquals(AMOUNT, gateway.creditedFor(ORDER));
+        assertEquals(0, AMOUNT.compareTo(gateway.creditedFor(ORDER)));
 
         // A week later, the same partner raises the same recharge again — because the
         // balance confused them, or somebody told them to. NEW session, NEW ticket.
         // Keyed on our ticket id this would be a fresh key and a second payment.
         JsonNode second = raise("SP-MP-04", ORDER);
 
-        assertEquals(AMOUNT, gateway.creditedFor(ORDER),
+        assertEquals(0, AMOUNT.compareTo(gateway.creditedFor(ORDER)),
                 "one payment for one payment — this is the whole point of step 90");
         assertEquals("INFORM_ALREADY_CREDITED", second.at("/nextStep/code").asText(),
                 "and the partner is told plainly, not silently ignored");
@@ -151,7 +155,7 @@ class MoneyPathTest {
         JsonNode view = raise("SP-MP-05", ORDER);
 
         assertEquals("AGENT_CONNECTING", view.at("/nextStep/code").asText());
-        assertEquals(0, gateway.creditedFor(ORDER));
+        assertEquals(0, Rupees.ZERO.compareTo(gateway.creditedFor(ORDER)));
 
         // THE ATTEMPT SURVIVED THE FAILURE. That is ADR-005 and REQUIRES_NEW: the row was
         // committed before the call, so it is still here even though the call threw —
@@ -168,7 +172,7 @@ class MoneyPathTest {
         // second payment, so a person looks.
         gateway.failNextCalls(0);
         JsonNode retry = raise("SP-MP-05", ORDER);
-        assertEquals(0, gateway.creditedFor(ORDER),
+        assertEquals(0, Rupees.ZERO.compareTo(gateway.creditedFor(ORDER)),
                 "a re-raise after a FAILED attempt must not quietly pay — the key is taken");
         assertEquals("INFORM_ALREADY_CREDITED", retry.at("/nextStep/code").asText());
     }
@@ -183,7 +187,7 @@ class MoneyPathTest {
 
         // ON: the bot pays.
         raise("SP-MP-06", "ORD-ON");
-        assertEquals(AMOUNT, gateway.creditedFor("ORD-ON"));
+        assertEquals(0, AMOUNT.compareTo(gateway.creditedFor("ORD-ON")));
 
         // Flip it. No restart, no redeploy, nothing in flight disturbed.
         setFlag(BotinFeature.RECHARGE_AUTO_CREDIT, false);
@@ -192,7 +196,7 @@ class MoneyPathTest {
 
         // OFF DOES NOT MEAN FAIL. The partner is still served — by a person.
         assertEquals("AGENT_CONNECTING", afterFlip.at("/nextStep/code").asText());
-        assertEquals(0, gateway.creditedFor("ORD-OFF"), "automation stopped, money stopped");
+        assertEquals(0, Rupees.ZERO.compareTo(gateway.creditedFor("ORD-OFF")), "automation stopped, money stopped");
 
         Ticket ticket = tickets.findTop10BySpIdOrderByCreatedAtDesc("SP-MP-07").get(0);
         assertEquals("T3", ticket.getTier());

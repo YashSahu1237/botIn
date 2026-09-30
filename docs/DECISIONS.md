@@ -336,6 +336,130 @@ came from gaps here.
 
 ---
 
+## D-11 — money is held in rupees
+
+**Decided by the product owner, against my recommendation, and implemented.** Amounts were
+`long` paise; they are now `BigDecimal` at scale 2 in rupees. My objection is recorded because
+it is the reason the implementation looks the way it does, not to relitigate it: paise-as-long
+is the standard precisely because it cannot acquire a fraction, and rupees force a scale and a
+rounding mode onto every amount. `BigDecimal` at a fixed scale gives rupees without giving up
+exactness — a `long` of rupees would have silently truncated Rs68.50 to Rs68.
+
+**One place holds the rules.** `platform/money/Rupees` owns `SCALE = 2` and
+`ROUNDING = HALF_UP`. HALF_UP matches what `Math.round(km * 5000)` did before, so no behaviour
+changed; it is marked **PROVISIONAL** because the concern matrix still records partial-kilometre
+handling as OPEN (prorate / round up / down). When that is answered, one line changes.
+
+**What moved:** `ActionRequest.numericFact` became `amountFact` returning `BigDecimal`;
+`ActionResult.amountPaise` became `amountRupees`; `ticket_action.amount_paise BIGINT` became
+`amount_rupees DECIMAL(12,2)` in V9; `LedgerEntry`, `DuplicateCreditGuard.netRupees`, the
+gateway, reconciliation, the console and the fixtures followed. Both decision tables now read
+rupees: the cap is `> 300` rather than `> 30000`, and the rate output is `50` rather than `5000`,
+so a business owner editing a row writes the number they would say out loud.
+
+**DECIMAL and not DOUBLE in the schema**, and `compareTo` and not `equals` in reconciliation —
+`BigDecimal.equals` is false for `250.0` vs `250.00`, which would have reported every credit as
+a mismatch on a difference of nothing.
+
+**The assumption I refused to bury.** Paths 1 and 2 pay what UAT's `tbl_order.transport_charges`
+says, and this code has always read that column AS PAISE. Whether it really is paise is **not
+confirmed** — probe 1 found no order above 30000, weak evidence it may already hold rupees. The
+conversion goes through `Rupees.fromPaise` at exactly one call site, with a comment saying so.
+Today's behaviour is preserved rather than changed on a guess. **If probe 2 shows the column is
+rupees, that one call goes away — and every transport credit computed until then was 100x too
+small.** Renaming the variables without this would have made the bug harder to see, not easier.
+
+**Not verified by a build yet.** Pre-flight and structure_check pass; `mvn clean test` is the
+real check, and the DMN comparison of a `BigDecimal` fact against an integer threshold is the
+part no static check reaches.
+
+---
+
+## D-12 — a seam for the real payment gateway
+
+`WalletCreditService` — the only code in the system that moves money — named `MockPayUGateway`
+in its constructor. The concern that credits a partner depended on the mock **by type**, so
+there was no place to put a real gateway: adding one meant editing the concern, and "is this
+wired to the real thing?" could only be answered by reading the class.
+
+`PayUGateway` is now the contract, and it carries only what a real gateway can honour:
+`creditWallet`, `statusOf`, `amountFor`, `allCredits`, `creditedFor`. `setRecharge`,
+`failNextCalls` and `reset` stay on the mock — they arrange a world, they do not talk to a
+payment provider, and an interface that included them would be the mock's shape wearing an
+interface's name. The demo surface and the tests keep depending on the concrete mock, which is
+correct: they are the things that arrange the world.
+
+**`allCredits()` is in the interface deliberately.** It looks like a test convenience and is
+not: reconciliation's whole value is comparing what we recorded against what the gateway
+believes, and the second half has to come from the gateway. A real implementation answers it
+from a settlement report.
+
+**`PayUUnavailableException` moved out of the mock** to a top-level class in the same package.
+A real implementation would otherwise have had to throw an exception belonging to the mock —
+the sort of detail that quietly decides an interface is not really one. Its comment states the
+rule that matters: a timeout on a credit is **"we do not know", never "it did not happen"**.
+
+**What this does NOT do.** There is still no real gateway, and `creditWallet` is still an
+in-memory map. RECHARGE still cannot move money. This removes the obstacle to fixing that; it
+does not fix it. OI-2 in the readiness sheet stays open, with its blocker narrowed from
+"there is no seam" to "implement `PayUGateway` against the real provider".
+
+---
+
+## D-13 — a fact may come from a service, and the platform for that comes first
+
+**Decided.** A fact provider may read a column (shape A), derive a value from rows across
+tables (shape B), or call another service (shape C). The SPI already allowed all three — it
+constrains only what `fetchFacts` returns, never where the data came from — but only A and B
+had any platform behind them. C had a pattern (`PayUGateway`) proven on the action side and
+nothing on the fact side.
+
+**Why it could not wait for the first shape-C concern.** The first provider to call a service
+would have chosen a timeout, a retry policy and a failure semantic, and every provider after it
+would have copied whatever that was. That is exactly how three money columns ended up with
+unconfirmed and mutually inconsistent units: the first instance set a convention nobody wrote
+down, and the second inherited it without knowing it was a choice.
+
+**What was built**
+
+- `ExternalDependency` — the shape-C twin of `UatColumn`. Names the dependency, the **property**
+  holding its base URL (a literal URL is refused at construction: a URL in the jar is the same
+  URL in every environment, which is how a UAT build calls production), an optional health path,
+  a timeout, and whether it feeds a money path.
+- `ExternalServiceClientFactory` — the only supported way to reach a service while answering a
+  partner. One connect budget, a read budget capped at `botin.external.max-timeout` (1500ms),
+  base URL resolved from the property so a missing environment variable fails at startup with
+  the property name in the message, and every non-2xx converted to
+  `ExternalServiceUnavailableException`.
+- `ExternalDependencyProbe` — the symmetric twin of `UatSchemaProbe`. Configuration is always
+  checked; reachability only where a safe health path is declared, and a dependency without one
+  is logged as *configured only* rather than reported as a pass it did not earn. Loud ERROR for
+  an advisory dependency, **boot failure on a money path** — the same policy, for the same
+  reason: a partner is better served by a service that escalates than by none, but deciding
+  whether to pay on facts we have silently stopped reading is worse than not starting.
+
+**No retry, anywhere.** Deliberately absent rather than configured off. The call sits inside a
+partner's live chat turn and the degraded answer — null fact, catch-all, a human — is already
+correct. A retry doubles the worst case to improve an answer that already has a good failure
+mode. Outbound **actions** are a different question with a different answer, and they keep going
+through their own interface in `integration/`, the way `PayUGateway` does.
+
+**Unavailable is never the negative value.** `ExternalServiceUnavailableException` exists as a
+type so this cannot be forgotten. `stockAvailable = false` is a refund; `alreadyRefunded = false`
+is a second refund. An outage read as a negative automates on every outage.
+
+**No cache, and that is the decision rather than an omission.** A cache here would be a second
+source of truth with its own staleness window, and nothing in the system reads a service yet, so
+the call rate it would be sized against does not exist. Revisit when the first shape-C fact
+lands, with a measured rate. Recorded so the next reader knows the question was asked.
+
+**What is deliberately still missing.** No preflight guard cross-checks `movesMoney` against the
+tiers in the concern's decision table — a dependency feeding a T2 rule but declared `advisory`
+would not be caught today. That guard belongs in `preflight.py` and should land with the first
+shape-C provider, when there is something for it to check.
+
+---
+
 ## Earlier decisions, recorded elsewhere
 
 | | Where |

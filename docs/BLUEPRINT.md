@@ -77,8 +77,8 @@ in/yesmadam/botin/
 │   └── violations/      l1_code = VIOLATIONS
 │       └── r4others/
 │
-├── integration/         EXTERNAL SYSTEMS.
-│   └── payu/
+├── integration/         EXTERNAL SYSTEMS. One interface per system, and every
+│   └── payu/           shape-C fact and every outbound action goes through one.
 │
 └── surface/             THINGS THAT LOOK AT THE SYSTEM, not part of it.
     ├── console/  demo/  reconcile/
@@ -189,6 +189,11 @@ removed from a production image.
 
 `payu/MockPayUGateway.java` → `integration/payu/`. An external system, not a concern.
 
+This package is also where **shape-C fact sources** live (§4, Obligation 2a): a fact whose
+answer another team computes is reached through an interface here, never through a client
+held by the provider. Today the only member is `PayUGateway`, and it is used by an *action*
+rather than a fact — so the pattern is proven and the fact-side platform is not yet built.
+
 ### 3.6 The one file that does not simply move
 
 **`process/ResponseTemplates.java`** is a static `Map.ofEntries` of action code → partner
@@ -242,9 +247,10 @@ exists to keep the T0 proof in its own three-element file.
 ```java
 @Component
 class MainWalletToBankFactProvider implements ConcernFactProvider {
-    public String concernCode() { return "MAIN_WALLET_TO_BANK"; }   // == catalogue.fact_provider
-    public Set<String> factKeys() { return Set.of("balancePaise", "mpinSet", "loanOutstanding"); }
-    public List<UatColumn> requiredColumns() { ... }
+    public String concernCode()   { return "MAIN_WALLET_TO_BANK"; }   // == catalogue.fact_provider
+    public Set<String> factKeys() { return Set.of("balanceRupees", "mpinSet", "loanOutstanding"); }
+    public List<UatColumn> requiredColumns() { ... }          // shapes A and B
+    public List<ExternalDependency> requiredServices() { ... } // shape C — NOT YET BUILT, see 2a
     public Map<String,Object> fetchFacts(FactRequest r) { ... }
 }
 ```
@@ -252,6 +258,75 @@ class MainWalletToBankFactProvider implements ConcernFactProvider {
 **Every key in `factKeys()` is present in the returned map on every path**, null when unknown.
 `emptyFacts()` does this for you. A null fact evaluates and reaches the catch-all; an *absent*
 one is an evaluation error that takes the whole table down.
+
+### Obligation 2a — the three fact shapes
+
+A fact provider is a plain Spring bean. **The SPI fixes what it returns and says nothing about
+where the data comes from** — `fetchFacts` is ordinary Java, and the source is a
+constructor-injection detail invisible to the delegate, the registry, the decision table and
+every test above it. So one provider may use all three shapes at once, and the shape is chosen
+**per fact, not per concern**.
+
+| | Shape | Choose it when | Declare with | Live example |
+|---|---|---|---|---|
+| **A** | One or more columns read over `uatJdbcTemplate` | the fact is **stored** in a table we may read | `requiredColumns()` | `ProductDeliveryFactProvider` — `order_type` → `express` |
+| **B** | Rows reduced in a private method, possibly across tables and catalogs | the derivation is **ours** and depends only on rows | `requiredColumns()` for every table touched | `TransportFactProvider` — 4 statements, 2 catalogs, 3 collaborators, 7 facts |
+| **C** | A call through an interface in `integration/` | the owner **computes** the answer, or it changes on write, or reading their table would re-implement their business logic inside BOTIn | `requiredServices()` | `PayUGateway` — the seam exists, **no fact provider uses it yet** |
+
+**Rules that hold across all three**
+
+- **Never throw.** Unknown is `null`, not an exception. `FetchFactsDelegate` catches anyway,
+  but a provider that leans on that discards the partial answer it had already established.
+- **One `try` per source, never one `try` per method.** A shape-C outage must cost the two
+  facts that source owned, not the four already read from the database.
+- **Never decide.** The test: *could Product change this number without a deploy?* If yes it is
+  a rule and it belongs in a DMN row. `computedAmountRupees` is a derivation and lives in the
+  provider; the Rs300 cap is a decision and lives in the table, above every paying row, where it
+  produces a **ticket** rather than a smaller payment.
+- **Name the direction of every degradation, in a comment, at the line.** "Unreadable order
+  type → Standard, because Standard is the slower TAT and can only ever tell a partner to wait
+  longer than they should — never call an on-time order late." A degradation whose direction
+  nobody chose is a guess wearing a fallback's clothes.
+- **Unavailable is never the negative value.** Inventory down must set `stockAvailable = null`,
+  not `false`. `false` means *out of stock*, which on this concern is a T2 refund — so reading
+  an outage as a negative auto-pays on every outage.
+- **Shape C gets one attempt and a tight budget.** No retries: this runs inside a partner's live
+  chat turn, and the degraded answer (null → a human) is already correct. Retrying multiplies
+  latency to improve an answer that has a good failure mode.
+- **Shape C always hides behind an interface in `integration/`.** The provider depends on a
+  contract, never on a client. *Is this wired to the real thing?* must be answerable by looking
+  at which bean is active, not by reading the class.
+- **A derivation shared by two concerns moves to `shared/`; a query never does.** Sharing a
+  derivation is safe because it is pure. Sharing a query encodes *which rows count*, and is how
+  tuning one concern silently changes another concern's decision weeks later with green tests.
+  `DeliveryTatService` is the live case — `PROD_DELIVERY_DELAY` and `VIOL_R9_NO_PRODUCT` must
+  never disagree about "late".
+
+**What each fact needs before it can be built.** Knowing the fetch logic is necessary and not
+sufficient. Four things per fact, and the first two are the ones that silently go wrong:
+
+1. **The key, spelled exactly as the decision table's `inputExpression`.** A name that does not
+   exist behaves exactly like a value that is false. The table read `arrivedAt300m` while the
+   provider supplied `arrivedAt300metre`, and every Path 2 claim would have reached an agent
+   with nothing reporting it. A test asserts `factKeys()` equals the table's inputs.
+2. **The physical column name, confirmed or declared inferred.** A wrong name in a `SELECT` is a
+   SQL error, which is survivable. The unsurvivable version is a name that exists but is not the
+   one meant: the query runs, returns rows, and answers wrongly. `UatSchemaProbe` checks every
+   declared column at startup against `information_schema`.
+3. **The unit, where the fact is money.** Three columns in the live schema are still unconfirmed
+   as rupees or paise. A unit error is silent in both directions and one of them double-pays.
+4. **The degradation direction**, decided and written at the line.
+
+**Shape C is not yet ready, and these four platform pieces come before the first one — not
+after, because the first one sets the precedent:**
+
+- a shared HTTP client with **one** timeout policy, the way `uatJdbcTemplate` carries
+  `setQueryTimeout(5)` once for every shape-A and shape-B provider
+- `ExternalDependency` plus a startup probe, the symmetric twin of `UatSchemaProbe`: loud ERROR
+  on an unreachable dependency, boot failure only on a money path
+- the no-retry rule, enforced in the client rather than remembered per provider
+- a caching decision. Irrelevant against MySQL at 5ms; not irrelevant for a near-static product
+  catalogue called on every turn of a high-volume concern.
 
 ### Obligation 3 — a decision table
 
@@ -308,6 +383,7 @@ A document nobody reads is not a contract. **Each obligation has a check that fa
 | `dmn_key` == the decision id in the file | `check_catalogue_pointers` | `tools/preflight.py` | ✅ |
 | togglz flag == enum constant | startup report | `FeatureNameValidator` | ✅ |
 | declared columns exist | startup probe | `UatSchemaProbe` | ⚠️ logs only |
+| declared **services** reachable | startup probe | `ExternalDependencyProbe` | ❌ **not built** |
 | **every table ends in a catch-all** | — | — | ❌ **new** |
 | **every action code has a template** | — | — | ❌ **new** |
 | **every T2 action code has a service** | escalates at runtime | `DecideDelegate` | ⚠️ runtime only |
@@ -326,6 +402,12 @@ Guard 3 would have caught the live gap immediately: **Transport decides T2 corre
 
 And `UatSchemaProbe` should **fail the deployment** rather than log an error. It is the check
 that would have caught `arrived_at300_m` the day the grant landed.
+
+The service probe is the same guard for shape-C facts and does not exist yet. It is one of the
+four platform pieces that must land **before** the first shape-C fact provider, not after —
+listed in §4, Obligation 2a. Without it, an endpoint that moved, a contract version that
+changed, or a renamed field in a JSON response is discovered by a partner rather than by the
+deployment, which is exactly the failure `UatSchemaProbe` exists to prevent on the DB side.
 
 ---
 

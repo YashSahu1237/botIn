@@ -1,5 +1,7 @@
 package in.yesmadam.botin.surface.demo;
 
+import java.math.BigDecimal;
+import in.yesmadam.botin.platform.money.Rupees;
 import in.yesmadam.botin.integration.payu.MockPayUGateway;
 import in.yesmadam.botin.shared.ledger.LedgerEntry;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
@@ -55,7 +57,7 @@ import java.util.*;
  * and a fixture that handed over a finished `transportPath` would demonstrate nothing but the
  * fixture file.
  *
- * The one exception is `computedAmountPaise`, which the real provider leaves null because the
+ * The one exception is `computedAmountRupees`, which the real provider leaves null because the
  * rate question is unanswered (DEFERRED D-B). The fixture supplies a figure DIRECTLY and it is
  * labelled as invented, because the cap and the rate are two different questions: showing that
  * an amount over the cap becomes a ticket rather than a clamped payment does not require the
@@ -109,7 +111,7 @@ public class DemoFixtures {
         // The gateway is a fixture source too, so it is seeded from the SAME file. One
         // description of the synthetic world; three of them drift.
         for (Recharge r : recharges) {
-            gateway.setRecharge(r.orderId(), r.status(), r.amountPaise());
+            gateway.setRecharge(r.orderId(), r.status(), r.amountRupees());
         }
 
         log.warn("""
@@ -159,13 +161,13 @@ public class DemoFixtures {
 
     /** A PayU transaction, as tbl_payu_transaction_details_for_sp would carry it. */
     @JsonIgnoreProperties(ignoreUnknown = true)
-    public record Recharge(String orderId, String spId, String status, long amountPaise,
+    public record Recharge(String orderId, String spId, String status, BigDecimal amountRupees,
                            String demonstrates) {}
 
     /**
      * A tbl_order row plus its wallet ledger, in the same shape the provider reads.
      *
-     * `computedAmountPaise` is the invented one — see the class comment. Everything else
+     * `computedAmountRupees` is the invented one — see the class comment. Everything else
      * here has a real column behind it.
      */
     @JsonIgnoreProperties(ignoreUnknown = true)
@@ -175,19 +177,19 @@ public class DemoFixtures {
                                  int unassignCode,
                                  int cashbackPaise,
                                  Double distanceBeyondRadiusKm,
-                                 Long computedAmountPaise,
+                                 BigDecimal computedAmountRupees,
                                  List<Ledger> ledger,
                                  String demonstrates) {
 
         public List<LedgerEntry> ledgerEntries() {
             return ledger == null ? List.of()
-                    : ledger.stream().map(l -> new LedgerEntry(l.action(), l.subaction(), l.amountPaise()))
+                    : ledger.stream().map(l -> new LedgerEntry(l.action(), l.subaction(), l.amountRupees()))
                             .toList();
         }
     }
 
     @JsonIgnoreProperties(ignoreUnknown = true)
-    public record Ledger(String action, String subaction, long amountPaise) {}
+    public record Ledger(String action, String subaction, BigDecimal amountRupees) {}
 
     /** RELATIVE, never a date. See the class comment — this is the whole reason. */
     @JsonIgnoreProperties(ignoreUnknown = true)
